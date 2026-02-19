@@ -1,0 +1,28 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#F8F9FA"/>
+  
+  <!-- Pile of rubble stones -->
+  <!-- Bottom layer -->
+  <ellipse cx="120" cy="220" rx="50" ry="35" fill="#78716C" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="200" cy="225" rx="60" ry="40" fill="#A8A29E" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="280" cy="220" rx="55" ry="38" fill="#78716C" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="160" cy="235" rx="45" ry="30" fill="#57534E" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="240" cy="238" rx="50" ry="33" fill="#A8A29E" stroke="#44403C" stroke-width="2"/>
+  
+  <!-- Middle layer -->
+  <ellipse cx="140" cy="175" rx="45" ry="32" fill="#A8A29E" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="200" cy="170" rx="55" ry="38" fill="#78716C" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="260" cy="180" rx="48" ry="35" fill="#57534E" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="180" cy="190" rx="40" ry="28" fill="#A8A29E" stroke="#44403C" stroke-width="2"/>
+  
+  <!-- Top layer -->
+  <ellipse cx="170" cy="135" rx="42" ry="30" fill="#78716C" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="220" cy="130" rx="50" ry="35" fill="#A8A29E" stroke="#44403C" stroke-width="2"/>
+  <ellipse cx="200" cy="100" rx="38" ry="28" fill="#57534E" stroke="#44403C" stroke-width="2"/>
+  
+  <!-- Texture details -->
+  <circle cx="120" cy="220" r="8" fill="#57534E" opacity="0.4"/>
+  <circle cx="200" cy="170" r="10" fill="#44403C" opacity="0.3"/>
+  <circle cx="220" cy="130" r="9" fill="#57534E" opacity="0.4"/>
+</svg>

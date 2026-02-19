@@ -1,0 +1,496 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+
+type AdminEvent = {
+  id: string;
+  kind: 'contact' | 'partner' | 'payment' | 'user';
+  label: string;
+  labelFr?: string;
+  labelEn?: string;
+  details?: string;
+  detailsFr?: string;
+  detailsEn?: string;
+  method?: 'mobilemoney' | 'card' | 'paypal';
+  amount?: number;
+  currency?: string;
+  createdAt: string;
+};
+
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'manager' | 'agent';
+  active: boolean;
+  createdAt: string;
+};
+
+type AdminStats = {
+  summary: {
+    contacts: number;
+    partners: number;
+    payments: number;
+    users: number;
+    activeUsers: number;
+    mobileMoneyPayments: number;
+    cardPayments: number;
+    paypalPayments: number;
+  };
+  recent: AdminEvent[];
+  generatedAt: string;
+};
+
+const defaultStats: AdminStats = {
+  summary: {
+    contacts: 0,
+    partners: 0,
+    payments: 0,
+    users: 0,
+    activeUsers: 0,
+    mobileMoneyPayments: 0,
+    cardPayments: 0,
+    paypalPayments: 0,
+  },
+  recent: [],
+  generatedAt: new Date().toISOString(),
+};
+
+export default function AdminPage() {
+  const [lang, setLang] = useState<'fr' | 'en'>('fr');
+  const [stats, setStats] = useState<AdminStats>(defaultStats);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [usersApiOnline, setUsersApiOnline] = useState<boolean | null>(null);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'admin' | 'manager' | 'agent'>('agent');
+
+  const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Impossible de charger les utilisateurs');
+      }
+      const data = (await response.json()) as { users?: AdminUser[] };
+      setUsers(Array.isArray(data.users) ? data.users : []);
+      setUsersApiOnline(true);
+    } catch {
+      setUsers([]);
+      setUsersApiOnline(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const response = await fetch('/api/admin/stats', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Impossible de charger les statistiques admin');
+      }
+      const data = (await response.json()) as Partial<AdminStats>;
+      setStats({
+        summary: {
+          contacts: Number(data?.summary?.contacts ?? 0),
+          partners: Number(data?.summary?.partners ?? 0),
+          payments: Number(data?.summary?.payments ?? 0),
+          users: Number(data?.summary?.users ?? 0),
+          activeUsers: Number(data?.summary?.activeUsers ?? 0),
+          mobileMoneyPayments: Number(data?.summary?.mobileMoneyPayments ?? 0),
+          cardPayments: Number(data?.summary?.cardPayments ?? 0),
+          paypalPayments: Number(data?.summary?.paypalPayments ?? 0),
+        },
+        recent: Array.isArray(data?.recent) ? data.recent : [],
+        generatedAt: data?.generatedAt || new Date().toISOString(),
+      });
+      setApiOnline(true);
+    } catch {
+      setErrorMessage('Impossible de charger les statistiques pour le moment.');
+      setStats(defaultStats);
+      setApiOnline(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      await Promise.all([loadStats(), loadUsers()]);
+    })();
+  }, []);
+
+  const generateDemoPayments = async () => {
+    try {
+      setGenerating(true);
+      const response = await fetch('/api/admin/generate-demo', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error('Erreur génération démo');
+      }
+      await loadStats();
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const cards = [
+    { title: t('Paiements', 'Payments'), value: stats.summary.payments },
+    { title: t('Partenaires', 'Partners'), value: stats.summary.partners },
+    { title: t('Messages', 'Messages'), value: stats.summary.contacts },
+    {
+      title: t('Utilisateurs actifs / total', 'Active users / total'),
+      value: `${stats.summary.activeUsers} / ${stats.summary.users}`,
+    },
+  ];
+
+  const paymentRows = stats.recent.filter((event) => event.kind === 'payment');
+  const getEventLabel = (event: AdminEvent) => {
+    if (lang === 'fr') return event.labelFr || event.label;
+    return event.labelEn || event.label;
+  };
+
+  const getRoleLabel = (role?: string) => {
+    if (!role) return '-';
+    const roleKey = role.toLowerCase();
+    const labels = {
+      fr: {
+        admin: 'Administrateur',
+        manager: 'Gestionnaire',
+        agent: 'Agent',
+      },
+      en: {
+        admin: 'Admin',
+        manager: 'Manager',
+        agent: 'Agent',
+      },
+    } as const;
+
+    return labels[lang][roleKey as 'admin' | 'manager' | 'agent'] || role;
+  };
+
+  const getEventDetails = (event: AdminEvent) => {
+    const details = lang === 'fr' ? event.detailsFr || event.details : event.detailsEn || event.details;
+    if (!details) return details;
+
+    if (event.kind === 'user' && details.includes('•')) {
+      const [role, tail] = details.split('•').map((part) => part.trim());
+      if (role && tail) {
+        return `${getRoleLabel(role)} • ${tail}`;
+      }
+    }
+
+    return details;
+  };
+
+  const getMethodLabel = (method?: 'mobilemoney' | 'card' | 'paypal') => {
+    if (!method) return '-';
+    const labels = {
+      fr: {
+        mobilemoney: 'Mobile Money',
+        card: 'Carte bancaire',
+        paypal: 'PayPal',
+      },
+      en: {
+        mobilemoney: 'Mobile Money',
+        card: 'Card',
+        paypal: 'PayPal',
+      },
+    };
+
+    return labels[lang][method];
+  };
+
+  const createUser = async () => {
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      return;
+    }
+    try {
+      setSavingUser(true);
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newUserName,
+          email: newUserEmail,
+          role: newUserRole,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Erreur création utilisateur');
+      }
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserRole('agent');
+      await Promise.all([loadUsers(), loadStats()]);
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const toggleUser = async (userId: string) => {
+    const response = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    });
+    if (!response.ok) {
+      return;
+    }
+    await Promise.all([loadUsers(), loadStats()]);
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-800">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-extrabold tracking-tight">{t('Aperçu administrateur', 'Admin overview')}</h1>
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              apiOnline === null
+                ? 'bg-slate-100 text-slate-600'
+                : apiOnline
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {apiOnline === null
+              ? t('API stats: en vérification', 'Stats API: checking')
+              : apiOnline
+              ? t('API stats: en ligne', 'Stats API: online')
+              : t('API stats: hors ligne', 'Stats API: offline')}
+          </span>
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              usersApiOnline === null
+                ? 'bg-slate-100 text-slate-600'
+                : usersApiOnline
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {usersApiOnline === null
+              ? t('API utilisateurs: en vérification', 'Users API: checking')
+              : usersApiOnline
+              ? t('API utilisateurs: en ligne', 'Users API: online')
+              : t('API utilisateurs: hors ligne', 'Users API: offline')}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLang('fr')}
+              className={`rounded-lg border px-3 py-1 text-xs font-semibold ${
+                lang === 'fr' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300'
+              }`}
+            >
+              FR
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('en')}
+              className={`rounded-lg border px-3 py-1 text-xs font-semibold ${
+                lang === 'en' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+        <p className="mt-2 text-slate-600">
+          {t(
+            'Tableau branché aux APIs de contact, partenaires et paiements.',
+            'Dashboard connected to contact, partners and payments APIs.'
+          )}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          {t('Dernière mise à jour', 'Last update')}: {new Date(stats.generatedAt).toLocaleString(locale)}
+        </p>
+        {errorMessage ? (
+          <p className="mt-2 text-sm text-red-600">{t(errorMessage, 'Unable to load statistics right now.')}</p>
+        ) : null}
+
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {cards.map((card) => (
+            <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">{card.title}</p>
+              <p className="mt-1 text-2xl font-bold">{loading ? '…' : card.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">{t('Activité récente', 'Recent activity')}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={generateDemoPayments}
+                className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
+                disabled={generating}
+              >
+                {generating ? t('Génération…', 'Generating...') : t('Générer paiements test', 'Generate test payments')}
+              </button>
+              <button
+                type="button"
+                onClick={loadStats}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium"
+              >
+                {t('Actualiser', 'Refresh')}
+              </button>
+            </div>
+          </div>
+          <ul className="mt-4 space-y-3">
+            {stats.recent.length === 0 ? (
+              <li className="text-sm text-slate-500">{t('Aucune activité pour le moment.', 'No activity yet.')}</li>
+            ) : (
+              stats.recent.map((event) => (
+                <li key={event.id} className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-sm font-medium">
+                    {event.kind === 'payment' && event.method
+                      ? `${getEventLabel(event)} (${getMethodLabel(event.method)})`
+                      : getEventLabel(event)}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {getEventDetails(event) ? `${getEventDetails(event)} • ` : ''}
+                    {new Date(event.createdAt).toLocaleString(locale)}
+                  </p>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Paiements récents', 'Recent payments')}</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Date', 'Date')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Méthode', 'Method')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Référence', 'Reference')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Montant', 'Amount')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-3 text-slate-500">
+                      {t('Aucun paiement pour le moment.', 'No payments yet.')}
+                    </td>
+                  </tr>
+                ) : (
+                  paymentRows.map((payment) => (
+                    <tr key={payment.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-3 pr-4">{new Date(payment.createdAt).toLocaleString(locale)}</td>
+                      <td className="py-3 pr-4">{getMethodLabel(payment.method)}</td>
+                      <td className="py-3 pr-4">{payment.details || '-'}</td>
+                      <td className="py-3 pr-4">
+                        {typeof payment.amount === 'number'
+                          ? `${payment.amount} ${payment.currency || ''}`.trim()
+                          : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Gestion des utilisateurs', 'User management')}</h2>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input
+              type="text"
+              value={newUserName}
+              onChange={(event) => setNewUserName(event.target.value)}
+              placeholder={t('Nom complet', 'Full name')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              type="email"
+              value={newUserEmail}
+              onChange={(event) => setNewUserEmail(event.target.value)}
+              placeholder={t('Email', 'Email')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <select
+              value={newUserRole}
+              onChange={(event) => setNewUserRole(event.target.value as 'admin' | 'manager' | 'agent')}
+              aria-label={t('Rôle utilisateur', 'User role')}
+              title={t('Rôle utilisateur', 'User role')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            >
+              <option value="agent">{getRoleLabel('agent')}</option>
+              <option value="manager">{getRoleLabel('manager')}</option>
+              <option value="admin">{getRoleLabel('admin')}</option>
+            </select>
+            <button
+              type="button"
+              onClick={createUser}
+              className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
+              disabled={savingUser}
+            >
+              {savingUser ? t('Enregistrement…', 'Saving...') : t('Ajouter', 'Add')}
+            </button>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Nom', 'Name')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Email', 'Email')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Rôle', 'Role')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Action', 'Action')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-slate-500">
+                      {t('Aucun utilisateur.', 'No users.')}
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-3 pr-4">{user.name}</td>
+                      <td className="py-3 pr-4">{user.email}</td>
+                      <td className="py-3 pr-4">{getRoleLabel(user.role)}</td>
+                      <td className="py-3 pr-4">
+                        <span className={user.active ? 'text-emerald-700' : 'text-slate-500'}>
+                          {user.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <button
+                          type="button"
+                          onClick={() => toggleUser(user.id)}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
+                        >
+                          {user.active ? t('Désactiver', 'Disable') : t('Activer', 'Enable')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

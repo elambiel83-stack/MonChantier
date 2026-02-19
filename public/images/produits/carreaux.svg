@@ -1,0 +1,41 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#F8F9FA"/>
+  
+  <!-- Floor tiles pattern -->
+  <defs>
+    <linearGradient id="tileGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5F4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E7E5E4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tileGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D6D3D1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A8A29E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Tile grid -->
+  <!-- Row 1 -->
+  <rect x="50" y="40" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="125" y="40" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="200" y="40" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="275" y="40" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  
+  <!-- Row 2 -->
+  <rect x="50" y="115" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="125" y="115" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="200" y="115" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="275" y="115" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  
+  <!-- Row 3 -->
+  <rect x="50" y="190" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="125" y="190" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="200" y="190" width="70" height="70" fill="url(#tileGrad1)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  <rect x="275" y="190" width="70" height="70" fill="url(#tileGrad2)" stroke="#78716C" stroke-width="1.5" rx="3"/>
+  
+  <!-- Shine effect on some tiles -->
+  <rect x="55" y="45" width="30" height="30" fill="white" opacity="0.3" rx="2"/>
+  <rect x="205" y="45" width="30" height="30" fill="white" opacity="0.3" rx="2"/>
+  <rect x="130" y="120" width="30" height="30" fill="white" opacity="0.3" rx="2"/>
+  <rect x="280" y="120" width="30" height="30" fill="white" opacity="0.3" rx="2"/>
+</svg>

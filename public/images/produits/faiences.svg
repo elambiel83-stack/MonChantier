@@ -1,0 +1,78 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#F8F9FA"/>
+  
+  <!-- Ceramic wall tiles with decorative patterns -->
+  <defs>
+    <linearGradient id="ceramicGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F1F5F9;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ceramicGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DBEAFE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#BFDBFE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ceramicGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEF3C7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDE68A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Tile grid with decorative elements -->
+  <!-- Row 1 -->
+  <rect x="70" y="40" width="60" height="50" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="100" cy="65" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <rect x="135" y="40" width="60" height="50" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <path d="M 165 55 L 160 70 L 170 70 Z" fill="#2563EB" opacity="0.4"/>
+  
+  <rect x="200" y="40" width="60" height="50" fill="url(#ceramicGrad3)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <rect x="220" y="55" width="20" height="20" fill="#F59E0B" opacity="0.3" rx="2"/>
+  
+  <rect x="265" y="40" width="60" height="50" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="295" cy="65" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <!-- Row 2 -->
+  <rect x="70" y="95" width="60" height="50" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <path d="M 100 110 L 95 125 L 105 125 Z" fill="#2563EB" opacity="0.4"/>
+  
+  <rect x="135" y="95" width="60" height="50" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="165" cy="120" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <rect x="200" y="95" width="60" height="50" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <rect x="220" y="110" width="20" height="20" fill="#2563EB" opacity="0.3" rx="2"/>
+  
+  <rect x="265" y="95" width="60" height="50" fill="url(#ceramicGrad3)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="295" cy="120" r="8" fill="#F59E0B" opacity="0.4"/>
+  
+  <!-- Row 3 -->
+  <rect x="70" y="150" width="60" height="50" fill="url(#ceramicGrad3)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <rect x="90" y="165" width="20" height="20" fill="#F59E0B" opacity="0.3" rx="2"/>
+  
+  <rect x="135" y="150" width="60" height="50" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <path d="M 165 165 L 160 180 L 170 180 Z" fill="#2563EB" opacity="0.4"/>
+  
+  <rect x="200" y="150" width="60" height="50" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="230" cy="175" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <rect x="265" y="150" width="60" height="50" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="295" cy="175" r="8" fill="#2563EB" opacity="0.4"/>
+  
+  <!-- Row 4 -->
+  <rect x="70" y="205" width="60" height="55" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="100" cy="232" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <rect x="135" y="205" width="60" height="55" fill="url(#ceramicGrad3)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <rect x="155" y="220" width="20" height="20" fill="#F59E0B" opacity="0.3" rx="2"/>
+  
+  <rect x="200" y="205" width="60" height="55" fill="url(#ceramicGrad2)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <path d="M 230 220 L 225 235 L 235 235 Z" fill="#2563EB" opacity="0.4"/>
+  
+  <rect x="265" y="205" width="60" height="55" fill="url(#ceramicGrad1)" stroke="#94A3B8" stroke-width="1" rx="2"/>
+  <circle cx="295" cy="232" r="8" fill="#3B82F6" opacity="0.3"/>
+  
+  <!-- Gloss/shine effects -->
+  <rect x="75" y="45" width="25" height="20" fill="white" opacity="0.4" rx="1"/>
+  <rect x="140" y="100" width="25" height="20" fill="white" opacity="0.4" rx="1"/>
+  <rect x="270" y="155" width="25" height="20" fill="white" opacity="0.4" rx="1"/>
+</svg>

@@ -1,0 +1,194 @@
+// MonChantier brand constants
+export const LOGO_URL = "/images/brand/monchantier-logo.svg";
+export const BANNER_URL = "/images/banners/hero.png";
+export const PRODUCTS_BANNER_URL = "/images/banners/produits.png";
+export const SERVICES_BANNER_URL = "/images/banners/services.png";
+
+// Products catalog
+export const products = [
+  {
+    id: 1,
+    fr: "Briques pleines",
+    en: "Solid bricks",
+    price: "$1.30 / unité",
+    prices: { USD: 1.3, CDF: null },
+    unitFr: "unité",
+    unitEn: "unit",
+    img: "/images/produits/briques.svg",
+    fallback: "/images/produits/briques.svg",
+  },
+  {
+    id: 2,
+    fr: "Moellons",
+    en: "Rubble stones",
+    price: "$22 / m³",
+    prices: { USD: 22, CDF: null },
+    unitFr: "m³",
+    unitEn: "m³",
+    img: "/images/produits/moellons.svg",
+    fallback: "/images/produits/moellons.svg",
+  },
+  {
+    id: 3,
+    fr: "Sable concassé",
+    en: "Crushed sand",
+    price: "$10 / m³",
+    prices: { USD: 10, CDF: null },
+    unitFr: "m³",
+    unitEn: "m³",
+    img: "/images/produits/sable.svg",
+    fallback: "/images/produits/sable.svg",
+  },
+  {
+    id: 4,
+    fr: "Pavés",
+    en: "Pavers",
+    price: "$15 / m²",
+    prices: { USD: 15, CDF: null },
+    unitFr: "m²",
+    unitEn: "m²",
+    img: "/images/produits/paves.svg",
+    fallback: "/images/produits/paves.svg",
+  },
+  {
+    id: 5,
+    fr: "Carreaux",
+    en: "Tiles",
+    price: "$— / m²",
+    prices: { USD: null, CDF: null },
+    unitFr: "m²",
+    unitEn: "m²",
+    img: "/images/produits/carreaux.svg",
+    fallback: "/images/produits/carreaux.svg",
+  },
+  {
+    id: 6,
+    fr: "Faïences",
+    en: "Ceramic wall tiles",
+    price: "$— / m²",
+    prices: { USD: null, CDF: null },
+    unitFr: "m²",
+    unitEn: "m²",
+    img: "/images/produits/faiences.svg",
+    fallback: "/images/produits/faiences.svg",
+  },
+];
+
+// Services data
+export const services = [
+  {
+    icon: "🚚",
+    fr: "Livraison sur chantier",
+    en: "On-site delivery",
+    frDesc: "Flotte locale et partenaires chauffeurs.",
+    enDesc: "Local fleet and driver partners.",
+  },
+  {
+    icon: "🧪",
+    fr: "Contrôle qualité",
+    en: "Quality control",
+    frDesc: "Matériaux testés et conformes.",
+    enDesc: "Tested, compliant materials.",
+  },
+  {
+    icon: "💬",
+    fr: "Assistance client",
+    en: "Customer support",
+    frDesc: "WhatsApp, téléphone et email.",
+    enDesc: "WhatsApp, phone, and email.",
+  },
+  {
+    icon: "📐",
+    fr: "Bureau d'études",
+    en: "Engineering office",
+    frDesc: "Plans, devis et études techniques.",
+    enDesc: "Plans, quotes and technical studies.",
+  },
+  {
+    icon: "🚰",
+    fr: "Plomberie",
+    en: "Plumbing",
+    frDesc: "Installation et réparation sanitaire.",
+    enDesc: "Sanitary installation and repair.",
+  },
+  {
+    icon: "🧱",
+    fr: "Maçonnerie",
+    en: "Masonry",
+    frDesc: "Construction et rénovation de bâtiments.",
+    enDesc: "Building construction and renovation.",
+  },
+  {
+    icon: "🔧",
+    fr: "Soudure",
+    en: "Welding",
+    frDesc: "Soudure métallique et ferronnerie.",
+    enDesc: "Metal welding and ironwork.",
+  },
+  {
+    icon: "🪚",
+    fr: "Menuiserie",
+    en: "Carpentry",
+    frDesc: "Portes, fenêtres et meubles en bois.",
+    enDesc: "Doors, windows and wooden furniture.",
+  },
+  {
+    icon: "🏠",
+    fr: "Carrelage",
+    en: "Tiling",
+    frDesc: "Pose de carreaux et faïences.",
+    enDesc: "Floor and wall tile installation.",
+  },
+  {
+    icon: "🎨",
+    fr: "Crépissage",
+    en: "Plastering",
+    frDesc: "Enduit et finition des murs.",
+    enDesc: "Wall coating and finishing.",
+  },
+  {
+    icon: "⬜",
+    fr: "Plafonnement",
+    en: "Ceiling installation",
+    frDesc: "Pose de faux plafonds et finitions.",
+    enDesc: "False ceiling and finishing.",
+  },
+  {
+    icon: "🏗️",
+    fr: "Pose toiture",
+    en: "Roofing",
+    frDesc: "Installation de toits et couvertures.",
+    enDesc: "Roof and covering installation.",
+  },
+  {
+    icon: "🚧",
+    fr: "Clôture",
+    en: "Fencing",
+    frDesc: "Installation de clôtures et portails.",
+    enDesc: "Fence and gate installation.",
+  },
+  {
+    icon: "🌱",
+    fr: "Jardinage",
+    en: "Gardening",
+    frDesc: "Aménagement et entretien d'espaces verts.",
+    enDesc: "Green space design and maintenance.",
+  },
+  {
+    icon: "⚙️",
+    fr: "Autres services",
+    en: "Other services",
+    frDesc: "Contactez-nous pour vos besoins spécifiques.",
+    enDesc: "Contact us for your specific needs.",
+  },
+];
+
+// Contact info
+export const CONTACT_INFO = {
+  address: "2452 Av. De l'eglise, Kolwezi",
+  whatsapp: "+243999972466",
+  email: "contact@monchantier.net",
+};
+
+// Input styles for forms
+export const INPUT_CLASS = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent";
