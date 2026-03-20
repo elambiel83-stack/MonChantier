@@ -1,6 +1,5 @@
 import React from "react";
 import { BANNER_URL } from "./constants";
-import { Language } from "./types";
 
 interface HeroProps {
   t: (fr: string, en: string) => string;
@@ -8,31 +7,38 @@ interface HeroProps {
 
 export function Hero({ t }: HeroProps) {
   return (
-    <section className="relative">
-      <div className="absolute inset-0 -z-10">
+    <section id="hero" className="relative isolate overflow-hidden scroll-mt-24 bg-slate-100">
+      <div className="absolute inset-0 z-0">
         <img
           src={BANNER_URL}
           alt="MonChantier banner"
           className="w-full h-full object-cover object-center"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = "/images/produits/moellons.svg";
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent" />
+        <div className="absolute inset-0 bg-slate-900/15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/90 to-white/60 lg:to-transparent" />
       </div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 min-h-[62vh] flex items-center">
+        <div className="max-w-2xl bg-white/75 backdrop-blur-sm rounded-2xl p-5 sm:p-8 border border-white/70 shadow">
+          <span className="inline-flex items-center rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-xs sm:text-sm font-bold tracking-wide uppercase">
+            {t("Livraison rapide partout en RDC", "Fast delivery across DRC")}
+          </span>
+          <h1 className="mt-4 text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-slate-900">
             {t("Bienvenue sur MonChantier", "Welcome to MonChantier")}
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-5 text-lg sm:text-xl text-slate-700 max-w-xl">
             {t(
               "Votre partenaire construction — livraison rapide, qualité garantie et service client à l'écoute.",
               "Your construction partner — fast delivery, guaranteed quality, and attentive support."
             )}
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <a href="#produits" className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow">
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <a href="#produits" className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3.5 rounded-xl shadow-md transition-transform hover:-translate-y-0.5">
               {t("Acheter maintenant", "Shop now")}
             </a>
-            <a href="#services" className="px-5 py-3 rounded-xl border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold">
+            <a href="#services" className="px-6 py-3.5 rounded-xl border-2 border-slate-300 hover:border-slate-500 text-slate-800 font-bold bg-white/80">
               {t("Découvrir nos services", "Explore services")}
             </a>
           </div>

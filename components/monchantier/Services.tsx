@@ -1,5 +1,5 @@
 import React from "react";
-import { services, SERVICES_BANNER_URL } from "./constants";
+import { CONTACT_INFO, services, SERVICES_BANNER_URL } from "./constants";
 import { Language } from "./types";
 
 interface ServicesProps {
@@ -7,6 +7,8 @@ interface ServicesProps {
 }
 
 export function Services({ t }: ServicesProps) {
+  const deliveryMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CONTACT_INFO.address)}`;
+
   return (
     <section id="services" className="bg-white border-y">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
@@ -21,13 +23,33 @@ export function Services({ t }: ServicesProps) {
           )}
         </p>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {services.map((s, i) => (
-            <div key={i} className="bg-slate-50 rounded-2xl p-6 ring-1 ring-slate-200 hover:shadow-md transition-shadow">
-              <div className="text-3xl">{s.icon}</div>
-              <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
-              <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>
-            </div>
-          ))}
+          {services.map((s, i) => {
+            const isDeliveryService = s.fr === "Livraison sur chantier";
+
+            if (isDeliveryService) {
+              return (
+                <a
+                  key={i}
+                  href={deliveryMapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-slate-50 rounded-2xl p-6 ring-1 ring-slate-200 hover:shadow-md transition-shadow block"
+                >
+                  <div className="text-3xl">{s.icon}</div>
+                  <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
+                  <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>
+                </a>
+              );
+            }
+
+            return (
+              <div key={i} className="bg-slate-50 rounded-2xl p-6 ring-1 ring-slate-200 hover:shadow-md transition-shadow">
+                <div className="text-3xl">{s.icon}</div>
+                <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
+                <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>
+              </div>
+            );
+          })}
         </div>
         <div className="mt-8 text-center">
           <a

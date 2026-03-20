@@ -1,5 +1,4 @@
 import React from "react";
-import { Language } from "./types";
 
 interface AboutProps {
   t: (fr: string, en: string) => string;
@@ -24,7 +23,7 @@ export function About({ t }: AboutProps) {
           </ul>
         </div>
         <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-sm bg-slate-100 aspect-[4/3]">
-          <img src="https://placehold.co/800x600" alt="Yard preview" className="w-full h-full object-cover" />
+          <img src="/images/banners/apropos.svg" alt="À propos MonChantier" className="w-full h-full object-cover" />
         </div>
       </div>
     </section>

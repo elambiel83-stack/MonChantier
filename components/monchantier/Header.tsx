@@ -1,5 +1,6 @@
 import React from "react";
 import { LOGO_URL } from "./constants";
+import { AuthControls } from "./AuthControls";
 import { Language } from "./types";
 
 interface HeaderProps {
@@ -24,6 +25,7 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
           </div>
         </div>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <a href="#hero" className="hover:text-orange-600">{t("Accueil", "Home")}</a>
           <a href="#produits" className="hover:text-orange-600">{t("Produits", "Products")}</a>
           <a href="#services" className="hover:text-orange-600">{t("Services", "Services")}</a>
           <a href="#partenaires" className="hover:text-orange-600">{t("Partenaires", "Partners")}</a>
@@ -54,6 +56,7 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
           <a href="#contact" className="ml-3 hidden sm:inline-block bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow">
             {t("Demander un devis", "Request a quote")}
           </a>
+          <AuthControls t={t} />
         </div>
       </div>
     </header>

@@ -1,8 +1,8 @@
 // MonChantier brand constants
 export const LOGO_URL = "/images/brand/monchantier-logo.svg";
-export const BANNER_URL = "/images/banners/hero.png";
-export const PRODUCTS_BANNER_URL = "/images/banners/produits.png";
-export const SERVICES_BANNER_URL = "/images/banners/services.png";
+export const BANNER_URL = "/images/banners/hero.svg";
+export const PRODUCTS_BANNER_URL = "/images/banners/produits.svg";
+export const SERVICES_BANNER_URL = "/images/banners/services.svg";
 
 // Products catalog
 export const products = [
@@ -71,6 +71,39 @@ export const products = [
     unitEn: "m²",
     img: "/images/produits/faiences.svg",
     fallback: "/images/produits/faiences.svg",
+  },
+  {
+    id: 7,
+    fr: "Bloc ciment",
+    en: "Concrete block",
+    price: "$— / unité",
+    prices: { USD: null, CDF: null },
+    unitFr: "unité",
+    unitEn: "unit",
+    img: "/images/produits/bloc-ciment.svg",
+    fallback: "/images/produits/bloc-ciment.svg",
+  },
+  {
+    id: 8,
+    fr: "Bordure de route",
+    en: "Road curb",
+    price: "$— / unité",
+    prices: { USD: null, CDF: null },
+    unitFr: "unité",
+    unitEn: "unit",
+    img: "/images/produits/bordure-route.svg",
+    fallback: "/images/produits/bordure-route.svg",
+  },
+  {
+    id: 9,
+    fr: "Séparateur de route",
+    en: "Road divider",
+    price: "$— / unité",
+    prices: { USD: null, CDF: null },
+    unitFr: "unité",
+    unitEn: "unit",
+    img: "/images/produits/separateur-route.svg",
+    fallback: "/images/produits/separateur-route.svg",
   },
 ];
 

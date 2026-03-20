@@ -71,7 +71,7 @@ export default function MonChantierSite() {
         onCartClick={() => setCartOpen(true)}
       />
       <Hero t={t} />
-      <Products lang={lang} t={t} onAddToCart={handleAddToCart} />
+      <Products lang={lang} t={t} onAddToCart={handleAddToCart} onOrderClick={() => setCartOpen(true)} />
       <Services t={t} />
       <About t={t} />
       <Partners lang={lang} t={t} />
