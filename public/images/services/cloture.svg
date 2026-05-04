@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Clôture — MonChantier</title>
+  <desc id="desc">Installation de clôtures et portails métalliques — MonChantier Kolwezi</desc>
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f4c2a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#082f49"/>
+      <stop offset="60%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#0f4c2a"/>
+    </linearGradient>
+    <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="postGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="40%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="4" dy="8" stdDeviation="12" flood-color="#00000070"/>
+    </filter>
+  </defs>
+
+  <!-- Ciel et sol -->
+  <rect width="1200" height="720" fill="url(#skyGrad)"/>
+  <!-- Sol -->
+  <rect x="0" y="540" width="1200" height="180" fill="#166534" fill-opacity="0.6"/>
+  <rect x="0" y="540" width="1200" height="20" fill="#15803d" fill-opacity="0.8"/>
+  <!-- Herbe texture -->
+  <rect x="0" y="555" width="1200" height="8" fill="#16a34a" fill-opacity="0.4"/>
+
+  <!-- Nuages/brume -->
+  <ellipse cx="300" cy="200" rx="200" ry="60" fill="white" fill-opacity="0.04"/>
+  <ellipse cx="900" cy="160" rx="250" ry="70" fill="white" fill-opacity="0.03"/>
+
+  <!-- === CLÔTURE MÉTALLIQUE === -->
+  <g filter="url(#shadow)">
+
+    <!-- Rails horizontaux -->
+    <rect x="60" y="290" width="1080" height="22" rx="4" fill="url(#metalGrad)"/>
+    <rect x="60" y="295" width="1080" height="6" rx="2" fill="white" fill-opacity="0.15"/>
+    <rect x="60" y="420" width="1080" height="22" rx="4" fill="url(#metalGrad)"/>
+    <rect x="60" y="425" width="1080" height="6" rx="2" fill="white" fill-opacity="0.15"/>
+
+    <!-- Rail supérieur avec pointes -->
+    <rect x="60" y="240" width="1080" height="16" rx="3" fill="url(#metalGrad)"/>
+
+    <!-- Poteaux verticaux -->
+    <!-- Poteau 1 -->
+    <rect x="60" y="200" width="28" height="360" rx="4" fill="url(#postGrad)"/>
+    <rect x="65" y="200" width="8" height="360" rx="2" fill="white" fill-opacity="0.1"/>
+    <!-- Pointe poteau -->
+    <polygon points="60,200 74,175 88,200" fill="#64748b"/>
+    <polygon points="68,200 74,178 80,200" fill="#94a3b8"/>
+
+    <!-- Poteau 2 -->
+    <rect x="250" y="200" width="28" height="360" rx="4" fill="url(#postGrad)"/>
+    <rect x="255" y="200" width="8" height="360" rx="2" fill="white" fill-opacity="0.1"/>
+    <polygon points="250,200 264,175 278,200" fill="#64748b"/>
+    <polygon points="258,200 264,178 270,200" fill="#94a3b8"/>
+
+    <!-- Poteau 3 -->
+    <rect x="440" y="200" width="28" height="360" rx="4" fill="url(#postGrad)"/>
+    <rect x="445" y="200" width="8" height="360" rx="2" fill="white" fill-opacity="0.1"/>
+    <polygon points="440,200 454,175 468,200" fill="#64748b"/>
+    <polygon points="448,200 454,178 460,200" fill="#94a3b8"/>
+
+    <!-- Barreaux entre poteau 1 et 2 -->
+    <rect x="100" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <rect x="103" y="240" width="4" height="322" rx="1" fill="white" fill-opacity="0.12"/>
+    <polygon points="100,240 106,222 112,240" fill="#64748b"/>
+    <rect x="130" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <rect x="133" y="240" width="4" height="322" rx="1" fill="white" fill-opacity="0.12"/>
+    <polygon points="130,240 136,222 142,240" fill="#64748b"/>
+    <rect x="160" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="160,240 166,222 172,240" fill="#64748b"/>
+    <rect x="190" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="190,240 196,222 202,240" fill="#64748b"/>
+    <rect x="220" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="220,240 226,222 232,240" fill="#64748b"/>
+
+    <!-- Barreaux entre poteau 2 et 3 -->
+    <rect x="290" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="290,240 296,222 302,240" fill="#64748b"/>
+    <rect x="320" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="320,240 326,222 332,240" fill="#64748b"/>
+    <rect x="350" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="350,240 356,222 362,240" fill="#64748b"/>
+    <rect x="380" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="380,240 386,222 392,240" fill="#64748b"/>
+    <rect x="410" y="240" width="12" height="322" rx="2" fill="#475569"/>
+    <polygon points="410,240 416,222 422,240" fill="#64748b"/>
+
+    <!-- === PORTAIL CENTRAL === -->
+    <!-- Poteau portail gauche -->
+    <rect x="540" y="160" width="36" height="400" rx="5" fill="#1e293b"/>
+    <rect x="545" y="160" width="10" height="400" rx="3" fill="white" fill-opacity="0.12"/>
+    <!-- Poteau portail droit -->
+    <rect x="760" y="160" width="36" height="400" rx="5" fill="#1e293b"/>
+    <rect x="765" y="160" width="10" height="400" rx="3" fill="white" fill-opacity="0.12"/>
+
+    <!-- Vantail gauche du portail -->
+    <rect x="576" y="200" width="180" height="340" rx="4" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+    <!-- Barreaux portail gauche -->
+    <rect x="596" y="220" width="12" height="300" rx="2" fill="#475569"/>
+    <polygon points="596,220 602,200 608,220" fill="#64748b"/>
+    <rect x="626" y="220" width="12" height="300" rx="2" fill="#475569"/>
+    <polygon points="626,220 632,200 638,220" fill="#64748b"/>
+    <rect x="656" y="220" width="12" height="300" rx="2" fill="#475569"/>
+    <polygon points="656,220 662,200 668,220" fill="#64748b"/>
+    <rect x="686" y="220" width="12" height="300" rx="2" fill="#475569"/>
+    <polygon points="686,220 692,200 698,220" fill="#64748b"/>
+    <rect x="716" y="220" width="12" height="300" rx="2" fill="#475569"/>
+    <polygon points="716,220 722,200 728,220" fill="#64748b"/>
+    <!-- Rails portail gauche -->
+    <rect x="576" y="295" width="180" height="14" rx="3" fill="#334155"/>
+    <rect x="576" y="410" width="180" height="14" rx="3" fill="#334155"/>
+    <!-- Serrure / poignée -->
+    <circle cx="752" cy="370" r="10" fill="#f59e0b"/>
+    <circle cx="752" cy="370" r="5" fill="#92400e"/>
+
+    <!-- Vantail droit du portail (entrouvert) -->
+    <g transform="rotate(-15, 796, 370)">
+      <rect x="796" y="200" width="-180" height="340" rx="4" fill="#1e293b" stroke="#334155" stroke-width="2" transform="translate(796,200) scale(-1,1) translate(-796,-200)"/>
+    </g>
+    <!-- Version simplifiée vantail droit -->
+    <rect x="796" y="200" width="160" height="340" rx="4" fill="#1e293b" stroke="#334155" stroke-width="2" opacity="0.8"/>
+    <rect x="812" y="220" width="10" height="300" rx="2" fill="#475569" opacity="0.8"/>
+    <rect x="838" y="220" width="10" height="300" rx="2" fill="#475569" opacity="0.8"/>
+    <rect x="864" y="220" width="10" height="300" rx="2" fill="#475569" opacity="0.8"/>
+    <rect x="890" y="220" width="10" height="300" rx="2" fill="#475569" opacity="0.8"/>
+    <rect x="916" y="220" width="10" height="300" rx="2" fill="#475569" opacity="0.8"/>
+    <rect x="796" y="295" width="160" height="14" rx="3" fill="#334155" opacity="0.8"/>
+    <rect x="796" y="410" width="160" height="14" rx="3" fill="#334155" opacity="0.8"/>
+  </g>
+
+  <!-- Logo sur le portail -->
+  <rect x="618" y="330" width="100" height="50" rx="6" fill="#f59e0b"/>
+  <text x="668" y="355" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="9" font-weight="900" fill="#1e293b">MON</text>
+  <text x="668" y="368" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="9" font-weight="900" fill="#1e293b">CHANTIER</text>
+
+  <!-- Poteau droit fin de clôture -->
+  <rect x="960" y="200" width="28" height="360" rx="4" fill="url(#postGrad)"/>
+  <polygon points="960,200 974,175 988,200" fill="#64748b"/>
+  <rect x="1100" y="200" width="28" height="360" rx="4" fill="url(#postGrad)"/>
+  <polygon points="1100,200 1114,175 1128,200" fill="#64748b"/>
+  <!-- Barreaux fin -->
+  <rect x="1000" y="240" width="12" height="322" rx="2" fill="#475569"/>
+  <polygon points="1000,240 1006,222 1012,240" fill="#64748b"/>
+  <rect x="1030" y="240" width="12" height="322" rx="2" fill="#475569"/>
+  <polygon points="1030,240 1036,222 1042,240" fill="#64748b"/>
+  <rect x="1060" y="240" width="12" height="322" rx="2" fill="#475569"/>
+  <polygon points="1060,240 1066,222 1072,240" fill="#64748b"/>
+
+  <!-- Bandeau titre -->
+  <rect x="0" y="630" width="1200" height="90" fill="#052e16" fill-opacity="0.85"/>
+  <text x="80" y="677" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="#4ade80">CLÔTURE &amp; PORTAIL</text>
+  <text x="80" y="702" font-family="Arial, sans-serif" font-size="15" fill="#86efac" fill-opacity="0.8">Installation de clôtures et portails — MonChantier</text>
+</svg>

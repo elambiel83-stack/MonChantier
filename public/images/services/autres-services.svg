@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Autres services — MonChantier</title>
+  <desc id="desc">Contactez-nous pour vos besoins spécifiques — MonChantier Kolwezi</desc>
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="gearGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="4" dy="6" stdDeviation="14" flood-color="#00000070"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Fond -->
+  <rect width="1200" height="720" fill="url(#bgGrad)"/>
+  <!-- Points lumineux de fond -->
+  <circle cx="100" cy="100" r="180" fill="#334155" fill-opacity="0.2"/>
+  <circle cx="1100" cy="600" r="220" fill="#334155" fill-opacity="0.2"/>
+
+  <!-- === GRANDE ROUE DENTÉE GAUCHE === -->
+  <g transform="translate(280, 340)" filter="url(#shadow)">
+    <!-- Corps roue -->
+    <circle cx="0" cy="0" r="160" fill="url(#gearGrad)"/>
+    <circle cx="0" cy="0" r="140" fill="#1e293b"/>
+    <circle cx="0" cy="0" r="50" fill="url(#gearGrad)"/>
+    <circle cx="0" cy="0" r="30" fill="#0f172a"/>
+    <circle cx="0" cy="0" r="10" fill="#f59e0b"/>
+    <!-- Dents de la roue (12 dents) -->
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(0)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(30)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(60)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(90)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(120)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(150)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(180)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(210)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(240)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(270)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(300)"/>
+    <rect x="-14" y="-180" width="28" height="40" rx="4" fill="#475569" transform="rotate(330)"/>
+    <!-- Rayons intérieurs -->
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round"/>
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round" transform="rotate(60)"/>
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round" transform="rotate(120)"/>
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round" transform="rotate(180)"/>
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round" transform="rotate(240)"/>
+    <line x1="0" y1="-130" x2="0" y2="-55" stroke="#64748b" stroke-width="16" stroke-linecap="round" transform="rotate(300)"/>
+    <!-- Reflet -->
+    <circle cx="-40" cy="-60" r="30" fill="white" fill-opacity="0.04"/>
+  </g>
+
+  <!-- === PETITE ROUE DENTÉE DROITE === -->
+  <g transform="translate(580, 230)" filter="url(#shadow)">
+    <circle cx="0" cy="0" r="90" fill="url(#gearGrad)"/>
+    <circle cx="0" cy="0" r="75" fill="#1e293b"/>
+    <circle cx="0" cy="0" r="28" fill="url(#gearGrad)"/>
+    <circle cx="0" cy="0" r="16" fill="#0f172a"/>
+    <circle cx="0" cy="0" r="6" fill="#f59e0b"/>
+    <!-- Dents (8 dents) -->
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(0)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(45)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(90)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(135)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(180)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(225)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(270)"/>
+    <rect x="-9" y="-105" width="18" height="26" rx="3" fill="#475569" transform="rotate(315)"/>
+    <!-- Rayons -->
+    <line x1="0" y1="-68" x2="0" y2="-32" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+    <line x1="0" y1="-68" x2="0" y2="-32" stroke="#64748b" stroke-width="10" stroke-linecap="round" transform="rotate(90)"/>
+    <line x1="0" y1="-68" x2="0" y2="-32" stroke="#64748b" stroke-width="10" stroke-linecap="round" transform="rotate(180)"/>
+    <line x1="0" y1="-68" x2="0" y2="-32" stroke="#64748b" stroke-width="10" stroke-linecap="round" transform="rotate(270)"/>
+  </g>
+
+  <!-- === CLÉ À MOLETTE === -->
+  <g transform="translate(750, 320) rotate(-35)" filter="url(#shadow)">
+    <!-- Manche -->
+    <rect x="-16" y="0" width="32" height="280" rx="10" fill="#334155"/>
+    <rect x="-10" y="0" width="20" height="280" rx="8" fill="#475569"/>
+    <!-- Reflet manche -->
+    <rect x="-4" y="10" width="6" height="260" rx="3" fill="white" fill-opacity="0.1"/>
+    <!-- Tête mâchoire -->
+    <rect x="-34" y="-60" width="68" height="70" rx="6" fill="#334155"/>
+    <rect x="-28" y="-52" width="56" height="55" rx="4" fill="#475569"/>
+    <!-- Fente mâchoire -->
+    <rect x="-14" y="-60" width="28" height="30" rx="3" fill="#0f172a"/>
+    <!-- Mâchoire mobile -->
+    <rect x="-34" y="-80" width="30" height="24" rx="4" fill="#64748b"/>
+    <rect x="14" y="-80" width="30" height="24" rx="4" fill="#1e293b"/>
+    <!-- Vis de réglage -->
+    <circle cx="26" cy="-18" r="10" fill="#f59e0b"/>
+    <line x1="20" y1="-18" x2="32" y2="-18" stroke="#92400e" stroke-width="3"/>
+    <line x1="26" y1="-24" x2="26" y2="-12" stroke="#92400e" stroke-width="3"/>
+  </g>
+
+  <!-- === TEXTE PRINCIPAL === -->
+  <text x="820" y="380" font-family="Arial Black, Arial, sans-serif" font-size="64" font-weight="900" fill="#475569" fill-opacity="0.15" transform="rotate(-5, 820, 380)">SERVICES</text>
+
+  <!-- Grille de services disponibles -->
+  <g transform="translate(680, 400)">
+    <!-- Carte 1 -->
+    <rect x="0" y="0" width="140" height="80" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <text x="70" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20">🎨</text>
+    <text x="70" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#94a3b8">Peinture</text>
+    <text x="70" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#64748b">Finitions</text>
+    <!-- Carte 2 -->
+    <rect x="155" y="0" width="140" height="80" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <text x="225" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20">💡</text>
+    <text x="225" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#94a3b8">Électricité</text>
+    <text x="225" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#64748b">Installation</text>
+    <!-- Carte 3 -->
+    <rect x="310" y="0" width="140" height="80" rx="10" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="380" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20">➕</text>
+    <text x="380" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#fcd34d">Et plus...</text>
+    <text x="380" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#f59e0b">Sur demande</text>
+  </g>
+
+  <!-- Bandeau bas -->
+  <rect x="0" y="630" width="1200" height="90" fill="#020617" fill-opacity="0.9"/>
+  <text x="80" y="677" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="#94a3b8">AUTRES SERVICES</text>
+  <text x="80" y="702" font-family="Arial, sans-serif" font-size="15" fill="#64748b" fill-opacity="0.9">Contactez-nous pour vos besoins spécifiques — MonChantier</text>
+</svg>
