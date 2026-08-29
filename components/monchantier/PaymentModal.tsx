@@ -23,6 +23,8 @@ export function PaymentModal({
   onPaymentSuccess,
 }: PaymentModalProps) {
   const [payPhone, setPayPhone] = useState("+243");
+  const [customerName, setCustomerName] = useState("Client MonChantier");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [payNetwork, setPayNetwork] = useState<MobileNetwork>("vodacom");
   const [payCurrency, setPayCurrency] = useState<Currency>("CDF");
   const [payMethod, setPayMethod] = useState<PaymentMethod>("mobilemoney");
@@ -31,6 +33,10 @@ export function PaymentModal({
   const [locationLoading, setLocationLoading] = useState(false);
   const [payStatus, setPayStatus] = useState<Status>("idle");
   const [payMsg, setPayMsg] = useState("");
+
+  const handleSelectPaymentMethod = (method: PaymentMethod) => {
+    setPayMethod(method);
+  };
 
   const getUnitPrice = (item: CartItem, currency: Currency) => {
     const direct = item.product.prices?.[currency] ?? null;
@@ -84,16 +90,34 @@ export function PaymentModal({
     );
   };
 
-  const handlePayment = async () => {
+  const handlePayment = async (methodOverride?: PaymentMethod) => {
     if (cartItems.length === 0) return;
     try {
       setPayStatus("loading");
       setPayMsg("");
 
+      const trimmedName = customerName.trim();
+      const trimmedEmail = customerEmail.trim();
+      if (!trimmedName || !trimmedEmail) {
+        setPayStatus("error");
+        setPayMsg(
+          t(
+            "Merci de renseigner votre nom et email pour recevoir la facture.",
+            "Please provide your name and email to receive your invoice."
+          )
+        );
+        return;
+      }
+
       const totalAmount = calculateTotal();
+      const rawMethod = methodOverride ?? payMethod;
+      const selectedMethod: PaymentMethod =
+        rawMethod === "card" || rawMethod === "paypal" || rawMethod === "mobilemoney"
+          ? rawMethod
+          : "mobilemoney";
 
       // 1) Mobile Money (Klasha)
-      if (payMethod === "mobilemoney") {
+      if (selectedMethod === "mobilemoney") {
         const res = await fetch("/api/payments/mobilemoney/initiate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -102,16 +126,19 @@ export function PaymentModal({
             currency: payCurrency,
             phone: payPhone,
             network: payNetwork,
-            fullname: "Client MonChantier",
-            email: "client@monchantier.net",
+            fullname: trimmedName,
+            email: trimmedEmail,
+            customerName: trimmedName,
+            customerEmail: trimmedEmail,
             tx_ref: `MC-${Date.now()}`,
             metadata: {
               items: cartItems.map(item => ({
                 productId: item.product.id,
                 productName: lang === "fr" ? item.product.fr : item.product.en,
                 quantity: item.quantity,
+                unitPrice: getUnitPrice(item, payCurrency) || 0,
               })),
-              method: payMethod,
+              method: selectedMethod,
               deliveryAddress: deliveryAddress,
               location: location,
             },
@@ -131,7 +158,7 @@ export function PaymentModal({
       }
 
       // 2) Card checkout (Stripe) — redirect
-      if (payMethod === "card") {
+      if (selectedMethod === "card") {
         const res = await fetch("/api/payments/card/create-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -142,9 +169,12 @@ export function PaymentModal({
               productId: item.product.id,
               productName: lang === "fr" ? item.product.fr : item.product.en,
               quantity: item.quantity,
+              unitPrice: getUnitPrice(item, payCurrency) || 0,
             })),
             deliveryAddress: deliveryAddress,
             location: location,
+            customerName: trimmedName,
+            customerEmail: trimmedEmail,
             successUrl: window.location.origin + "/payment/success",
             cancelUrl: window.location.origin + "/payment/cancel",
           }),
@@ -157,7 +187,7 @@ export function PaymentModal({
       }
 
       // 3) PayPal checkout — redirect
-      if (payMethod === "paypal") {
+      if (selectedMethod === "paypal") {
         const res = await fetch("/api/payments/paypal/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -168,9 +198,12 @@ export function PaymentModal({
               productId: item.product.id,
               productName: lang === "fr" ? item.product.fr : item.product.en,
               quantity: item.quantity,
+              unitPrice: getUnitPrice(item, payCurrency) || 0,
             })),
             deliveryAddress: deliveryAddress,
             location: location,
+            customerName: trimmedName,
+            customerEmail: trimmedEmail,
             returnUrl: window.location.origin + "/payment/success",
             cancelUrl: window.location.origin + "/payment/cancel",
           }),
@@ -184,9 +217,9 @@ export function PaymentModal({
 
       setPayStatus("error");
       setPayMsg(t("Méthode inconnue", "Unknown method"));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setPayStatus("error");
-      setPayMsg(err?.message || "Erreur");
+      setPayMsg(err instanceof Error ? err.message : "Erreur");
     }
   };
 
@@ -217,7 +250,7 @@ export function PaymentModal({
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
               type="button"
-              onClick={() => setPayMethod("mobilemoney")}
+              onClick={() => handleSelectPaymentMethod("mobilemoney")}
               className={`px-3 py-2 rounded-xl text-sm font-semibold border ${
                 payMethod === "mobilemoney"
                   ? "bg-slate-900 text-white border-slate-900"
@@ -228,7 +261,7 @@ export function PaymentModal({
             </button>
             <button
               type="button"
-              onClick={() => setPayMethod("card")}
+              onClick={() => handleSelectPaymentMethod("card")}
               className={`px-3 py-2 rounded-xl text-sm font-semibold border ${
                 payMethod === "card"
                   ? "bg-slate-900 text-white border-slate-900"
@@ -239,7 +272,7 @@ export function PaymentModal({
             </button>
             <button
               type="button"
-              onClick={() => setPayMethod("paypal")}
+              onClick={() => handleSelectPaymentMethod("paypal")}
               className={`px-3 py-2 rounded-xl text-sm font-semibold border ${
                 payMethod === "paypal"
                   ? "bg-slate-900 text-white border-slate-900"
@@ -290,6 +323,27 @@ export function PaymentModal({
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder={t("Ex: Jean Ilunga", "e.g., John Doe")}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700">{t("Email de facturation", "Billing email")}</label>
+              <input
+                type="email"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t("Ex: client@email.com", "e.g., client@email.com")}
+              />
+            </div>
+
             <div>
               <label htmlFor="currency-select" className="text-xs font-semibold text-slate-700">{t("Devise", "Currency")}</label>
               <select
@@ -425,7 +479,7 @@ export function PaymentModal({
           <button
             type="button"
             disabled={payStatus === "loading" || cartItems.length === 0}
-            onClick={handlePayment}
+            onClick={() => handlePayment(payMethod)}
             className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold px-5 py-3 rounded-xl shadow"
           >
             {payStatus === "loading" ? t("En cours…", "Processing…") : t("Lancer le paiement", "Initiate payment")}

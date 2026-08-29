@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createPhoneOtp } from "@/lib/phoneAuth";
+import { isSmsConfigured, sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
   try {
@@ -12,15 +13,36 @@ export async function POST(req: Request) {
 
     const { code, expiresAt, phone: normalizedPhone } = await createPhoneOtp(phone);
 
+    let smsSent = false;
+    let smsError: string | null = null;
+
+    if (isSmsConfigured()) {
+      try {
+        await sendSms({
+          to: normalizedPhone,
+          message: `MonChantier: votre code de connexion est ${code}. Il expire dans 5 minutes.`,
+        });
+        smsSent = true;
+      } catch (error) {
+        smsError = error instanceof Error ? error.message : "Échec envoi SMS";
+        console.error("Erreur envoi SMS OTP:", error);
+      }
+    }
+
+    const devMode = process.env.NODE_ENV === "development";
+
     return NextResponse.json({
       ok: true,
       phone: normalizedPhone,
       expiresAt,
-      devCode: process.env.NODE_ENV === "development" ? code : undefined,
-      message:
-        process.env.NODE_ENV === "development"
+      devCode: devMode ? code : undefined,
+      message: smsSent
+        ? "Code OTP envoyé par SMS"
+        : devMode
           ? `Code OTP généré (dev): ${code}`
-          : "Code OTP envoyé",
+          : smsError
+            ? "Envoi du SMS impossible pour le moment. Réessayez."
+            : "SMS non configuré côté serveur.",
     });
   } catch {
     return NextResponse.json({ message: "Invalid request" }, { status: 400 });

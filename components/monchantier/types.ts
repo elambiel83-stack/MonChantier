@@ -33,6 +33,7 @@ export interface Service {
   en: string;
   frDesc: string;
   enDesc: string;
+  img: string;
 }
 
 export interface PartnerForm {
@@ -58,5 +59,6 @@ export interface ContactForm {
   name: string;
   email: string;
   phone: string;
+  services: string[];
   message: string;
 }

@@ -105,6 +105,17 @@ export const products = [
     img: "/images/produits/separateur-route.svg",
     fallback: "/images/produits/separateur-route.svg",
   },
+  {
+    id: 10,
+    fr: "Ciment",
+    en: "Cement",
+    price: "$— / sac",
+    prices: { USD: null, CDF: null },
+    unitFr: "sac",
+    unitEn: "bag",
+    img: "/images/produits/ciment.svg",
+    fallback: "/images/produits/ciment.svg",
+  },
 ];
 
 // Services data
@@ -115,6 +126,7 @@ export const services = [
     en: "On-site delivery",
     frDesc: "Flotte locale et partenaires chauffeurs.",
     enDesc: "Local fleet and driver partners.",
+    img: "/images/services/livraison.svg",
   },
   {
     icon: "🧪",
@@ -122,6 +134,7 @@ export const services = [
     en: "Quality control",
     frDesc: "Matériaux testés et conformes.",
     enDesc: "Tested, compliant materials.",
+    img: "/images/services/controle-qualite.svg",
   },
   {
     icon: "💬",
@@ -129,6 +142,7 @@ export const services = [
     en: "Customer support",
     frDesc: "WhatsApp, téléphone et email.",
     enDesc: "WhatsApp, phone, and email.",
+    img: "/images/services/assistance-client.svg",
   },
   {
     icon: "📐",
@@ -136,6 +150,7 @@ export const services = [
     en: "Engineering office",
     frDesc: "Plans, devis et études techniques.",
     enDesc: "Plans, quotes and technical studies.",
+    img: "/images/services/bureau-etudes.svg",
   },
   {
     icon: "🚰",
@@ -143,6 +158,7 @@ export const services = [
     en: "Plumbing",
     frDesc: "Installation et réparation sanitaire.",
     enDesc: "Sanitary installation and repair.",
+    img: "/images/services/plomberie.svg",
   },
   {
     icon: "🧱",
@@ -150,6 +166,7 @@ export const services = [
     en: "Masonry",
     frDesc: "Construction et rénovation de bâtiments.",
     enDesc: "Building construction and renovation.",
+    img: "/images/services/maconnerie.svg",
   },
   {
     icon: "🔧",
@@ -157,6 +174,7 @@ export const services = [
     en: "Welding",
     frDesc: "Soudure métallique et ferronnerie.",
     enDesc: "Metal welding and ironwork.",
+    img: "/images/services/soudure.svg",
   },
   {
     icon: "🪚",
@@ -164,6 +182,7 @@ export const services = [
     en: "Carpentry",
     frDesc: "Portes, fenêtres et meubles en bois.",
     enDesc: "Doors, windows and wooden furniture.",
+    img: "/images/services/menuiserie.svg",
   },
   {
     icon: "🏠",
@@ -171,6 +190,7 @@ export const services = [
     en: "Tiling",
     frDesc: "Pose de carreaux et faïences.",
     enDesc: "Floor and wall tile installation.",
+    img: "/images/services/carrelage.svg",
   },
   {
     icon: "🎨",
@@ -178,6 +198,7 @@ export const services = [
     en: "Plastering",
     frDesc: "Enduit et finition des murs.",
     enDesc: "Wall coating and finishing.",
+    img: "/images/services/crepissage.svg",
   },
   {
     icon: "⬜",
@@ -185,6 +206,7 @@ export const services = [
     en: "Ceiling installation",
     frDesc: "Pose de faux plafonds et finitions.",
     enDesc: "False ceiling and finishing.",
+    img: "/images/services/plafonnement.svg",
   },
   {
     icon: "🏗️",
@@ -192,6 +214,7 @@ export const services = [
     en: "Roofing",
     frDesc: "Installation de toits et couvertures.",
     enDesc: "Roof and covering installation.",
+    img: "/images/services/toiture.svg",
   },
   {
     icon: "🚧",
@@ -199,6 +222,7 @@ export const services = [
     en: "Fencing",
     frDesc: "Installation de clôtures et portails.",
     enDesc: "Fence and gate installation.",
+    img: "/images/services/cloture.svg",
   },
   {
     icon: "🌱",
@@ -206,6 +230,15 @@ export const services = [
     en: "Gardening",
     frDesc: "Aménagement et entretien d'espaces verts.",
     enDesc: "Green space design and maintenance.",
+    img: "/images/services/jardinage.svg",
+  },
+  {
+    icon: "✨",
+    fr: "Travaux de finissage",
+    en: "Finishing works",
+    frDesc: "Finitions intérieures et extérieures de vos chantiers.",
+    enDesc: "Interior and exterior finishing works for your projects.",
+    img: "/images/services/autres-services.svg",
   },
   {
     icon: "⚙️",
@@ -213,6 +246,7 @@ export const services = [
     en: "Other services",
     frDesc: "Contactez-nous pour vos besoins spécifiques.",
     enDesc: "Contact us for your specific needs.",
+    img: "/images/services/autres-services.svg",
   },
 ];
 

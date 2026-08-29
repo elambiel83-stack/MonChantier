@@ -11,14 +11,14 @@ export default function PaymentCancel() {
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 mb-4">Paiement annulé</h1>
         <p className="text-slate-600 mb-6">
-          Vous avez annulé le paiement. Aucun montant n'a été débité de votre compte.
+          Vous avez annulé le paiement. Aucun montant n&apos;a été débité de votre compte.
         </p>
         <div className="space-y-3">
           <Link 
             href="/"
             className="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
           >
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
           <Link 
             href="/#produits"
@@ -28,7 +28,7 @@ export default function PaymentCancel() {
           </Link>
         </div>
         <p className="text-xs text-slate-500 mt-6">
-          Besoin d'aide ? Contactez-nous sur WhatsApp: +243 999 972 466
+          Besoin d&apos;aide ? Contactez-nous sur WhatsApp: +243 999 972 466
         </p>
       </div>
     </div>

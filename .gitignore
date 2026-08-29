@@ -5,6 +5,9 @@ dist/
 coverage/
 .env
 .env.*
+!.env.example
 *.log
 .DS_Store
 .vscode/
+cookies.txt
+tsconfig.tsbuildinfo

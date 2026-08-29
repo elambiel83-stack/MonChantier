@@ -1,6 +1,5 @@
 import React from "react";
 import { CONTACT_INFO, services, SERVICES_BANNER_URL } from "./constants";
-import { Language } from "./types";
 
 interface ServicesProps {
   t: (fr: string, en: string) => string;
@@ -35,6 +34,9 @@ export function Services({ t }: ServicesProps) {
                   rel="noreferrer"
                   className="bg-slate-50 rounded-2xl p-6 ring-1 ring-slate-200 hover:shadow-md transition-shadow block"
                 >
+                  <div className="rounded-xl overflow-hidden ring-1 ring-slate-200">
+                    <img src={s.img} alt={t(s.fr, s.en)} className="w-full h-36 object-cover object-center" />
+                  </div>
                   <div className="text-3xl">{s.icon}</div>
                   <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
                   <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>
@@ -44,6 +46,9 @@ export function Services({ t }: ServicesProps) {
 
             return (
               <div key={i} className="bg-slate-50 rounded-2xl p-6 ring-1 ring-slate-200 hover:shadow-md transition-shadow">
+                <div className="rounded-xl overflow-hidden ring-1 ring-slate-200">
+                  <img src={s.img} alt={t(s.fr, s.en)} className="w-full h-36 object-cover object-center" />
+                </div>
                 <div className="text-3xl">{s.icon}</div>
                 <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
                 <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>

@@ -21,7 +21,6 @@ export function Cart({
   onUpdateQuantity,
   onRemoveItem,
   onCheckout,
-  lang,
   t,
   currency,
   fxRateUSDCDF,

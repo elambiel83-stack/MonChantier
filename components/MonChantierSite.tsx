@@ -19,7 +19,7 @@ export default function MonChantierSite() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
-  const [currency, setCurrency] = useState<Currency>("CDF");
+  const [currency] = useState<Currency>("CDF");
   const { fxRateUSDCDF, fxLoading } = useFxRate();
 
   const t = (fr: string, en: string) => (lang === "fr" ? fr : en);

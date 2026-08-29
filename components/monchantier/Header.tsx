@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { LOGO_URL } from "./constants";
 import { AuthControls } from "./AuthControls";
 import { Language } from "./types";
@@ -11,7 +11,72 @@ interface HeaderProps {
   onCartClick?: () => void;
 }
 
+interface NavLink {
+  href: string;
+  label: string;
+}
+
+function LiquidNav({ links }: { links: NavLink[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number; opacity: number }>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
+
+  const moveTo = (el: HTMLElement) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    setPill({
+      left: rect.left - containerRect.left,
+      width: rect.width,
+      opacity: 1,
+    });
+  };
+
+  return (
+    <nav
+      ref={containerRef}
+      onMouseLeave={() => setPill((p) => ({ ...p, opacity: 0 }))}
+      className="hidden md:flex items-center gap-1 text-sm font-medium relative rounded-full bg-white/40 backdrop-blur-md ring-1 ring-white/60 shadow-inner px-1.5 py-1.5"
+    >
+      <span
+        className="absolute top-1.5 bottom-1.5 rounded-full bg-white/80 shadow-[0_2px_10px_rgba(234,88,12,0.25)] ring-1 ring-orange-200/70 pointer-events-none"
+        style={{
+          left: pill.left,
+          width: pill.width,
+          opacity: pill.opacity,
+          transition:
+            "left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease",
+        }}
+      />
+      {links.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          onMouseEnter={(e) => moveTo(e.currentTarget)}
+          onFocus={(e) => moveTo(e.currentTarget)}
+          className="relative z-10 px-4 py-2 rounded-full text-slate-700 hover:text-orange-700 transition-colors"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: HeaderProps) {
+  const links: NavLink[] = [
+    { href: "#hero", label: t("Accueil", "Home") },
+    { href: "#produits", label: t("Produits", "Products") },
+    { href: "#services", label: t("Services", "Services") },
+    { href: "#partenaires", label: t("Partenaires", "Partners") },
+    { href: "#apropos", label: t("À propos", "About") },
+    { href: "#contact", label: t("Contact", "Contact") },
+  ];
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-slate-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
@@ -24,14 +89,7 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
             <div className="text-xs text-slate-500">{t("Vente d'agrégats en ligne", "Online aggregates store")}</div>
           </div>
         </div>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <a href="#hero" className="hover:text-orange-600">{t("Accueil", "Home")}</a>
-          <a href="#produits" className="hover:text-orange-600">{t("Produits", "Products")}</a>
-          <a href="#services" className="hover:text-orange-600">{t("Services", "Services")}</a>
-          <a href="#partenaires" className="hover:text-orange-600">{t("Partenaires", "Partners")}</a>
-          <a href="#apropos" className="hover:text-orange-600">{t("À propos", "About")}</a>
-          <a href="#contact" className="hover:text-orange-600">{t("Contact", "Contact")}</a>
-        </nav>
+        <LiquidNav links={links} />
         <div className="flex items-center gap-2">
           <button onClick={() => setLang("fr")} className={`px-2 py-1 rounded text-xs border ${lang === "fr" ? "bg-slate-900 text-white" : "bg-white"}`}>
             FR

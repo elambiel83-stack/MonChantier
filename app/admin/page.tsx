@@ -53,7 +53,7 @@ const defaultStats: AdminStats = {
     paypalPayments: 0,
   },
   recent: [],
-  generatedAt: new Date().toISOString(),
+  generatedAt: '',
 };
 
 export default function AdminPage() {
@@ -72,6 +72,13 @@ export default function AdminPage() {
 
   const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleString(locale);
+  };
 
   const loadUsers = async () => {
     try {
@@ -311,7 +318,7 @@ export default function AdminPage() {
           )}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          {t('Dernière mise à jour', 'Last update')}: {new Date(stats.generatedAt).toLocaleString(locale)}
+          {t('Dernière mise à jour', 'Last update')}: {formatDate(stats.generatedAt)}
         </p>
         {errorMessage ? (
           <p className="mt-2 text-sm text-red-600">{t(errorMessage, 'Unable to load statistics right now.')}</p>
@@ -360,7 +367,7 @@ export default function AdminPage() {
                   </p>
                   <p className="text-xs text-slate-500">
                     {getEventDetails(event) ? `${getEventDetails(event)} • ` : ''}
-                    {new Date(event.createdAt).toLocaleString(locale)}
+                    {formatDate(event.createdAt)}
                   </p>
                 </li>
               ))
@@ -390,7 +397,7 @@ export default function AdminPage() {
                 ) : (
                   paymentRows.map((payment) => (
                     <tr key={payment.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="py-3 pr-4">{new Date(payment.createdAt).toLocaleString(locale)}</td>
+                      <td className="py-3 pr-4">{formatDate(payment.createdAt)}</td>
                       <td className="py-3 pr-4">{getMethodLabel(payment.method)}</td>
                       <td className="py-3 pr-4">{payment.details || '-'}</td>
                       <td className="py-3 pr-4">

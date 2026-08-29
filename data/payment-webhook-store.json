@@ -1,0 +1,168 @@
+{
+  "paymentStatuses": {
+    "cs_1779418137310_f3q0gl": {
+      "reference": "cs_1779418137310_f3q0gl",
+      "method": "card",
+      "state": "pending",
+      "updatedAt": "2026-05-22T02:48:57.310Z"
+    },
+    "PAYPAL-1779418139090-oxz2j4": {
+      "reference": "PAYPAL-1779418139090-oxz2j4",
+      "method": "paypal",
+      "state": "pending",
+      "updatedAt": "2026-05-22T02:48:59.090Z"
+    },
+    "REPLAY-PERSIST-001": {
+      "reference": "REPLAY-PERSIST-001",
+      "method": "card",
+      "state": "confirmed",
+      "updatedAt": "2026-05-22T02:49:22.439Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260522024922-Y3Y0",
+        "sent": false,
+        "email": null,
+        "taxRate": 16,
+        "totals": {
+          "ht": 8620.69,
+          "tva": 1379.31,
+          "ttc": 10000,
+          "currency": "CDF"
+        }
+      }
+    },
+    "cs_1779418292128_heicwu": {
+      "reference": "cs_1779418292128_heicwu",
+      "method": "card",
+      "state": "confirmed",
+      "updatedAt": "2026-05-22T02:51:33.041Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260522025133-PGDD",
+        "sent": false,
+        "email": null,
+        "taxRate": 16,
+        "totals": {
+          "ht": 10344.83,
+          "tva": 1655.17,
+          "ttc": 12000,
+          "currency": "CDF"
+        }
+      }
+    },
+    "PAYPAL-1779418512723-injru7": {
+      "reference": "PAYPAL-1779418512723-injru7",
+      "method": "paypal",
+      "state": "pending",
+      "updatedAt": "2026-05-22T02:55:12.723Z"
+    },
+    "MC-1779421360507": {
+      "reference": "MC-1779421360507",
+      "method": "mobilemoney",
+      "state": "confirmed",
+      "updatedAt": "2026-05-22T03:42:42.756Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260522034242-Y3Z1",
+        "sent": false,
+        "email": "e.lambi.el83@gmail.com",
+        "taxRate": 16,
+        "totals": {
+          "ht": 674172.41,
+          "tva": 107867.59,
+          "ttc": 782040,
+          "currency": "CDF"
+        }
+      }
+    },
+    "cs_demo_1787953550737": {
+      "reference": "cs_demo_1787953550737",
+      "method": "card",
+      "state": "confirmed",
+      "updatedAt": "2026-08-28T21:46:00.618Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260828214550-PC1E",
+        "sent": false,
+        "email": "qa@example.com",
+        "taxRate": 16,
+        "totals": {
+          "ht": 86.21,
+          "tva": 13.79,
+          "ttc": 100,
+          "currency": "USD"
+        }
+      }
+    },
+    "MC-QA-1787953712226": {
+      "reference": "MC-QA-1787953712226",
+      "method": "mobilemoney",
+      "state": "confirmed",
+      "updatedAt": "2026-08-28T21:48:46.772Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260828214846-06W9",
+        "sent": false,
+        "email": "qa@example.com",
+        "taxRate": 16,
+        "totals": {
+          "ht": 43103.45,
+          "tva": 6896.55,
+          "ttc": 50000,
+          "currency": "CDF"
+        }
+      }
+    },
+    "cs_demo_1787954152468": {
+      "reference": "cs_demo_1787954152468",
+      "method": "card",
+      "state": "confirmed",
+      "updatedAt": "2026-08-28T21:55:52.673Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260828215552-LP64",
+        "sent": false,
+        "email": "qa-playwright@example.com",
+        "taxRate": 16,
+        "totals": {
+          "ht": 3193.97,
+          "tva": 511.03,
+          "ttc": 3705,
+          "currency": "CDF"
+        }
+      }
+    },
+    "TEST-CONFIRM-1": {
+      "reference": "TEST-CONFIRM-1",
+      "method": "card",
+      "state": "confirmed",
+      "updatedAt": "2026-08-28T22:29:32.232Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260828222932-2RH5",
+        "sent": false,
+        "email": null,
+        "taxRate": 16,
+        "totals": {
+          "ht": 8.62,
+          "tva": 1.38,
+          "ttc": 10,
+          "currency": "CDF"
+        }
+      }
+    }
+  },
+  "processedWebhookEvents": {
+    "stripe": [
+      "evt_local_webhook_001"
+    ],
+    "paypal": []
+  }
+}

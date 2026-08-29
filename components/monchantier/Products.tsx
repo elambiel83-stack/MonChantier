@@ -39,7 +39,9 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((p) => (
+        {products.map((p) => {
+          const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
+          return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
               <img
@@ -70,18 +72,21 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                   >
                     {t("Devis", "Quote")}
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => onAddToCart(p)}
-                    className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
-                  >
-                    {t("Ajouter au panier", "Add to cart")}
-                  </button>
+                  {hasPrice && (
+                    <button
+                      type="button"
+                      onClick={() => onAddToCart(p)}
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+                    >
+                      {t("Ajouter au panier", "Add to cart")}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

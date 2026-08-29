@@ -1,56 +1,123 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordPayment } from '@/lib/adminStore';
+import { registerPendingPayment, confirmPayment } from '@/lib/paymentConfirmation';
+import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
+
+// Devises acceptées par l'API PayPal (le CDF n'en fait pas partie).
+const PAYPAL_SUPPORTED_CURRENCIES = new Set([
+  'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'HKD', 'NZD',
+  'SGD', 'SEK', 'DKK', 'PLN', 'NOK', 'HUF', 'CZK', 'ILS', 'MXN', 'MYR',
+  'PHP', 'TWD', 'THB', 'BRL',
+]);
+
+function parsePositiveAmount(value: unknown) {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
+function sanitizeCurrency(value: unknown) {
+  if (typeof value !== 'string') return 'CDF';
+  const normalized = value.trim().toUpperCase();
+  return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { amount, currency, items, deliveryAddress, location, returnUrl, cancelUrl } = body;
+    const { amount, currency, items, deliveryAddress, location, returnUrl, cancelUrl, customerName, customerEmail } = body;
 
     const normalizedItems = Array.isArray(items) ? items : [];
-    const totalQty = normalizedItems.reduce(
-      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
-      0
-    );
     const productSummary = normalizedItems
       .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
       .join(', ');
 
-    // Validation
-    if (!amount || !returnUrl || !cancelUrl || normalizedItems.length === 0) {
+    const parsedAmount = parsePositiveAmount(amount);
+    const parsedCurrency = sanitizeCurrency(currency);
+
+    if (!parsedAmount || !returnUrl || !cancelUrl || normalizedItems.length === 0) {
       return NextResponse.json(
         { message: 'Montant, URLs de redirection et articles requis' },
         { status: 400 }
       );
     }
 
-    // En production: utiliser PayPal SDK
-    console.log('=== CRÉATION COMMANDE PAYPAL ===');
-    console.log('Montant:', amount, currency);
-    console.log('Articles:', normalizedItems);
+    const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
+    const resolvedCustomerEmail = (customerEmail || '').trim();
+    const normalizedLineItems = normalizedItems.map(
+      (item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
+        productName: item.productName || 'Produit',
+        quantity: Number(item.quantity || 1),
+        unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
+      })
+    );
+
+    if (isPayPalConfigured()) {
+      if (!PAYPAL_SUPPORTED_CURRENCIES.has(parsedCurrency)) {
+        return NextResponse.json(
+          {
+            message: `PayPal ne prend pas en charge la devise ${parsedCurrency}. Merci de sélectionner USD pour ce moyen de paiement.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const paymentReference = `PAYPAL-${Date.now()}`;
+      const invoicePayload = encodeInvoicePayload({
+        reference: paymentReference,
+        method: 'paypal',
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        customerName: resolvedCustomerName,
+        customerEmail: resolvedCustomerEmail,
+        items: normalizedLineItems,
+        deliveryAddress,
+        location,
+      });
+
+      const order = await createPayPalOrder({
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        productSummary,
+        returnUrl: `${returnUrl}?reference=${encodeURIComponent(paymentReference)}`,
+        cancelUrl,
+        customId: invoicePayload,
+      });
+
+      await registerPendingPayment(paymentReference, 'paypal');
+
+      return NextResponse.json({
+        success: true,
+        approveUrl: order.approveUrl,
+        orderId: order.orderId,
+      });
+    }
+
+    // Pas de credentials PayPal: mode démo, confirmation immédiate locale.
+    console.log('=== COMMANDE PAYPAL (MODE DEMO) ===');
+    console.log('Montant:', parsedAmount, parsedCurrency);
     console.log('Résumé:', productSummary);
-    console.log('Quantité totale:', totalQty);
-    console.log('Adresse livraison:', deliveryAddress);
-    console.log('Localisation:', location);
-    console.log('Return URL:', returnUrl);
-    console.log('Cancel URL:', cancelUrl);
-    console.log('================================');
+    console.log('====================================');
 
-    // Simuler la création d'une commande PayPal
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    recordPayment({
+    const paymentReference = `PAYPAL-DEMO-${Date.now()}`;
+    const result = await confirmPayment({
+      reference: paymentReference,
       method: 'paypal',
-      amount: Number(amount),
-      currency,
-      reference: `PAYPAL-${Date.now()}`,
+      amount: parsedAmount,
+      currency: parsedCurrency,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
+      items: normalizedLineItems,
+      deliveryAddress,
+      location,
     });
 
-    // En production: retourner l'URL d'approbation PayPal réelle
-    // Pour la démo, on simule avec une page locale
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      approveUrl: `${returnUrl}?paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
-      orderId: `PAYPAL-${Date.now()}`
+      approveUrl: `${returnUrl}?reference=${encodeURIComponent(paymentReference)}&paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
+      orderId: paymentReference,
+      invoice: result.invoice,
     });
   } catch (error) {
     console.error('Erreur création commande PayPal:', error);

@@ -1,6 +1,5 @@
 import React from "react";
 import { CONTACT_INFO } from "./constants";
-import { Language } from "./types";
 
 interface FooterProps {
   t: (fr: string, en: string) => string;

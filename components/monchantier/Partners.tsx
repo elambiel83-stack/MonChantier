@@ -41,7 +41,7 @@ export function Partners({ lang, t }: PartnersProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).catch(() => null as any);
+      }).catch(() => null);
 
       if (!res) {
         setPartnerStatus("success");
@@ -77,9 +77,10 @@ export function Partners({ lang, t }: PartnersProps) {
         certifications: "",
         notes: "",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setPartnerStatus("error");
-      setPartnerMsg(err?.message || t("Erreur", "Error"));
+      const message = err instanceof Error ? err.message : undefined;
+      setPartnerMsg(message || t("Erreur", "Error"));
     }
   };
 
