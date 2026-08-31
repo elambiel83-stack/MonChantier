@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { CONTACT_INFO } from "./constants";
 
 interface FooterProps {
@@ -24,15 +25,15 @@ export function Footer({ t }: FooterProps) {
             © {new Date().getFullYear()} MonChantier. {t("Tous droits réservés.", "All rights reserved.")}
           </p>
           <div className="flex items-center gap-4 text-sm text-slate-600">
-            <a href="#" className="hover:text-slate-900">
+            <Link href="/mentions-legales" className="hover:text-slate-900">
               {t("Mentions légales", "Legal")}
-            </a>
-            <a href="#" className="hover:text-slate-900">
+            </Link>
+            <Link href="/confidentialite" className="hover:text-slate-900">
               {t("Confidentialité", "Privacy")}
-            </a>
-            <a href="#" className="hover:text-slate-900">
+            </Link>
+            <Link href="/cgv" className="hover:text-slate-900">
               {t("Conditions", "Terms")}
-            </a>
+            </Link>
           </div>
         </div>
       </footer>

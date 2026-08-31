@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { BANNER_URL } from "./constants";
 import { findNearestCity, getCity, haversineDistanceKm } from "@/lib/drcCities";
 
@@ -13,6 +14,7 @@ type LocationState =
   | { status: "found"; cityName: string; distanceFromBaseKm: number };
 
 export function Hero({ t }: HeroProps) {
+  const [heroSrc, setHeroSrc] = useState(BANNER_URL);
   const [location, setLocation] = useState<LocationState>({ status: "idle" });
 
   const detectLocation = () => {
@@ -47,13 +49,14 @@ export function Hero({ t }: HeroProps) {
   return (
     <section id="hero" className="relative isolate overflow-hidden scroll-mt-24 bg-slate-100">
       <div className="absolute inset-0 z-0">
-        <img
-          src={BANNER_URL}
+        <Image
+          src={heroSrc}
           alt="MonChantier banner"
-          className="w-full h-full object-cover object-center"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/images/produits/moellons.svg";
-          }}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+          onError={() => setHeroSrc("/images/produits/moellons.svg")}
         />
         <div className="absolute inset-0 bg-slate-900/15" />
         <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/90 to-white/60 lg:to-transparent" />

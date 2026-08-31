@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "./monchantier/Header";
 import { Hero } from "./monchantier/Hero";
 import { Products } from "./monchantier/Products";
@@ -14,15 +14,43 @@ import { PaymentModal } from "./monchantier/PaymentModal";
 import { useFxRate } from "./monchantier/hooks/useFxRate";
 import { Language, Product, CartItem, Currency } from "./monchantier/types";
 
+const CART_STORAGE_KEY = "monchantier:cart";
+
 export default function MonChantierSite() {
   const [lang, setLang] = useState<Language>("fr");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [currency] = useState<Currency>("CDF");
   const { fxRateUSDCDF, fxLoading } = useFxRate();
 
   const t = (fr: string, en: string) => (lang === "fr" ? fr : en);
+
+  // Hydrate the cart from localStorage once on mount (client-only — avoids
+  // an SSR/client markup mismatch if read eagerly in useState).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setCartItems(parsed);
+      }
+    } catch {
+      // Ignore corrupted/unavailable storage — start with an empty cart.
+    } finally {
+      setCartHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated) return;
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch {
+      // Storage full or unavailable (private browsing) — cart still works in-memory.
+    }
+  }, [cartItems, cartHydrated]);
 
   const handleAddToCart = (product: Product) => {
     setCartItems((prev) => {
@@ -72,7 +100,7 @@ export default function MonChantierSite() {
       />
       <Hero t={t} />
       <Products lang={lang} t={t} onAddToCart={handleAddToCart} onOrderClick={() => setCartOpen(true)} />
-      <Services t={t} />
+      <Services lang={lang} t={t} onAddToCart={handleAddToCart} />
       <About t={t} />
       <Partners lang={lang} t={t} />
       <Contact lang={lang} t={t} />

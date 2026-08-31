@@ -6,6 +6,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { verifyPhoneOtp } from "./phoneAuth";
 import { AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole } from "./roleStore";
+import { checkRateLimit } from "./rateLimit";
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
@@ -106,6 +107,9 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         const email = credentials?.email?.trim().toLowerCase() || "";
         const password = credentials?.password || "";
         if (!email || !password) return null;
+
+        const attempts = checkRateLimit(`admin-login:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
+        if (!attempts.allowed) return null;
 
         if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword)) {
           return null;

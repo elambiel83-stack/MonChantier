@@ -62,13 +62,13 @@
       "en": "Tiles",
       "unitFr": "m²",
       "unitEn": "m²",
-      "priceUSD": null,
+      "priceUSD": 7,
       "priceCDF": null,
       "img": "/images/produits/carreaux.svg",
       "fallback": "/images/produits/carreaux.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:13.780Z"
     },
     {
       "id": 6,
@@ -76,13 +76,13 @@
       "en": "Ceramic wall tiles",
       "unitFr": "m²",
       "unitEn": "m²",
-      "priceUSD": null,
+      "priceUSD": 4,
       "priceCDF": null,
       "img": "/images/produits/faiences.svg",
       "fallback": "/images/produits/faiences.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:13.074Z"
     },
     {
       "id": 7,
@@ -90,13 +90,13 @@
       "en": "Concrete block",
       "unitFr": "unité",
       "unitEn": "unit",
-      "priceUSD": null,
+      "priceUSD": 2,
       "priceCDF": null,
       "img": "/images/produits/bloc-ciment.svg",
       "fallback": "/images/produits/bloc-ciment.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:12.165Z"
     },
     {
       "id": 8,
@@ -104,13 +104,13 @@
       "en": "Road curb",
       "unitFr": "unité",
       "unitEn": "unit",
-      "priceUSD": null,
+      "priceUSD": 10,
       "priceCDF": null,
       "img": "/images/produits/bordure-route.svg",
       "fallback": "/images/produits/bordure-route.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:11.383Z"
     },
     {
       "id": 9,
@@ -118,13 +118,13 @@
       "en": "Road divider",
       "unitFr": "unité",
       "unitEn": "unit",
-      "priceUSD": null,
+      "priceUSD": 3,
       "priceCDF": null,
       "img": "/images/produits/separateur-route.svg",
       "fallback": "/images/produits/separateur-route.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:10.354Z"
     },
     {
       "id": 10,
@@ -132,13 +132,13 @@
       "en": "Cement",
       "unitFr": "sac",
       "unitEn": "bag",
-      "priceUSD": null,
+      "priceUSD": 14,
       "priceCDF": null,
       "img": "/images/produits/ciment.svg",
       "fallback": "/images/produits/ciment.svg",
       "active": true,
       "createdAt": "2026-08-31T17:27:17.512Z",
-      "updatedAt": "2026-08-31T17:27:17.512Z"
+      "updatedAt": "2026-08-31T19:00:07.909Z"
     }
   ],
   "nextId": 13

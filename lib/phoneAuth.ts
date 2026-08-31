@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { checkRateLimit } from "./rateLimit";
 
 type PhoneOtpRecord = {
   code: string;
@@ -58,6 +59,10 @@ export async function createPhoneOtp(phone: string): Promise<{ phone: string; co
 
 export async function verifyPhoneOtp(phone: string, code: string): Promise<boolean> {
   const normalizedPhone = normalizePhone(phone);
+
+  const attempts = checkRateLimit(`otp-verify:${normalizedPhone}`, { max: 5, windowMs: OTP_TTL_MS });
+  if (!attempts.allowed) return false;
+
   const store = cleanupExpired(await readOtpStore());
   const record = store[normalizedPhone];
 

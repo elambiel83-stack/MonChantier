@@ -139,6 +139,7 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     updatedAt: new Date().toISOString(),
     invoice: invoiceResponse,
     fullInvoice: invoice,
+    orderStatus: 'processing',
   });
 
   if (invoice.deliveryAddress && invoice.customerEmail) {

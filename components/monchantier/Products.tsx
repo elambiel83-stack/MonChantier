@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { PRODUCTS_BANNER_URL } from "./constants";
 import { Language, Product } from "./types";
 
@@ -25,8 +26,14 @@ type CatalogProduct = {
 
 function toProduct(p: CatalogProduct, lang: Language): Product {
   const unit = lang === "fr" ? p.unitFr : p.unitEn;
-  const priceLabel =
-    p.priceUSD !== null ? `$${p.priceUSD} / ${unit}` : `$— / ${unit}`;
+  let priceLabel: string;
+  if (p.priceUSD !== null) {
+    priceLabel = `$${p.priceUSD} / ${unit}`;
+  } else if (p.priceCDF !== null) {
+    priceLabel = `${p.priceCDF.toLocaleString("fr-FR")} FC / ${unit}`;
+  } else {
+    priceLabel = `$— / ${unit}`;
+  }
   return {
     id: p.id,
     fr: p.fr,
@@ -40,8 +47,24 @@ function toProduct(p: CatalogProduct, lang: Language): Product {
   };
 }
 
+function normalize(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+type SortOption = "default" | "price-asc" | "price-desc";
+
+function productPriceValue(p: Product): number | null {
+  return p.prices?.USD ?? p.prices?.CDF ?? null;
+}
+
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortOption>("default");
+  const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     fetch("/api/catalog/products", { cache: "no-store" })
@@ -50,12 +73,24 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
       .catch(() => setCatalog([]));
   }, []);
 
-  const products = catalog.map((p) => toProduct(p, lang));
+  const allProducts = catalog.map((p) => toProduct(p, lang));
+  const normalizedQuery = normalize(query.trim());
+  const products = allProducts
+    .filter((p) => !normalizedQuery || normalize(t(p.fr, p.en)).includes(normalizedQuery))
+    .sort((a, b) => {
+      if (sort === "default") return 0;
+      const priceA = productPriceValue(a);
+      const priceB = productPriceValue(b);
+      if (priceA === null && priceB === null) return 0;
+      if (priceA === null) return 1;
+      if (priceB === null) return -1;
+      return sort === "price-asc" ? priceA - priceB : priceB - priceA;
+    });
 
   return (
     <section id="produits" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-      <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200">
-        <img src={PRODUCTS_BANNER_URL} alt="Nos Produits — MonChantier" className="w-full h-56 md:h-64 object-cover object-center" />
+      <div className="relative rounded-2xl overflow-hidden ring-1 ring-slate-200 h-56 md:h-64">
+        <Image src={PRODUCTS_BANNER_URL} alt="Nos Produits — MonChantier" fill sizes="100vw" className="object-cover object-center" />
       </div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-[1fr_auto] items-start md:items-end gap-6">
         <div>
@@ -65,8 +100,8 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
-          <div className="w-24 sm:w-28 md:w-36 rounded-xl overflow-hidden ring-1 ring-slate-200 bg-slate-100 aspect-[4/3] self-start">
-            <img src="/images/produits/briques.svg" alt="Produits MonChantier" className="w-full h-full object-cover" />
+          <div className="relative w-24 sm:w-28 md:w-36 rounded-xl overflow-hidden ring-1 ring-slate-200 bg-slate-100 aspect-[4/3] self-start">
+            <Image src="/images/produits/briques.svg" alt="Produits MonChantier" fill sizes="144px" className="object-cover" />
           </div>
           <button
             type="button"
@@ -80,20 +115,48 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           </a>
         </div>
       </div>
+
+      <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("Rechercher un produit…", "Search a product…")}
+            className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortOption)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="default">{t("Tri par défaut", "Default sort")}</option>
+          <option value="price-asc">{t("Prix croissant", "Price: low to high")}</option>
+          <option value="price-desc">{t("Prix décroissant", "Price: high to low")}</option>
+        </select>
+      </div>
+
+      {normalizedQuery && products.length === 0 && (
+        <p className="mt-6 text-sm text-slate-500">
+          {t("Aucun produit ne correspond à votre recherche.", "No product matches your search.")}
+        </p>
+      )}
+
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((p) => {
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
           return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
-              <img
-                src={p.img}
+              <Image
+                src={imgFailed[p.id] && p.fallback ? p.fallback : p.img}
                 alt={p.fr}
-                className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement;
-                  if (p.fallback && img.src.indexOf(p.fallback) === -1) img.src = p.fallback;
-                }}
+                fill
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                onError={() => setImgFailed((prev) => ({ ...prev, [p.id]: true }))}
               />
             </div>
 

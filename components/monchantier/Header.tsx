@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import Image from "next/image";
 import { LOGO_URL } from "./constants";
 import { AuthControls } from "./AuthControls";
 import { Language } from "./types";
@@ -81,8 +82,8 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
     <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-slate-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
         <div className="flex items-center gap-3">
-          <div className="h-14 w-14 rounded-md bg-white ring-1 ring-slate-200 grid place-items-center shadow-sm overflow-hidden">
-            <img src={LOGO_URL} alt="MonChantier" className="h-full w-full object-contain p-1" />
+          <div className="relative h-14 w-14 rounded-md bg-white ring-1 ring-slate-200 grid place-items-center shadow-sm overflow-hidden">
+            <Image src={LOGO_URL} alt="MonChantier" fill sizes="56px" className="object-contain p-1" />
           </div>
           <div className="leading-tight">
             <div className="font-extrabold tracking-tight text-xl">MonChantier</div>

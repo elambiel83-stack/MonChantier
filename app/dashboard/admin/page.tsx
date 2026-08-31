@@ -33,6 +33,37 @@ type StoredService = {
   active: boolean;
 };
 
+type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+type StoredOrder = {
+  reference: string;
+  method: 'mobilemoney' | 'card' | 'paypal';
+  updatedAt: string;
+  orderStatus?: OrderStatus;
+  cancelReason?: string;
+  invoice?: {
+    totals?: { ht: number; tva: number; ttc: number; currency: string };
+  };
+  fullInvoice?: {
+    customerName?: string;
+    customerEmail?: string;
+  };
+};
+
+const ORDER_STATUS_LABELS: Record<OrderStatus, { fr: string; en: string }> = {
+  processing: { fr: 'En préparation', en: 'Processing' },
+  shipped: { fr: 'Expédiée', en: 'Shipped' },
+  delivered: { fr: 'Livrée', en: 'Delivered' },
+  cancelled: { fr: 'Annulée', en: 'Cancelled' },
+};
+
+const ORDER_STATUS_NEXT: Record<OrderStatus, OrderStatus[]> = {
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+};
+
 type TaxTotals = { ht: number; tva: number; ttc: number; count: number };
 
 type TaxSummary = {
@@ -218,6 +249,9 @@ export default function AdminPage() {
   const [savingService, setSavingService] = useState(false);
 
   const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
+
+  const [orders, setOrders] = useState<StoredOrder[]>([]);
+  const [busyOrderRef, setBusyOrderRef] = useState<string | null>(null);
 
   const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
@@ -537,6 +571,41 @@ export default function AdminPage() {
     }
   };
 
+  const loadOrders = async () => {
+    try {
+      const response = await fetch('/api/admin/orders', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les commandes');
+      const data = (await response.json()) as { orders?: StoredOrder[] };
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
+    } catch {
+      setOrders([]);
+    }
+  };
+
+  const changeOrderStatus = async (reference: string, orderStatus: OrderStatus) => {
+    if (orderStatus === 'cancelled') {
+      const confirmed = window.confirm(
+        t('Confirmer l\'annulation de cette commande ?', 'Confirm cancellation of this order?')
+      );
+      if (!confirmed) return;
+    }
+    try {
+      setBusyOrderRef(reference);
+      const response = await fetch(`/api/admin/orders/${encodeURIComponent(reference)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Erreur mise à jour commande');
+      }
+      await loadOrders();
+    } finally {
+      setBusyOrderRef(null);
+    }
+  };
+
   const loadPlatformRoles = async () => {
     try {
       const response = await fetch('/api/admin/roles', { cache: 'no-store' });
@@ -609,6 +678,7 @@ export default function AdminPage() {
         loadProducts(),
         loadServices(),
         loadTaxes(),
+        loadOrders(),
       ]);
     })();
   }, []);
@@ -886,6 +956,92 @@ export default function AdminPage() {
                       </td>
                     </tr>
                   ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Gestion des commandes', 'Order management')}</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Référence', 'Reference')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Client', 'Customer')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Méthode', 'Method')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Montant', 'Amount')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Action', 'Action')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-3 text-slate-500">
+                      {t('Aucune commande confirmée pour le moment.', 'No confirmed order yet.')}
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map((order) => {
+                    const status = order.orderStatus || 'processing';
+                    const nextOptions = ORDER_STATUS_NEXT[status];
+                    const totals = order.invoice?.totals;
+                    return (
+                      <tr key={order.reference} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-3 pr-4 font-mono text-xs">{order.reference}</td>
+                        <td className="py-3 pr-4">
+                          {order.fullInvoice?.customerName || order.fullInvoice?.customerEmail || '—'}
+                        </td>
+                        <td className="py-3 pr-4">{getMethodLabel(order.method)}</td>
+                        <td className="py-3 pr-4">
+                          {totals ? `${totals.ttc.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${totals.currency}` : '—'}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span
+                            className={
+                              status === 'delivered'
+                                ? 'rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700'
+                                : status === 'cancelled'
+                                ? 'rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700'
+                                : status === 'shipped'
+                                ? 'rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700'
+                                : 'rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700'
+                            }
+                          >
+                            {t(ORDER_STATUS_LABELS[status].fr, ORDER_STATUS_LABELS[status].en)}
+                          </span>
+                          {status === 'cancelled' && order.cancelReason && (
+                            <p className="mt-1 text-xs text-slate-400">{order.cancelReason}</p>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4">
+                          {nextOptions.length === 0 ? (
+                            '—'
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {nextOptions.map((nextStatus) => (
+                                <button
+                                  key={nextStatus}
+                                  type="button"
+                                  disabled={busyOrderRef === order.reference}
+                                  onClick={() => changeOrderStatus(order.reference, nextStatus)}
+                                  className={
+                                    nextStatus === 'cancelled'
+                                      ? 'rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-3 py-1.5 text-xs font-medium disabled:opacity-60'
+                                      : 'rounded-lg bg-slate-900 text-white px-3 py-1.5 text-xs font-medium disabled:opacity-60'
+                                  }
+                                >
+                                  {t(ORDER_STATUS_LABELS[nextStatus].fr, ORDER_STATUS_LABELS[nextStatus].en)}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -157,6 +157,86 @@
           "currency": "CDF"
         }
       }
+    },
+    "MC-1788205862995": {
+      "reference": "MC-1788205862995",
+      "method": "mobilemoney",
+      "state": "confirmed",
+      "updatedAt": "2026-08-31T19:51:04.782Z",
+      "invoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "number": "FAC-20260831195104-Y1S5",
+        "sent": false,
+        "email": "e.eric.el83@gmail.com",
+        "taxRate": 16,
+        "totals": {
+          "ht": 1429913.79,
+          "tva": 228786.21,
+          "ttc": 1658700,
+          "currency": "CDF"
+        }
+      },
+      "fullInvoice": {
+        "standard": "RDC-NORMALISEE-2026",
+        "legalReference": "Facture normalisée (mentions fiscales RDC)",
+        "invoiceNumber": "FAC-20260831195104-Y1S5",
+        "issuedAt": "2026-08-31T19:51:04.702Z",
+        "reference": "MC-1788205862995",
+        "customerName": "Client MonChantier",
+        "customerEmail": "e.eric.el83@gmail.com",
+        "method": "mobilemoney",
+        "amount": 1658700,
+        "currency": "CDF",
+        "taxRate": 16,
+        "totalHT": 1429913.79,
+        "totalTVA": 228786.21,
+        "totalTTC": 1658700,
+        "seller": {
+          "companyName": "MonChantier SARL",
+          "address": "Kinshasa, RDC",
+          "city": "Kinshasa",
+          "country": "RDC"
+        },
+        "items": [
+          {
+            "productName": "Moellons",
+            "quantity": 11,
+            "unitPrice": 62700,
+            "lineTotal": 689700
+          },
+          {
+            "productName": "Pavés",
+            "quantity": 6,
+            "unitPrice": 42750,
+            "lineTotal": 256500
+          },
+          {
+            "productName": "Contrôle qualité",
+            "quantity": 9,
+            "unitPrice": 0,
+            "lineTotal": 0
+          },
+          {
+            "productName": "Livraison sur chantier",
+            "quantity": 1,
+            "unitPrice": 712500,
+            "lineTotal": 712500
+          },
+          {
+            "productName": "Jardinage",
+            "quantity": 1,
+            "unitPrice": 0,
+            "lineTotal": 0
+          }
+        ],
+        "deliveryAddress": "",
+        "location": {
+          "lat": 39.4787827,
+          "lng": -75.0377502
+        }
+      },
+      "orderStatus": "processing"
     }
   },
   "processedWebhookEvents": {

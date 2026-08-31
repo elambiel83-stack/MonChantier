@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { CartItem, Currency, Language } from "./types";
 
 interface CartProps {
@@ -82,11 +83,15 @@ export function Cart({
                   key={item.product.id}
                   className="flex gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50"
                 >
-                  <img
-                    src={item.product.img}
-                    alt={t(item.product.fr, item.product.en)}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
+                  <div className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden">
+                    <Image
+                      src={item.product.img}
+                      alt={t(item.product.fr, item.product.en)}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-slate-900 truncate">
                       {t(item.product.fr, item.product.en)}

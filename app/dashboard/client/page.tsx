@@ -13,6 +13,20 @@ const METHOD_LABELS: Record<string, string> = {
   paypal: "PayPal",
 };
 
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  processing: "En préparation",
+  shipped: "Expédiée",
+  delivered: "Livrée",
+  cancelled: "Annulée",
+};
+
+const ORDER_STATUS_CLASSES: Record<string, string> = {
+  processing: "bg-amber-100 text-amber-700",
+  shipped: "bg-blue-100 text-blue-700",
+  delivered: "bg-emerald-100 text-emerald-700",
+  cancelled: "bg-red-100 text-red-700",
+};
+
 function formatDate(value: string) {
   return new Date(value).toLocaleString("fr-FR");
 }
@@ -127,15 +141,19 @@ export default async function ClientDashboardPage() {
                     <td className="py-3 pr-4">{METHOD_LABELS[order.method] || order.method}</td>
                     <td className="py-3 pr-4">{formatAmount(order)}</td>
                     <td className="py-3 pr-4">
-                      <span
-                        className={
-                          order.state === "confirmed"
-                            ? "rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700"
-                            : "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700"
-                        }
-                      >
-                        {order.state === "confirmed" ? "Confirmée" : "En attente"}
-                      </span>
+                      {order.state === "confirmed" ? (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            ORDER_STATUS_CLASSES[order.orderStatus || "processing"]
+                          }`}
+                        >
+                          {ORDER_STATUS_LABELS[order.orderStatus || "processing"]}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          En attente
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 pr-4">
                       {order.fullInvoice ? (

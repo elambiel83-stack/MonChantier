@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 interface AboutProps {
   t: (fr: string, en: string) => string;
@@ -22,8 +23,8 @@ export function About({ t }: AboutProps) {
             <li>• {t("Partenariats durables", "Long-term partnerships")}</li>
           </ul>
         </div>
-        <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-sm bg-slate-100 aspect-[4/3]">
-          <img src="/images/banners/apropos.svg" alt="À propos MonChantier" className="w-full h-full object-cover" />
+        <div className="relative rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-sm bg-slate-100 aspect-[4/3]">
+          <Image src="/images/banners/apropos.svg" alt="À propos MonChantier" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
       </div>
     </section>
