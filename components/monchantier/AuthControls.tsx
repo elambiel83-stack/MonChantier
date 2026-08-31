@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 interface AuthControlsProps {
@@ -66,6 +67,12 @@ export function AuthControls({ t }: AuthControlsProps) {
         <span className="hidden sm:inline text-xs text-slate-600 max-w-[120px] truncate" title={session.user.name || ""}>
           {session.user.name || t("Connecté", "Signed in")}
         </span>
+        <Link
+          href="/dashboard"
+          className="px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold"
+        >
+          {t("Tableau de bord", "Dashboard")}
+        </Link>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}

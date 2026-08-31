@@ -1,11 +1,49 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { BANNER_URL } from "./constants";
+import { findNearestCity, getCity, haversineDistanceKm } from "@/lib/drcCities";
 
 interface HeroProps {
   t: (fr: string, en: string) => string;
 }
 
+type LocationState =
+  | { status: "idle" | "detecting" | "denied" | "unsupported" | "error" }
+  | { status: "found"; cityName: string; distanceFromBaseKm: number };
+
 export function Hero({ t }: HeroProps) {
+  const [location, setLocation] = useState<LocationState>({ status: "idle" });
+
+  const detectLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocation({ status: "unsupported" });
+      return;
+    }
+
+    setLocation({ status: "detecting" });
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const { city } = findNearestCity(latitude, longitude);
+        const kolwezi = getCity("Kolwezi");
+        const distanceFromBaseKm = Math.round(
+          haversineDistanceKm(latitude, longitude, kolwezi.lat, kolwezi.lng)
+        );
+        setLocation({ status: "found", cityName: city.name, distanceFromBaseKm });
+      },
+      (error) => {
+        setLocation({ status: error.code === error.PERMISSION_DENIED ? "denied" : "error" });
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  useEffect(() => {
+    detectLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <section id="hero" className="relative isolate overflow-hidden scroll-mt-24 bg-slate-100">
       <div className="absolute inset-0 z-0">
@@ -42,7 +80,7 @@ export function Hero({ t }: HeroProps) {
               {t("Découvrir nos services", "Explore services")}
             </a>
           </div>
-          
+
           <div className="mt-8 p-4 bg-white/90 backdrop-blur rounded-xl border border-slate-200 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -51,16 +89,41 @@ export function Hero({ t }: HeroProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-slate-900">
                   {t("Zones de livraison", "Delivery areas")}
                 </h3>
-                <p className="text-sm text-slate-600 mt-1">
-                  {t(
-                    "Livraison dans toute la RDC : Kinshasa, Lubumbashi, Kolwezi, Goma, Bukavu, Kisangani, Kananga, Mbuji-Mayi et toutes les provinces. Délais variables selon la destination.",
-                    "Delivery across the entire DRC: Kinshasa, Lubumbashi, Kolwezi, Goma, Bukavu, Kisangani, Kananga, Mbuji-Mayi and all provinces. Delivery times vary by destination."
-                  )}
-                </p>
+
+                {location.status === "found" ? (
+                  <p className="text-sm text-slate-600 mt-1">
+                    {t(
+                      `Vous êtes localisé près de ${location.cityName}, à environ ${location.distanceFromBaseKm} km de notre base à Kolwezi. Livraison disponible dans votre zone — délais variables selon la destination.`,
+                      `You're located near ${location.cityName}, about ${location.distanceFromBaseKm} km from our Kolwezi base. Delivery available in your area — times vary by destination.`
+                    )}
+                  </p>
+                ) : location.status === "detecting" ? (
+                  <p className="text-sm text-slate-500 mt-1 italic">
+                    {t("Détection de votre position…", "Detecting your location…")}
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-600 mt-1">
+                      {t(
+                        "Livraison dans toute la RDC : Kinshasa, Lubumbashi, Kolwezi, Goma, Bukavu, Kisangani, Kananga, Mbuji-Mayi et toutes les provinces. Délais variables selon la destination.",
+                        "Delivery across the entire DRC: Kinshasa, Lubumbashi, Kolwezi, Goma, Bukavu, Kisangani, Kananga, Mbuji-Mayi and all provinces. Delivery times vary by destination."
+                      )}
+                    </p>
+                    {(location.status === "denied" || location.status === "error") && (
+                      <button
+                        type="button"
+                        onClick={detectLocation}
+                        className="mt-2 text-xs font-semibold text-orange-700 hover:text-orange-800 underline"
+                      >
+                        {t("Activer la localisation pour voir votre zone", "Enable location to see your area")}
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -297,3 +297,34 @@ En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Admini
 1. Définir `ADMIN_API_SECRET` dans `.env.local` (une valeur aléatoire longue).
 2. Appeler la route avec l'en-tête `Authorization: Bearer <ADMIN_API_SECRET>`.
 3. Sans secret configuré ou avec une valeur incorrecte, la route renvoie `401`.
+
+### Suivi de livraison
+
+Une livraison est créée automatiquement dès qu'un paiement est confirmé avec une adresse de livraison (`deliveryAddress` + `location` déjà capturées au checkout). Statuts : `pending → assigned → picked_up → in_transit → delivered` (ou `cancelled` à tout moment sauf depuis `delivered`), transitions validées côté serveur (`lib/deliveryStore.ts`) — impossible de sauter une étape.
+
+- **Client** (`/dashboard/client`, section "Mes livraisons") : barre de progression + timeline, distance restante jusqu'à l'adresse calculée en direct (Haversine) dès que le livreur partage sa position.
+- **Transporteur** (`/dashboard/driver`) : missions assignées + file de missions disponibles (auto-assignation), boutons pour faire avancer le statut, bouton "Partager ma position" (géolocalisation navigateur, envoi ponctuel ou suivi actif toutes les 20s pendant `picked_up`/`in_transit`).
+- **Admin** (`/dashboard/admin`, section "Livraisons") : vue de toutes les livraisons, assignation manuelle d'un livreur.
+
+Routes : `GET /api/deliveries` (vue selon le rôle), `POST /api/deliveries/<id>/assign`, `POST /api/deliveries/<id>/status`, `POST /api/deliveries/<id>/position`. La position n'est acceptée que du livreur assigné, et seulement pendant `picked_up`/`in_transit`.
+
+Limite connue : le point de départ est toujours le dépôt de Kolwezi (`lib/drcCities.ts`) — pas de gestion de plusieurs entrepôts/fournisseurs.
+
+### Gestion du catalogue (produits & services) et taxes
+
+Le catalogue public (produits/services affichés sur le site) est maintenant piloté par un store persistant (`lib/productStore.ts`, `lib/serviceStore.ts`), initialisé automatiquement au premier accès à partir du catalogue statique existant (`components/monchantier/constants.ts`) — rien n'est perdu à la migration.
+
+- **Admin** (`/dashboard/admin`, sections "Produits" et "Services") : ajouter un produit/service, modifier son prix (USD/CDF) avec sauvegarde immédiate, l'activer/désactiver (un produit désactivé disparaît du site public sans être supprimé), ou le supprimer définitivement.
+- **Site public** : `Products.tsx`/`Services.tsx` chargent désormais le catalogue via `GET /api/catalog/products` et `GET /api/catalog/services` (produits/services actifs uniquement) au lieu d'une liste statique.
+- Routes admin (protégées par le middleware `/api/admin/*`) : `GET/POST /api/admin/products`, `PATCH/DELETE /api/admin/products/<id>`, et l'équivalent pour `/api/admin/services`.
+
+**Taxes (TVA à reverser)** (`/dashboard/admin`, section "Taxes") : calculée en temps réel à partir de toutes les factures confirmées (`lib/taxSummary.ts`), regroupée par devise (HT/TVA/TTC + nombre de factures), avec le détail facture par facture. Aucune donnée additionnelle à saisir — réutilise les factures déjà émises par le système de paiement.
+
+#### Prix fixés par les partenaires (fournisseurs & techniciens)
+
+Chaque produit/service porte un `ownerIdentity` optionnel : absent pour le catalogue MonChantier, présent (email) pour un produit/service apporté par un partenaire. Un partenaire ne peut créer et modifier que ses propres articles — vérifié côté serveur à chaque requête (`existing.ownerIdentity !== actor.identity` → `403`).
+
+- **Fournisseur** (`/dashboard/supplier`) : publie ses propres produits et fixe leurs prix (USD/CDF), visibles immédiatement sur le catalogue public au même titre que les produits MonChantier.
+- **Technicien** (`/dashboard/technician`) : publie ses propres services et fixe leurs prix (optionnels — laisser vide pour "sur devis").
+- Routes dédiées (hors `/api/admin/*`, permissions vérifiées par requête via `lib/sessionIdentity.ts`) : `GET/POST /api/partner/products`, `PATCH /api/partner/products/<id>` (rôle `supplier`, propriétaire uniquement) ; mêmes routes sous `/api/partner/services` pour le rôle `technician`.
+- L'admin garde une visibilité et un contrôle total sur tous les articles, y compris ceux des partenaires, via `/api/admin/products` et `/api/admin/services`.

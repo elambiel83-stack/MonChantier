@@ -8,11 +8,64 @@ type PlatformRoleAssignment = {
   role: AppRole;
 };
 
+type StoredProduct = {
+  id: number;
+  fr: string;
+  en: string;
+  unitFr: string;
+  unitEn: string;
+  priceUSD: number | null;
+  priceCDF: number | null;
+  img: string;
+  active: boolean;
+};
+
+type StoredService = {
+  id: number;
+  icon: string;
+  fr: string;
+  en: string;
+  frDesc: string;
+  enDesc: string;
+  img: string;
+  priceUSD: number | null;
+  priceCDF: number | null;
+  active: boolean;
+};
+
+type TaxTotals = { ht: number; tva: number; ttc: number; count: number };
+
+type TaxSummary = {
+  vatRate: number | null;
+  totalsByCurrency: Record<string, TaxTotals>;
+  invoices: Array<{
+    reference: string;
+    invoiceNumber: string;
+    method: string;
+    currency: string;
+    ht: number;
+    tva: number;
+    ttc: number;
+    updatedAt: string;
+  }>;
+};
+
 type LoanInstallment = {
   index: number;
   dueDate: string;
   amount: number;
   paid: boolean;
+};
+
+type DeliveryStatus = 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+
+type Delivery = {
+  id: string;
+  reference: string;
+  clientName: string;
+  driverIdentity?: string;
+  status: DeliveryStatus;
+  deliveryAddress: string;
 };
 
 type LoanBorrower = {
@@ -132,6 +185,39 @@ export default function AdminPage() {
   const [decidingLoanId, setDecidingLoanId] = useState<string | null>(null);
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
   const [agentAssignInput, setAgentAssignInput] = useState<Record<string, string>>({});
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [busyDeliveryId, setBusyDeliveryId] = useState<string | null>(null);
+  const [driverAssignInput, setDriverAssignInput] = useState<Record<string, string>>({});
+  const [products, setProducts] = useState<StoredProduct[]>([]);
+  const [productEdits, setProductEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
+  const [busyProductId, setBusyProductId] = useState<number | null>(null);
+  const [newProduct, setNewProduct] = useState({
+    fr: '',
+    en: '',
+    unitFr: 'unité',
+    unitEn: 'unit',
+    priceUSD: '',
+    priceCDF: '',
+    img: '/images/produits/briques.svg',
+  });
+  const [savingProduct, setSavingProduct] = useState(false);
+
+  const [services, setServices] = useState<StoredService[]>([]);
+  const [serviceEdits, setServiceEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
+  const [busyServiceId, setBusyServiceId] = useState<number | null>(null);
+  const [newService, setNewService] = useState({
+    icon: '🔧',
+    fr: '',
+    en: '',
+    frDesc: '',
+    enDesc: '',
+    img: '/images/services/autres-services.svg',
+    priceUSD: '',
+    priceCDF: '',
+  });
+  const [savingService, setSavingService] = useState(false);
+
+  const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
 
   const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
@@ -244,6 +330,213 @@ export default function AdminPage() {
     }
   };
 
+  const loadDeliveries = async () => {
+    try {
+      const response = await fetch('/api/deliveries', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les livraisons');
+      const data = (await response.json()) as { deliveries?: Delivery[] };
+      setDeliveries(Array.isArray(data.deliveries) ? data.deliveries : []);
+    } catch {
+      setDeliveries([]);
+    }
+  };
+
+  const assignDriverToDelivery = async (deliveryId: string) => {
+    const driverIdentity = (driverAssignInput[deliveryId] || '').trim();
+    if (!driverIdentity) return;
+    try {
+      setBusyDeliveryId(deliveryId);
+      const response = await fetch(`/api/deliveries/${deliveryId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ driverIdentity }),
+      });
+      if (!response.ok) throw new Error('Erreur assignation livreur');
+      setDriverAssignInput((prev) => ({ ...prev, [deliveryId]: '' }));
+      await loadDeliveries();
+    } finally {
+      setBusyDeliveryId(null);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const response = await fetch('/api/admin/products', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les produits');
+      const data = (await response.json()) as { products?: StoredProduct[] };
+      setProducts(Array.isArray(data.products) ? data.products : []);
+    } catch {
+      setProducts([]);
+    }
+  };
+
+  const createProduct = async () => {
+    if (!newProduct.fr.trim() || !newProduct.unitFr.trim()) return;
+    try {
+      setSavingProduct(true);
+      const response = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      });
+      if (!response.ok) throw new Error('Erreur création produit');
+      setNewProduct({ fr: '', en: '', unitFr: 'unité', unitEn: 'unit', priceUSD: '', priceCDF: '', img: '/images/produits/briques.svg' });
+      await loadProducts();
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const saveProductPrice = async (id: number) => {
+    const edit = productEdits[id];
+    if (!edit) return;
+    try {
+      setBusyProductId(id);
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceUSD: edit.priceUSD === '' ? null : edit.priceUSD,
+          priceCDF: edit.priceCDF === '' ? null : edit.priceCDF,
+        }),
+      });
+      if (!response.ok) throw new Error('Erreur mise à jour prix');
+      setProductEdits((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      await loadProducts();
+    } finally {
+      setBusyProductId(null);
+    }
+  };
+
+  const toggleProductActive = async (product: StoredProduct) => {
+    try {
+      setBusyProductId(product.id);
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !product.active }),
+      });
+      if (!response.ok) throw new Error('Erreur mise à jour produit');
+      await loadProducts();
+    } finally {
+      setBusyProductId(null);
+    }
+  };
+
+  const removeProduct = async (id: number) => {
+    try {
+      setBusyProductId(id);
+      const response = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Erreur suppression produit');
+      await loadProducts();
+    } finally {
+      setBusyProductId(null);
+    }
+  };
+
+  const loadServices = async () => {
+    try {
+      const response = await fetch('/api/admin/services', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les services');
+      const data = (await response.json()) as { services?: StoredService[] };
+      setServices(Array.isArray(data.services) ? data.services : []);
+    } catch {
+      setServices([]);
+    }
+  };
+
+  const createService = async () => {
+    if (!newService.fr.trim() || !newService.frDesc.trim()) return;
+    try {
+      setSavingService(true);
+      const response = await fetch('/api/admin/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService),
+      });
+      if (!response.ok) throw new Error('Erreur création service');
+      setNewService({
+        icon: '🔧',
+        fr: '',
+        en: '',
+        frDesc: '',
+        enDesc: '',
+        img: '/images/services/autres-services.svg',
+        priceUSD: '',
+        priceCDF: '',
+      });
+      await loadServices();
+    } finally {
+      setSavingService(false);
+    }
+  };
+
+  const saveServicePrice = async (id: number) => {
+    const edit = serviceEdits[id];
+    if (!edit) return;
+    try {
+      setBusyServiceId(id);
+      const response = await fetch(`/api/admin/services/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceUSD: edit.priceUSD === '' ? null : edit.priceUSD,
+          priceCDF: edit.priceCDF === '' ? null : edit.priceCDF,
+        }),
+      });
+      if (!response.ok) throw new Error('Erreur mise à jour prix');
+      setServiceEdits((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      await loadServices();
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const toggleServiceActive = async (service: StoredService) => {
+    try {
+      setBusyServiceId(service.id);
+      const response = await fetch(`/api/admin/services/${service.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !service.active }),
+      });
+      if (!response.ok) throw new Error('Erreur mise à jour service');
+      await loadServices();
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const removeService = async (id: number) => {
+    try {
+      setBusyServiceId(id);
+      const response = await fetch(`/api/admin/services/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Erreur suppression service');
+      await loadServices();
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const loadTaxes = async () => {
+    try {
+      const response = await fetch('/api/admin/taxes', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les taxes');
+      const data = (await response.json()) as TaxSummary;
+      setTaxSummary(data);
+    } catch {
+      setTaxSummary(null);
+    }
+  };
+
   const loadPlatformRoles = async () => {
     try {
       const response = await fetch('/api/admin/roles', { cache: 'no-store' });
@@ -307,7 +600,16 @@ export default function AdminPage() {
 
   useEffect(() => {
     (async () => {
-      await Promise.all([loadStats(), loadUsers(), loadPlatformRoles(), loadLoans()]);
+      await Promise.all([
+        loadStats(),
+        loadUsers(),
+        loadPlatformRoles(),
+        loadLoans(),
+        loadDeliveries(),
+        loadProducts(),
+        loadServices(),
+        loadTaxes(),
+      ]);
     })();
   }, []);
 
@@ -1010,6 +1312,464 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Livraisons', 'Deliveries')}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Créées automatiquement à la confirmation de paiement (si une adresse a été fournie).',
+              'Created automatically once a payment is confirmed (if an address was provided).'
+            )}
+          </p>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Référence', 'Reference')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Client', 'Client')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Adresse', 'Address')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Livreur', 'Driver')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deliveries.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-slate-500">
+                      {t('Aucune livraison.', 'No deliveries.')}
+                    </td>
+                  </tr>
+                ) : (
+                  deliveries.map((delivery) => (
+                    <tr key={delivery.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-3 pr-4 font-mono text-xs">{delivery.reference}</td>
+                      <td className="py-3 pr-4">{delivery.clientName}</td>
+                      <td className="py-3 pr-4">{delivery.deliveryAddress}</td>
+                      <td className="py-3 pr-4">{delivery.status}</td>
+                      <td className="py-3 pr-4">
+                        {delivery.driverIdentity ? (
+                          delivery.driverIdentity
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            <input
+                              value={driverAssignInput[delivery.id] || ''}
+                              onChange={(e) =>
+                                setDriverAssignInput((prev) => ({ ...prev, [delivery.id]: e.target.value }))
+                              }
+                              placeholder={t('Email livreur', 'Driver email')}
+                              className="rounded-lg border border-slate-300 px-2 py-1 text-xs w-40"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => assignDriverToDelivery(delivery.id)}
+                              disabled={busyDeliveryId === delivery.id}
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {t('Assigner', 'Assign')}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Produits', 'Products')}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Ajoutez un produit ou modifiez ses prix. Un produit désactivé disparaît du site public.',
+              'Add a product or edit its prices. A deactivated product disappears from the public site.'
+            )}
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input
+              value={newProduct.fr}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, fr: e.target.value }))}
+              placeholder={t('Nom (FR)', 'Name (FR)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newProduct.en}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, en: e.target.value }))}
+              placeholder={t('Nom (EN)', 'Name (EN)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newProduct.unitFr}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, unitFr: e.target.value }))}
+              placeholder={t('Unité (FR)', 'Unit (FR)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newProduct.img}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, img: e.target.value }))}
+              placeholder={t('Chemin image', 'Image path')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              value={newProduct.priceUSD}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, priceUSD: e.target.value }))}
+              placeholder="Prix USD"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              value={newProduct.priceCDF}
+              onChange={(e) => setNewProduct((prev) => ({ ...prev, priceCDF: e.target.value }))}
+              placeholder="Prix CDF"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={createProduct}
+              disabled={savingProduct}
+              className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60 md:col-span-2"
+            >
+              {savingProduct ? t('Ajout…', 'Adding...') : t('+ Ajouter le produit', '+ Add product')}
+            </button>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Nom', 'Name')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Unité', 'Unit')}</th>
+                  <th className="py-2 pr-4 font-medium">Prix USD</th>
+                  <th className="py-2 pr-4 font-medium">Prix CDF</th>
+                  <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Action', 'Action')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-3 text-slate-500">
+                      {t('Aucun produit.', 'No products.')}
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((product) => {
+                    const edit = productEdits[product.id] || {
+                      priceUSD: product.priceUSD?.toString() || '',
+                      priceCDF: product.priceCDF?.toString() || '',
+                    };
+                    return (
+                      <tr key={product.id} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-3 pr-4">{lang === 'fr' ? product.fr : product.en}</td>
+                        <td className="py-3 pr-4">{lang === 'fr' ? product.unitFr : product.unitEn}</td>
+                        <td className="py-3 pr-4">
+                          <input
+                            type="number"
+                            value={edit.priceUSD}
+                            onChange={(e) =>
+                              setProductEdits((prev) => ({
+                                ...prev,
+                                [product.id]: { ...edit, priceUSD: e.target.value },
+                              }))
+                            }
+                            className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                          />
+                        </td>
+                        <td className="py-3 pr-4">
+                          <input
+                            type="number"
+                            value={edit.priceCDF}
+                            onChange={(e) =>
+                              setProductEdits((prev) => ({
+                                ...prev,
+                                [product.id]: { ...edit, priceCDF: e.target.value },
+                              }))
+                            }
+                            className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                          />
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={product.active ? 'text-emerald-700' : 'text-slate-400'}>
+                            {product.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveProductPrice(product.id)}
+                              disabled={busyProductId === product.id}
+                              className="rounded-lg bg-slate-900 text-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {t('Enregistrer', 'Save')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleProductActive(product)}
+                              disabled={busyProductId === product.id}
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {product.active ? t('Désactiver', 'Disable') : t('Activer', 'Enable')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeProduct(product.id)}
+                              disabled={busyProductId === product.id}
+                              className="rounded-lg border border-red-300 bg-white text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {t('Supprimer', 'Delete')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Services', 'Services')}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Ajoutez un service ou modifiez ses prix (optionnel: laissez vide pour "sur devis").',
+              'Add a service or edit its prices (optional: leave empty for "quote only").'
+            )}
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input
+              value={newService.icon}
+              onChange={(e) => setNewService((prev) => ({ ...prev, icon: e.target.value }))}
+              placeholder={t('Icône (emoji)', 'Icon (emoji)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newService.fr}
+              onChange={(e) => setNewService((prev) => ({ ...prev, fr: e.target.value }))}
+              placeholder={t('Nom (FR)', 'Name (FR)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newService.en}
+              onChange={(e) => setNewService((prev) => ({ ...prev, en: e.target.value }))}
+              placeholder={t('Nom (EN)', 'Name (EN)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newService.img}
+              onChange={(e) => setNewService((prev) => ({ ...prev, img: e.target.value }))}
+              placeholder={t('Chemin image', 'Image path')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              value={newService.frDesc}
+              onChange={(e) => setNewService((prev) => ({ ...prev, frDesc: e.target.value }))}
+              placeholder={t('Description (FR)', 'Description (FR)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+            />
+            <input
+              value={newService.enDesc}
+              onChange={(e) => setNewService((prev) => ({ ...prev, enDesc: e.target.value }))}
+              placeholder={t('Description (EN)', 'Description (EN)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+            />
+            <input
+              type="number"
+              value={newService.priceUSD}
+              onChange={(e) => setNewService((prev) => ({ ...prev, priceUSD: e.target.value }))}
+              placeholder={t('Prix USD (optionnel)', 'Price USD (optional)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              value={newService.priceCDF}
+              onChange={(e) => setNewService((prev) => ({ ...prev, priceCDF: e.target.value }))}
+              placeholder={t('Prix CDF (optionnel)', 'Price CDF (optional)')}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={createService}
+              disabled={savingService}
+              className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
+            >
+              {savingService ? t('Ajout…', 'Adding...') : t('+ Ajouter le service', '+ Add service')}
+            </button>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 pr-4 font-medium">{t('Nom', 'Name')}</th>
+                  <th className="py-2 pr-4 font-medium">Prix USD</th>
+                  <th className="py-2 pr-4 font-medium">Prix CDF</th>
+                  <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Action', 'Action')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {services.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-slate-500">
+                      {t('Aucun service.', 'No services.')}
+                    </td>
+                  </tr>
+                ) : (
+                  services.map((service) => {
+                    const edit = serviceEdits[service.id] || {
+                      priceUSD: service.priceUSD?.toString() || '',
+                      priceCDF: service.priceCDF?.toString() || '',
+                    };
+                    return (
+                      <tr key={service.id} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-3 pr-4">
+                          {service.icon} {lang === 'fr' ? service.fr : service.en}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <input
+                            type="number"
+                            value={edit.priceUSD}
+                            onChange={(e) =>
+                              setServiceEdits((prev) => ({
+                                ...prev,
+                                [service.id]: { ...edit, priceUSD: e.target.value },
+                              }))
+                            }
+                            className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                          />
+                        </td>
+                        <td className="py-3 pr-4">
+                          <input
+                            type="number"
+                            value={edit.priceCDF}
+                            onChange={(e) =>
+                              setServiceEdits((prev) => ({
+                                ...prev,
+                                [service.id]: { ...edit, priceCDF: e.target.value },
+                              }))
+                            }
+                            className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                          />
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={service.active ? 'text-emerald-700' : 'text-slate-400'}>
+                            {service.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveServicePrice(service.id)}
+                              disabled={busyServiceId === service.id}
+                              className="rounded-lg bg-slate-900 text-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {t('Enregistrer', 'Save')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleServiceActive(service)}
+                              disabled={busyServiceId === service.id}
+                              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {service.active ? t('Désactiver', 'Disable') : t('Activer', 'Enable')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeService(service.id)}
+                              disabled={busyServiceId === service.id}
+                              className="rounded-lg border border-red-300 bg-white text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60"
+                            >
+                              {t('Supprimer', 'Delete')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Taxes (TVA à reverser)', 'Taxes (VAT payable)')}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Calculée sur toutes les factures confirmées (mobile money, carte, PayPal).',
+              'Computed from all confirmed invoices (mobile money, card, PayPal).'
+            )}
+            {taxSummary?.vatRate !== null && taxSummary?.vatRate !== undefined && (
+              <span> {t('Taux', 'Rate')}: {taxSummary.vatRate}%.</span>
+            )}
+          </p>
+
+          {!taxSummary || Object.keys(taxSummary.totalsByCurrency).length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500">{t('Aucune facture confirmée.', 'No confirmed invoice.')}</p>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(taxSummary.totalsByCurrency).map(([currency, totals]) => (
+                <div key={currency} className="rounded-xl border border-slate-200 p-4">
+                  <p className="text-sm font-semibold text-slate-700">{currency}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('Total HT', 'Total excl. tax')}: {totals.ht.toLocaleString('fr-FR')} {currency}
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-orange-700">
+                    {t('TVA à reverser', 'VAT payable')}: {totals.tva.toLocaleString('fr-FR')} {currency}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('Total TTC', 'Total incl. tax')}: {totals.ttc.toLocaleString('fr-FR')} {currency} ·{' '}
+                    {totals.count} {t('facture(s)', 'invoice(s)')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {taxSummary && taxSummary.invoices.length > 0 && (
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-slate-500">
+                    <th className="py-2 pr-4 font-medium">{t('Facture', 'Invoice')}</th>
+                    <th className="py-2 pr-4 font-medium">{t('Méthode', 'Method')}</th>
+                    <th className="py-2 pr-4 font-medium">{t('HT', 'Excl. tax')}</th>
+                    <th className="py-2 pr-4 font-medium">TVA</th>
+                    <th className="py-2 pr-4 font-medium">{t('TTC', 'Incl. tax')}</th>
+                    <th className="py-2 pr-4 font-medium">{t('Date', 'Date')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taxSummary.invoices.slice(0, 20).map((invoice) => (
+                    <tr key={invoice.reference} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-3 pr-4 font-mono text-xs">{invoice.invoiceNumber}</td>
+                      <td className="py-3 pr-4">{invoice.method}</td>
+                      <td className="py-3 pr-4">
+                        {invoice.ht.toLocaleString('fr-FR')} {invoice.currency}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {invoice.tva.toLocaleString('fr-FR')} {invoice.currency}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {invoice.ttc.toLocaleString('fr-FR')} {invoice.currency}
+                      </td>
+                      <td className="py-3 pr-4">{formatDate(invoice.updatedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </section>
     </div>

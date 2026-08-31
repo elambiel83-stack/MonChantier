@@ -1,5 +1,7 @@
-import React from "react";
-import { products, PRODUCTS_BANNER_URL } from "./constants";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { PRODUCTS_BANNER_URL } from "./constants";
 import { Language, Product } from "./types";
 
 interface ProductsProps {
@@ -9,7 +11,47 @@ interface ProductsProps {
   onOrderClick: () => void;
 }
 
+type CatalogProduct = {
+  id: number;
+  fr: string;
+  en: string;
+  unitFr: string;
+  unitEn: string;
+  priceUSD: number | null;
+  priceCDF: number | null;
+  img: string;
+  fallback: string;
+};
+
+function toProduct(p: CatalogProduct, lang: Language): Product {
+  const unit = lang === "fr" ? p.unitFr : p.unitEn;
+  const priceLabel =
+    p.priceUSD !== null ? `$${p.priceUSD} / ${unit}` : `$— / ${unit}`;
+  return {
+    id: p.id,
+    fr: p.fr,
+    en: p.en,
+    price: priceLabel,
+    prices: { USD: p.priceUSD, CDF: p.priceCDF },
+    unitFr: p.unitFr,
+    unitEn: p.unitEn,
+    img: p.img,
+    fallback: p.fallback,
+  };
+}
+
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
+  const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
+
+  useEffect(() => {
+    fetch("/api/catalog/products", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => setCatalog(Array.isArray(data.products) ? data.products : []))
+      .catch(() => setCatalog([]));
+  }, []);
+
+  const products = catalog.map((p) => toProduct(p, lang));
+
   return (
     <section id="produits" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
       <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200">

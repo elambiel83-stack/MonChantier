@@ -7,6 +7,7 @@ import {
   setStoredPaymentStatus,
   StoredInvoice,
 } from '@/lib/paymentStore';
+import { createDeliveryFromPayment } from '@/lib/deliveryStore';
 
 export type ConfirmPaymentPayload = {
   reference: string;
@@ -139,6 +140,16 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     invoice: invoiceResponse,
     fullInvoice: invoice,
   });
+
+  if (invoice.deliveryAddress && invoice.customerEmail) {
+    await createDeliveryFromPayment({
+      reference: payload.reference,
+      clientIdentity: invoice.customerEmail,
+      clientName: invoice.customerName,
+      deliveryAddress: invoice.deliveryAddress,
+      location: invoice.location,
+    });
+  }
 
   return {
     success: true,

@@ -1,5 +1,5 @@
-import RoleComingSoon from "../_components/RoleComingSoon";
+import DriverDeliveriesPanel from "@/components/monchantier/DriverDeliveriesPanel";
 
 export default function Page() {
-  return <RoleComingSoon role="driver" />;
+  return <DriverDeliveriesPanel />;
 }

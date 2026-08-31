@@ -1,5 +1,5 @@
-import RoleComingSoon from "../_components/RoleComingSoon";
+import SupplierProductsPanel from "@/components/monchantier/SupplierProductsPanel";
 
 export default function Page() {
-  return <RoleComingSoon role="supplier" />;
+  return <SupplierProductsPanel />;
 }
