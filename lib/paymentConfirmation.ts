@@ -137,6 +137,7 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     state: 'confirmed',
     updatedAt: new Date().toISOString(),
     invoice: invoiceResponse,
+    fullInvoice: invoice,
   });
 
   return {

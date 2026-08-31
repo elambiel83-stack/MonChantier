@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { InvoicePaymentMethod } from '@/lib/invoice';
+import { InvoiceData, InvoicePaymentMethod } from '@/lib/invoice';
 
 export type StoredInvoice = {
   number: string;
@@ -23,6 +23,9 @@ export type StoredPaymentStatus = {
   method: InvoicePaymentMethod;
   updatedAt: string;
   invoice?: StoredInvoice;
+  // Snapshot complet de la facture (articles, vendeur, client) permettant de
+  // régénérer le PDF plus tard (le résumé `invoice` ci-dessus ne suffit pas).
+  fullInvoice?: InvoiceData;
 };
 
 type WebhookProvider = 'stripe' | 'paypal';
@@ -100,6 +103,13 @@ export function setStoredPaymentStatus(status: StoredPaymentStatus): Promise<voi
     const store = await readStore();
     store.paymentStatuses[status.reference] = status;
     await writeStore(store);
+  });
+}
+
+export function listPaymentStatuses(): Promise<StoredPaymentStatus[]> {
+  return withLock(async () => {
+    const store = await readStore();
+    return Object.values(store.paymentStatuses);
   });
 }
 

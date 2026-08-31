@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { confirmPayment } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
+import { confirmDeposit } from '@/lib/walletStore';
 import {
   hasProcessedWebhookEvent,
   markWebhookEventProcessed,
@@ -71,8 +73,22 @@ export async function POST(request: NextRequest) {
 
     const session = event.data?.object || {};
     const metadata = (session.metadata || {}) as Record<string, string>;
-    const invoicePayload = decodeInvoicePayload(metadata.invoice_payload || null);
+    const rawPayload = metadata.invoice_payload || null;
 
+    const walletPayload = decodeWalletDepositPayload(rawPayload);
+    if (walletPayload) {
+      const { wallet, alreadyConfirmed } = await confirmDeposit({
+        identity: walletPayload.identity,
+        reference: walletPayload.reference,
+        method: walletPayload.method,
+        currency: walletPayload.currency,
+        amount: walletPayload.amount,
+      });
+      await markWebhookEventProcessed('stripe', eventId);
+      return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
+    }
+
+    const invoicePayload = decodeInvoicePayload(rawPayload);
     if (!invoicePayload) {
       return NextResponse.json(
         { message: 'invoice_payload absent ou invalide dans metadata Stripe' },

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { confirmPayment } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
+import { confirmDeposit } from '@/lib/walletStore';
 import { verifyPayPalWebhookSignature } from '@/lib/paypal';
 import {
   hasProcessedWebhookEvent,
@@ -67,6 +69,19 @@ export async function POST(request: NextRequest) {
         | string
         | undefined) ||
       null;
+
+    const walletPayload = decodeWalletDepositPayload(customId);
+    if (walletPayload) {
+      const { wallet, alreadyConfirmed } = await confirmDeposit({
+        identity: walletPayload.identity,
+        reference: walletPayload.reference,
+        method: walletPayload.method,
+        currency: walletPayload.currency,
+        amount: walletPayload.amount,
+      });
+      await markWebhookEventProcessed('paypal', eventId);
+      return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
+    }
 
     const invoicePayload = decodeInvoicePayload(customId);
     if (!invoicePayload) {

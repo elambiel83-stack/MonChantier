@@ -3,11 +3,22 @@
 import { FormEvent, useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
 
+function getCallbackUrl(value: string | null) {
+  // The middleware supplies a relative path. Keep redirects on this site and
+  // never send an authenticated user back to the sign-in screen.
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/auth/")) {
+    return "/";
+  }
+
+  return value;
+}
+
 export default function SignInPage() {
   const [phone, setPhone] = useState("+243");
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [enabledProviders, setEnabledProviders] = useState<Record<string, unknown>>({});
+  const [callbackUrl, setCallbackUrl] = useState("/");
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -16,6 +27,8 @@ export default function SignInPage() {
     };
 
     loadProviders();
+
+    setCallbackUrl(getCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl")));
   }, []);
 
   const oauthProviders = [
@@ -44,11 +57,11 @@ export default function SignInPage() {
     const result = await signIn("phone", {
       phone,
       code,
-      callbackUrl: "/",
+      callbackUrl,
     });
 
-    if (!result) {
-      setMessage("Échec de connexion");
+    if (!result?.ok) {
+      setMessage("Échec de connexion : vérifiez votre code et réessayez.");
     }
   };
 
@@ -63,7 +76,7 @@ export default function SignInPage() {
             {oauthProviders.map((provider) => (
               <button
                 key={provider.id}
-                onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+                onClick={() => signIn(provider.id, { callbackUrl })}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
               >
                 {provider.label}

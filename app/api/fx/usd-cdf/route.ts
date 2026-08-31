@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getBccUsdToCdfRate } from '@/lib/walletExchange';
 
 export async function GET() {
   try {
     // En production: récupérer le taux réel depuis l'API BCC ou autre source
-    // Pour l'instant, on retourne un taux fixe réaliste
-    const rate = 2850; // 1 USD = 2850 CDF (exemple)
-    
+    const rate = getBccUsdToCdfRate();
+
     return NextResponse.json({ 
       rate,
       source: 'BCC',

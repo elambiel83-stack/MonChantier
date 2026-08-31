@@ -195,6 +195,74 @@ Sans configuration, le code OTP n'est jamais envoyé par SMS en production (seul
    - `AFRICASTALKING_SENDER_ID` (optionnel: expéditeur/shortcode approuvé)
 4. En mode `sandbox`, seuls les numéros de test enregistrés dans le simulateur Africa's Talking reçoivent réellement le SMS.
 
+### Dashboards par rôle (RBAC)
+
+L'application distingue 9 rôles de plateforme, chacun avec son propre espace protégé sous `/dashboard/<role>` :
+
+- `client`, `supplier`, `driver`, `site-manager`, `technician`, `accountant`, `director`, `admin`, `ai`
+
+Le rôle `ai` (Centre de contrôle / intelligence opérationnelle) est un squelette : il n'analyse aucune donnée réelle tant que les dashboards métier (stocks, livraisons, ventes) n'en produisent pas.
+
+Fonctionnement :
+
+1. Tout utilisateur connecté a un rôle attaché à sa session (`session.user.role`), stocké dans `data/role-store.json` (par email ou identifiant de connexion). Par défaut : `client`.
+2. `middleware.ts` protège `/dashboard/:path*` : un utilisateur non connecté est redirigé vers `/auth/signin`; un utilisateur connecté qui tente d'accéder au dashboard d'un autre rôle est renvoyé vers le sien. Le rôle `admin` peut accéder à tous les dashboards.
+3. L'ancienne route `/admin` redirige désormais vers `/dashboard/admin` (même protection qu'avant, basée sur `ADMIN_EMAILS`).
+4. Deux dashboards sont pleinement fonctionnels : `admin` (statistiques, gestion des utilisateurs internes, attribution des rôles) et `client` (commandes, factures, devis — voir ci-dessous). Les 6 autres affichent un squelette (menu prévu + message "en construction") en attendant leurs modules métier réels (missions, chantiers, stocks, etc.).
+
+#### Dashboard Client
+
+Accessible sur `/dashboard/client` pour tout utilisateur connecté avec un email (Google/Facebook ou email renseigné à l'achat) :
+
+- **Mes commandes** : historique des paiements (Mobile Money, carte, PayPal) rattachés à l'email du compte, avec statut (en attente/confirmée) et téléchargement de la facture PDF.
+- **Mes devis** : historique des demandes de devis envoyées via `/api/contact`, persistées dans `data/quote-store.json`.
+
+Le rattachement se fait par correspondance d'email (le paiement exige toujours un email de facturation, quelle que soit la méthode). Un compte connecté uniquement par téléphone (sans email) ne peut pas voir ses commandes ici tant qu'aucun email n'est associé.
+
+Le PDF de facture est régénéré à la demande via `GET /api/payments/invoice/<reference>/pdf`, à partir d'un snapshot complet de la facture (`fullInvoice`) conservé dans `data/payment-webhook-store.json`. Accès restreint au propriétaire de la facture (email correspondant) ou à un `admin`.
+
+#### Crédit immobilier
+
+Service de crédit interne (pas un partenariat bancaire externe), accessible depuis `/dashboard/client` :
+
+- Le client simule un prêt (`GET /api/loans/quote`) puis dépose une demande (`POST /api/loans`) : objet, devise (USD/CDF), montant, durée en mois. L'échéancier est calculé immédiatement par amortissement à mensualité constante (taux `LOAN_ANNUAL_INTEREST_RATE`, défaut 12%/an).
+- Plafonds configurables : `LOAN_MIN_TERM_MONTHS` (défaut 3), `LOAN_MAX_TERM_MONTHS` (défaut 60), `LOAN_MAX_PRINCIPAL_USD` (défaut 20000), `LOAN_MAX_PRINCIPAL_CDF`.
+- Un `admin` approuve ou refuse la demande depuis `/dashboard/admin` (ou `POST /api/admin/loans/<id>/decide`). L'approbation décaisse immédiatement le montant dans le porte-monnaie du client (`data/loan-store.json` + `data/wallet-store.json`).
+- Le client rembourse échéance par échéance depuis son porte-monnaie (`POST /api/loans/<id>/pay`) ; le prêt passe en `paid_off` une fois la dernière échéance réglée.
+
+Aucune vérification de solvabilité ni garantie n'est implémentée: la décision d'octroi reste entièrement manuelle (admin). Ce module traite un vrai flux d'argent interne à la plateforme — s'assurer de la conformité réglementaire (activité de crédit) avant tout usage en production réelle.
+
+**Statuts et traçabilité** : le dossier suit désormais `submitted → under_review → approved/rejected → active → paid_off`. L'admin peut passer un dossier en analyse (`POST /api/admin/loans/<id>/review`, avec note optionnelle) avant de décider. Chaque événement du cycle de vie (soumission, analyse, décision, décaissement, paiement d'échéance, solde) est journalisé dans `loan.auditLog` (horodaté, avec l'identité de l'acteur), visible côté client (historique dépliable) et côté admin (fiche dossier).
+
+**KYC emprunteur** : la demande capture désormais nom complet, téléphone, situation professionnelle, employeur, revenus/charges mensuels (`loan.borrower`), affichés dans la fiche admin. Aucune vérification automatique de ces données.
+
+**Santé de remboursement** : calculée à la lecture (pas stockée) via `getRepaymentHealth()` — `à jour` / `en retard` / `impayé` selon le nombre de jours de retard sur la prochaine échéance non payée, seuil configurable via `LOAN_LATE_THRESHOLD_DAYS` (défaut 30 jours).
+
+**Rôles crédit dédiés** : `credit-agent` (analyse les dossiers qui lui sont assignés) et `credit-committee` (décide de l'octroi/refus), en plus de `accountant`/`director`/`admin` déjà existants. Attribution via `/dashboard/admin` (section rôles plateforme). Permissions centralisées dans `lib/loanPermissions.ts`, appliquées par chaque route `/api/credit/*` (indépendantes du middleware `/api/admin/*`, qui reste réservé au rôle `admin`) :
+
+- `GET /api/credit/loans` — tous les dossiers (admin/director/accountant/credit-committee) ou dossiers assignés (credit-agent).
+- `POST /api/credit/loans/<id>/assign` — assigner un agent (admin).
+- `POST /api/credit/loans/<id>/review` — mettre en analyse (admin/credit-agent/credit-committee).
+- `POST /api/credit/loans/<id>/decide` — approuver/refuser (admin/credit-committee).
+- `POST /api/credit/loans/<id>/collections` — enregistrer une action de recouvrement (admin/accountant/credit-agent).
+- `POST/GET /api/credit/loans/<id>/documents[/<documentId>]` — upload et téléchargement de documents (propriétaire du dossier ou staff crédit), stockés sous `data/loan-documents/<loanId>/`, 5 Mo max, PDF/JPG/PNG uniquement.
+- `POST /api/credit/loans/<id>/collateral` — déclarer une garantie (propriétaire ou staff crédit).
+- `GET /api/credit/portfolio` — KPI agrégés (admin/director/accountant/credit-committee).
+
+Dashboards dédiés : `/dashboard/credit-agent` (dossiers assignés + recouvrement), `/dashboard/credit-committee` (file de décision), `/dashboard/director` (portefeuille : capital décaissé/restant/impayé, taux de remboursement, répartition à jour/en retard/impayé).
+
+**Centre de recouvrement** : pour tout dossier `en retard`/`impayé`, actions tracées dans le journal d'audit (`collection_called`, `collection_notified`, `collection_promise_to_pay`, `collection_escalated`) — disponibles depuis `/dashboard/admin` et `/dashboard/credit-agent`.
+
+**Demande multi-étapes** : le formulaire client (`/dashboard/client`) est un assistant en 7 étapes (type de projet → emprunteur → projet immobilier → financement/simulation → documents → garanties → récapitulatif), avec checklist de documents et déclaration de garanties juste après soumission.
+
+**Écarts encore ouverts** (non traités) : upload/gestion de documents sur un dossier déjà existant en dehors du flux de création, liaison Crédit ↔ Chantier avec décaissement par tranches (suppose un module chantier qui n'existe pas), détection d'anomalies par IA sur le portefeuille.
+
+Attribution d'un rôle à un utilisateur :
+
+- Se connecter en tant qu'admin sur `/dashboard/admin`.
+- Section "Attribution des rôles plateforme" : saisir l'email (ou l'identifiant `phone:+243...`) et choisir le rôle, puis "Assigner".
+- API équivalente : `GET/POST /api/admin/roles` (protégée comme le reste de `/api/admin/*`).
+
 ### Protection de /admin et des routes /api/admin/*
 
 Ces pages exposent les statistiques, paiements et la gestion des utilisateurs internes: elles sont protégées par `middleware.ts`.

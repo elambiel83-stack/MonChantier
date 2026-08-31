@@ -3,6 +3,26 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import { verifyPhoneOtp } from "./phoneAuth";
+import { AppRole, DEFAULT_ROLE } from "./roles";
+import { getStoredRole } from "./roleStore";
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export async function resolveRole(identity: string | null): Promise<AppRole> {
+  if (!identity) return DEFAULT_ROLE;
+
+  if (identity.includes("@") && getAdminEmails().includes(identity)) {
+    return "admin";
+  }
+
+  const stored = await getStoredRole(identity);
+  return stored || DEFAULT_ROLE;
+}
 
 type TikTokProfile = {
   data?: {
@@ -114,5 +134,24 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
+  },
+  callbacks: {
+    async jwt({ token }) {
+      const identity =
+        typeof token.email === "string" && token.email
+          ? token.email.toLowerCase()
+          : typeof token.sub === "string"
+          ? token.sub
+          : null;
+
+      token.role = await resolveRole(identity);
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role;
+      }
+      return session;
+    },
   },
 };

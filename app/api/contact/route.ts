@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordContact } from '@/lib/adminStore';
 import { isMailerConfigured, sendContactEmail } from '@/lib/mailer';
+import { recordQuoteRequest } from '@/lib/quoteStore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +89,13 @@ export async function POST(request: NextRequest) {
     ].join('\n');
 
     recordContact({ name: cleanName, email: cleanEmail });
+    await recordQuoteRequest({
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      message: normalizedMessage,
+      services: selectedServices,
+    });
 
     let emailDelivered = true;
     try {
