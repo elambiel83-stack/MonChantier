@@ -87,10 +87,24 @@ export type LoanAuditEntry = {
     | 'installment_paid'
     | 'paid_off'
     | 'agent_assigned'
+    | 'tranche_released'
     | 'document_added'
     | 'collateral_added'
     | `collection_${CollectionActionType}`;
   note?: string;
+};
+
+export type LoanDisbursementMode = 'lump_sum' | 'tranches';
+
+export type LoanTranche = {
+  id: string;
+  index: number;
+  label: string;
+  condition: string;
+  amount: number;
+  status: 'pending' | 'released';
+  releasedAt?: string;
+  releasedBy?: string;
 };
 
 export type Loan = {
@@ -111,6 +125,8 @@ export type Loan = {
   assignedAgentIdentity?: string;
   documents: LoanDocument[];
   collateral: LoanCollateral[];
+  disbursementMode: LoanDisbursementMode;
+  tranches?: LoanTranche[];
   reviewedAt?: string;
   reviewedBy?: string;
   reviewNote?: string;
@@ -198,6 +214,7 @@ export function createLoanApplication(args: {
   currency: WalletCurrency;
   principal: number;
   termMonths: number;
+  tranches?: Array<{ label: string; condition: string; amount: number }>;
 }): Promise<Loan> {
   return withLock(async () => {
     const store = await readStore();
@@ -211,6 +228,7 @@ export function createLoanApplication(args: {
     });
 
     const identity = normalizeIdentity(args.identity);
+    const hasTranches = Array.isArray(args.tranches) && args.tranches.length > 0;
     const loan: Loan = {
       id: makeId(),
       identity,
@@ -228,6 +246,17 @@ export function createLoanApplication(args: {
       createdAt: now.toISOString(),
       documents: [],
       collateral: [],
+      disbursementMode: hasTranches ? 'tranches' : 'lump_sum',
+      tranches: hasTranches
+        ? args.tranches!.map((tranche, index) => ({
+            id: makeAuditId(),
+            index: index + 1,
+            label: tranche.label,
+            condition: tranche.condition,
+            amount: tranche.amount,
+            status: 'pending' as const,
+          }))
+        : undefined,
       installments: schedule.installments.map((installment) => ({ ...installment, paid: false })),
       auditLog: [],
     };
@@ -325,6 +354,21 @@ export async function decideLoan(args: {
     return result;
   }
 
+  if (result.loan.disbursementMode === 'tranches') {
+    // Décaissement par tranches: aucun versement automatique, chaque
+    // tranche sera libérée manuellement via releaseTranche().
+    return withLock(async () => {
+      const store = await readStore();
+      const loan = store.loans.find((item) => item.id === args.id);
+      if (!loan) return { success: false as const, error: 'not_found' as const };
+      loan.status = 'active';
+      loan.disbursedAt = new Date().toISOString();
+      appendAudit(loan, { by: 'system', action: 'disbursed', note: 'Décaissement par tranches activé' });
+      await writeStore(store);
+      return { success: true as const, loan };
+    });
+  }
+
   // Décaissement effectif dans le porte-monnaie du client, hors verrou du
   // store des prêts (le verrou du wallet store est indépendant).
   await creditLoanDisbursement({
@@ -343,6 +387,52 @@ export async function decideLoan(args: {
     appendAudit(loan, { by: 'system', action: 'disbursed' });
     await writeStore(store);
     return { success: true as const, loan };
+  });
+}
+
+export type ReleaseTrancheResult =
+  | { success: true; loan: Loan }
+  | { success: false; error: 'not_found' | 'tranche_not_found' | 'not_active' | 'already_released' };
+
+export async function releaseTranche(args: {
+  id: string;
+  trancheId: string;
+  releasedBy: string;
+}): Promise<ReleaseTrancheResult> {
+  const loan = await getLoanById(args.id);
+  if (!loan) return { success: false, error: 'not_found' };
+  if (loan.status !== 'active') return { success: false, error: 'not_active' };
+
+  const tranche = loan.tranches?.find((item) => item.id === args.trancheId);
+  if (!tranche) return { success: false, error: 'tranche_not_found' };
+  if (tranche.status === 'released') return { success: false, error: 'already_released' };
+
+  await creditLoanDisbursement({
+    identity: loan.identity,
+    loanId: `${loan.id}:${tranche.id}`,
+    currency: loan.currency,
+    amount: tranche.amount,
+  });
+
+  return withLock(async () => {
+    const store = await readStore();
+    const stored = store.loans.find((item) => item.id === args.id);
+    if (!stored) return { success: false as const, error: 'not_found' as const };
+
+    const storedTranche = stored.tranches?.find((item) => item.id === args.trancheId);
+    if (storedTranche) {
+      storedTranche.status = 'released';
+      storedTranche.releasedAt = new Date().toISOString();
+      storedTranche.releasedBy = args.releasedBy;
+    }
+    appendAudit(stored, {
+      by: args.releasedBy,
+      action: 'tranche_released',
+      note: `${tranche.label} (${tranche.amount} ${stored.currency})`,
+    });
+
+    await writeStore(store);
+    return { success: true as const, loan: stored };
   });
 }
 
@@ -579,7 +669,13 @@ export function getPortfolioSummary(loans: Loan[]): PortfolioSummary {
     if (loan.status === 'rejected') summary.rejectedCount += 1;
 
     if (loan.status === 'active' || loan.status === 'paid_off') {
-      summary.totalDisbursed[loan.currency] += loan.principal;
+      const disbursedAmount =
+        loan.disbursementMode === 'tranches'
+          ? (loan.tranches || [])
+              .filter((tranche) => tranche.status === 'released')
+              .reduce((sum, tranche) => sum + tranche.amount, 0)
+          : loan.principal;
+      summary.totalDisbursed[loan.currency] += disbursedAmount;
 
       const paidAmount = loan.installments
         .filter((installment) => installment.paid)

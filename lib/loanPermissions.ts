@@ -16,6 +16,10 @@ export function canAssignAgent(role: AppRole): boolean {
   return role === 'admin';
 }
 
+export function canReleaseTranche(role: AppRole): boolean {
+  return role === 'admin' || role === 'accountant' || role === 'credit-committee';
+}
+
 export function canLogCollectionAction(role: AppRole): boolean {
   return role === 'admin' || role === 'accountant' || role === 'credit-agent';
 }

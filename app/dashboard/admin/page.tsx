@@ -52,6 +52,9 @@ type Loan = {
   assignedAgentIdentity?: string;
   installments: LoanInstallment[];
   auditLog: LoanAuditEntry[];
+  documents: { id: string; category: string; fileName: string; uploadedAt: string }[];
+  disbursementMode: 'lump_sum' | 'tranches';
+  tranches?: { id: string; label: string; condition: string; amount: number; status: 'pending' | 'released' }[];
 };
 
 type AdminEvent = {
@@ -222,6 +225,19 @@ export default function AdminPage() {
         body: JSON.stringify({ type }),
       });
       if (!response.ok) throw new Error('Erreur action recouvrement');
+      await loadLoans();
+    } finally {
+      setDecidingLoanId(null);
+    }
+  };
+
+  const releaseTranche = async (loanId: string, trancheId: string) => {
+    try {
+      setDecidingLoanId(loanId);
+      const response = await fetch(`/api/credit/loans/${loanId}/tranches/${trancheId}/release`, {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Erreur libération tranche');
       await loadLoans();
     } finally {
       setDecidingLoanId(null);
@@ -495,9 +511,9 @@ export default function AdminPage() {
         </div>
 
         <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">{t('Activité récente', 'Recent activity')}</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={generateDemoPayments}
@@ -789,7 +805,7 @@ export default function AdminPage() {
                           <td className="py-3 pr-4">{loan.status}</td>
                           <td className="py-3 pr-4">{healthLabels[loan.repaymentHealth]}</td>
                           <td className="py-3 pr-4">
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               {loan.status === 'submitted' && (
                                 <button
                                   type="button"
@@ -823,7 +839,7 @@ export default function AdminPage() {
                               {loan.status !== 'submitted' && loan.status !== 'under_review' && '-'}
                             </div>
                             {loan.status !== 'rejected' && loan.status !== 'paid_off' && (
-                              <div className="mt-2 flex gap-2">
+                              <div className="mt-2 flex flex-wrap gap-2">
                                 <input
                                   value={agentAssignInput[loan.id] || ''}
                                   onChange={(e) =>
@@ -852,7 +868,7 @@ export default function AdminPage() {
                         {expanded && (
                           <tr className="border-b border-slate-100 last:border-b-0 bg-slate-50">
                             <td colSpan={7} className="py-3 px-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                                     {t('Emprunteur', 'Borrower')}
@@ -874,6 +890,30 @@ export default function AdminPage() {
                                 </div>
                                 <div>
                                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    {t('Documents', 'Documents')}
+                                  </p>
+                                  {loan.documents.length === 0 ? (
+                                    <p className="mt-1 text-xs text-slate-400">{t('Aucun', 'None')}</p>
+                                  ) : (
+                                    <ul className="mt-1 space-y-1">
+                                      {loan.documents.map((doc) => (
+                                        <li key={doc.id} className="text-xs">
+                                          <a
+                                            href={`/api/credit/loans/${loan.id}/documents/${doc.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-orange-600 hover:text-orange-700 font-medium"
+                                          >
+                                            {doc.fileName}
+                                          </a>{' '}
+                                          <span className="text-slate-400">({doc.category})</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                                     {t('Journal d\'audit', 'Audit log')}
                                   </p>
                                   <ul className="mt-1 space-y-1">
@@ -886,6 +926,39 @@ export default function AdminPage() {
                                   </ul>
                                 </div>
                               </div>
+                              {loan.disbursementMode === 'tranches' && loan.tranches && (
+                                <div className="mt-4 pt-3 border-t border-slate-200">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    {t('Décaissement par tranches', 'Tranche disbursement')}
+                                  </p>
+                                  <ul className="mt-2 space-y-2">
+                                    {loan.tranches.map((tranche) => (
+                                      <li key={tranche.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                        <span>
+                                          {tranche.label} — {tranche.amount.toLocaleString('fr-FR')} {loan.currency}
+                                          {tranche.condition ? ` (${tranche.condition})` : ''}
+                                        </span>
+                                        {tranche.status === 'released' ? (
+                                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-700">
+                                            {t('Libérée', 'Released')}
+                                          </span>
+                                        ) : loan.status === 'active' ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => releaseTranche(loan.id, tranche.id)}
+                                            disabled={decidingLoanId === loan.id}
+                                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-2 py-1 font-medium"
+                                          >
+                                            {t('Libérer', 'Release')}
+                                          </button>
+                                        ) : (
+                                          <span className="text-slate-400">{t('En attente', 'Pending')}</span>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                               {(loan.repaymentHealth === 'late' || loan.repaymentHealth === 'defaulted') && (
                                 <div className="mt-4 pt-3 border-t border-slate-200">
                                   <p className="text-xs font-semibold uppercase tracking-wide text-red-500">

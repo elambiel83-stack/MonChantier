@@ -255,7 +255,13 @@ Dashboards dédiés : `/dashboard/credit-agent` (dossiers assignés + recouvreme
 
 **Demande multi-étapes** : le formulaire client (`/dashboard/client`) est un assistant en 7 étapes (type de projet → emprunteur → projet immobilier → financement/simulation → documents → garanties → récapitulatif), avec checklist de documents et déclaration de garanties juste après soumission.
 
-**Écarts encore ouverts** (non traités) : upload/gestion de documents sur un dossier déjà existant en dehors du flux de création, liaison Crédit ↔ Chantier avec décaissement par tranches (suppose un module chantier qui n'existe pas), détection d'anomalies par IA sur le portefeuille.
+**Documents sur un dossier existant** : l'upload n'est plus limité au flux de création — chaque prêt listé dans "Mes prêts" (client) et dans les fiches dossier (admin, agent crédit) a sa propre section Documents (liste + ajout), via le même `POST/GET /api/credit/loans/<id>/documents[/<documentId>]` déjà en place.
+
+**Décaissement par tranches (liaison Crédit ↔ Chantier minimale)** : à la demande, le client peut choisir "Décaissement par tranches liées à l'avancement du chantier" et définir des tranches (libellé, condition, montant — dont la somme doit égaler le montant demandé). Pas de module chantier complet construit : les tranches sont une liste embarquée sur le prêt (`loan.tranches`), pas un vrai suivi de chantier (budget/matériaux/livraisons/avancement réel). À l'approbation, aucun décaissement automatique n'a lieu pour ces prêts — chaque tranche est libérée individuellement via `POST /api/credit/loans/<id>/tranches/<trancheId>/release` (admin/comptable/comité), créditant uniquement son montant dans le porte-monnaie. Le portefeuille (`totalDisbursed`) ne compte que les tranches réellement libérées.
+
+**Alertes IA sur le portefeuille crédit** (`/dashboard/ai`, `GET /api/credit/alerts`) : détection à base de règles explicites (pas de modèle prédictif/ML réel) sur les données réelles des prêts — taux d'impayés élevé, retard sévère individuel (>60 jours), crédit important sans garantie déclarée, concentration excessive sur un seul dossier, dossiers en analyse prolongée (>7 jours), dossiers soumis sans agent assigné. Chaque alerte inclut une action recommandée et les dossiers concernés. Accessible aux rôles ayant `canViewPortfolio` (admin/director/accountant/credit-committee) ainsi qu'au rôle `ai`.
+
+**Écarts encore ouverts** : un vrai module chantier (projets, budget, matériaux, livraisons, avancement réel) reste à construire si l'on veut que la libération de tranche soit conditionnée à un avancement vérifié plutôt qu'à une décision manuelle ; les alertes restent des règles à seuils fixes, pas un modèle qui apprend des données.
 
 Attribution d'un rôle à un utilisateur :
 
@@ -272,6 +278,17 @@ Ces pages exposent les statistiques, paiements et la gestion des utilisateurs in
    - `ADMIN_EMAILS=vous@exemple.com,autre-admin@exemple.com`
 3. Sans `ADMIN_EMAILS` configuré, l'accès est refusé à tout le monde (comportement sûr par défaut).
 4. Un accès direct à `/admin` sans session valide redirige vers `/auth/signin`; un appel à `/api/admin/*` sans autorisation renvoie `403`.
+
+#### Connexion admin par email + mot de passe
+
+En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Administrateur" (email + mot de passe), utile quand une connexion OAuth n'est pas pratique.
+
+- Configurer dans `.env.local` :
+  - `ADMIN_LOGIN_EMAIL=admin@monchantier.net`
+  - `ADMIN_LOGIN_PASSWORD=<mot de passe>`
+  - Ajouter aussi cet email dans `ADMIN_EMAILS` pour qu'il obtienne le rôle `admin`.
+- Sans ces deux variables, le formulaire reste affiché mais refuse toute connexion (comportement sûr par défaut).
+- Le mot de passe est comparé par hash SHA-256 en temps constant (`lib/auth.ts`) pour limiter les attaques par mesure de temps ; il n'est jamais stocké ailleurs que dans `.env.local` (non versionné).
 
 ### Confirmation manuelle de paiement (ops)
 

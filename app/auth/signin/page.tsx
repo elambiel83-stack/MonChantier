@@ -19,6 +19,9 @@ export default function SignInPage() {
   const [message, setMessage] = useState("");
   const [enabledProviders, setEnabledProviders] = useState<Record<string, unknown>>({});
   const [callbackUrl, setCallbackUrl] = useState("/");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminSubmitting, setAdminSubmitting] = useState(false);
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -62,6 +65,29 @@ export default function SignInPage() {
 
     if (!result?.ok) {
       setMessage("Échec de connexion : vérifiez votre code et réessayez.");
+    }
+  };
+
+  const handleAdminLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setAdminSubmitting(true);
+    setMessage("");
+    try {
+      const result = await signIn("admin-login", {
+        email: adminEmail,
+        password: adminPassword,
+        callbackUrl,
+        redirect: false,
+      });
+
+      if (!result?.ok) {
+        setMessage("Échec de connexion : email ou mot de passe incorrect.");
+        return;
+      }
+
+      window.location.href = result.url || callbackUrl;
+    } finally {
+      setAdminSubmitting(false);
     }
   };
 
@@ -111,6 +137,35 @@ export default function SignInPage() {
             Se connecter avec numéro
           </button>
         </form>
+
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Administrateur</p>
+          <form onSubmit={handleAdminLogin} className="mt-2 space-y-2">
+            <input
+              type="email"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              placeholder="Email administrateur"
+              autoComplete="username"
+            />
+            <input
+              type="password"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="Mot de passe"
+              autoComplete="current-password"
+            />
+            <button
+              type="submit"
+              disabled={adminSubmitting}
+              className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+            >
+              {adminSubmitting ? "Connexion…" : "Se connecter comme administrateur"}
+            </button>
+          </form>
+        </div>
 
         {message ? <p className="mt-3 text-sm text-slate-600">{message}</p> : null}
       </div>

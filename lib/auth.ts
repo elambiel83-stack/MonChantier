@@ -1,3 +1,4 @@
+import { timingSafeEqual, createHash } from "crypto";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -5,6 +6,12 @@ import GoogleProvider from "next-auth/providers/google";
 import { verifyPhoneOtp } from "./phoneAuth";
 import { AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole } from "./roleStore";
+
+function safeEqual(a: string, b: string): boolean {
+  const hashA = createHash("sha256").update(a).digest();
+  const hashB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(hashA, hashB);
+}
 
 function getAdminEmails(): string[] {
   return (process.env.ADMIN_EMAILS || "")
@@ -81,6 +88,33 @@ const buildProviders = (): NextAuthOptions["providers"] => {
           id: `phone:${phone}`,
           name: phone,
           email: null,
+        };
+      },
+    }),
+    CredentialsProvider({
+      id: "admin-login",
+      name: "Administrateur",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Mot de passe", type: "password" },
+      },
+      async authorize(credentials) {
+        const expectedEmail = (process.env.ADMIN_LOGIN_EMAIL || "").trim().toLowerCase();
+        const expectedPassword = process.env.ADMIN_LOGIN_PASSWORD || "";
+        if (!expectedEmail || !expectedPassword) return null;
+
+        const email = credentials?.email?.trim().toLowerCase() || "";
+        const password = credentials?.password || "";
+        if (!email || !password) return null;
+
+        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword)) {
+          return null;
+        }
+
+        return {
+          id: email,
+          name: "Administrateur",
+          email,
         };
       },
     }),

@@ -16,6 +16,7 @@ type LoanBorrower = {
 };
 
 type LoanAuditEntry = { id: string; at: string; by: string; action: string; note?: string };
+type LoanDocument = { id: string; category: string; fileName: string; uploadedAt: string };
 
 type Loan = {
   id: string;
@@ -28,6 +29,7 @@ type Loan = {
   repaymentHealth: RepaymentHealth;
   createdAt: string;
   auditLog: LoanAuditEntry[];
+  documents: LoanDocument[];
 };
 
 const STATUS_LABELS: Record<LoanStatus, string> = {
@@ -142,12 +144,12 @@ export default function CreditAgentPanel() {
               )}
 
               {loan.status === "submitted" && (
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <input
                     value={notes[loan.id] || ""}
                     onChange={(e) => setNotes((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                     placeholder="Note d'analyse (optionnel)"
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="min-w-[180px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                   <button
                     type="button"
@@ -198,6 +200,29 @@ export default function CreditAgentPanel() {
                     </button>
                   </div>
                 </div>
+              )}
+
+              {loan.documents.length > 0 && (
+                <details className="mt-2">
+                  <summary className="text-xs font-semibold text-slate-500 cursor-pointer">
+                    Documents ({loan.documents.length})
+                  </summary>
+                  <ul className="mt-1 space-y-1">
+                    {loan.documents.map((doc) => (
+                      <li key={doc.id} className="text-xs">
+                        <a
+                          href={`/api/credit/loans/${loan.id}/documents/${doc.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-orange-600 hover:text-orange-700 font-medium"
+                        >
+                          {doc.fileName}
+                        </a>{" "}
+                        <span className="text-slate-400">({doc.category})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               )}
 
               <details className="mt-2">

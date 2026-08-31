@@ -87,6 +87,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let tranches: Array<{ label: string; condition: string; amount: number }> | undefined;
+    if (Array.isArray(body?.tranches) && body.tranches.length > 0) {
+      tranches = body.tranches.map(
+        (tranche: { label?: unknown; condition?: unknown; amount?: unknown }) => ({
+          label: String(tranche?.label || '').trim(),
+          condition: String(tranche?.condition || '').trim(),
+          amount: Number(tranche?.amount),
+        })
+      );
+      const invalid = tranches!.some(
+        (tranche) => !tranche.label || !Number.isFinite(tranche.amount) || tranche.amount <= 0
+      );
+      if (invalid) {
+        return NextResponse.json({ message: 'Tranches invalides' }, { status: 400 });
+      }
+      const trancheSum = tranches!.reduce((sum, tranche) => sum + tranche.amount, 0);
+      if (Math.round(trancheSum * 100) !== Math.round(principal * 100)) {
+        return NextResponse.json(
+          { message: 'La somme des tranches doit être égale au montant demandé' },
+          { status: 400 }
+        );
+      }
+    }
+
     const loan = await createLoanApplication({
       identity,
       borrower: { fullName, phone, monthlyIncome, monthlyCharges, employmentStatus, employer },
@@ -95,6 +119,7 @@ export async function POST(request: NextRequest) {
       currency,
       principal,
       termMonths,
+      tranches,
     });
     return NextResponse.json({ success: true, loan });
   } catch (error) {

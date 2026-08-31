@@ -37,6 +37,16 @@ type LoanCollateral = {
 type LoanStatus = "submitted" | "under_review" | "approved" | "rejected" | "active" | "paid_off";
 type RepaymentHealth = "on_track" | "late" | "defaulted" | "n_a";
 
+type LoanTranche = {
+  id: string;
+  index: number;
+  label: string;
+  condition: string;
+  amount: number;
+  status: "pending" | "released";
+  releasedAt?: string;
+};
+
 type Loan = {
   id: string;
   purpose: string;
@@ -55,6 +65,8 @@ type Loan = {
   auditLog: LoanAuditEntry[];
   documents: LoanDocument[];
   collateral: LoanCollateral[];
+  disbursementMode: "lump_sum" | "tranches";
+  tranches?: LoanTranche[];
 };
 
 const STATUS_LABELS: Record<LoanStatus, { label: string; className: string }> = {
@@ -126,6 +138,10 @@ export default function LoanPanel() {
   const [banner, setBanner] = useState("");
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
   const [payingLoanId, setPayingLoanId] = useState<string | null>(null);
+  const [docsPanelLoanId, setDocsPanelLoanId] = useState<string | null>(null);
+  const [docUploadCategory, setDocUploadCategory] = useState<Record<string, LoanDocumentCategory>>({});
+  const [docUploadFile, setDocUploadFile] = useState<Record<string, File | null>>({});
+  const [uploadingLoanId, setUploadingLoanId] = useState<string | null>(null);
 
   const [showWizard, setShowWizard] = useState(false);
   const [step, setStep] = useState(1);
@@ -152,6 +168,18 @@ export default function LoanPanel() {
   const [termMonths, setTermMonths] = useState("24");
   const [quote, setQuote] = useState<{ annualInterestRate: number; monthlyPayment: number; totalRepayable: number; totalInterest: number } | null>(null);
   const [applying, setApplying] = useState(false);
+
+  const [useTranches, setUseTranches] = useState(false);
+  const [tranches, setTranches] = useState<{ label: string; condition: string; amount: string }[]>([
+    { label: "", condition: "", amount: "" },
+  ]);
+  const trancheTotal = tranches.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+  const updateTranche = (index: number, field: "label" | "condition" | "amount", value: string) => {
+    setTranches((prev) => prev.map((t, i) => (i === index ? { ...t, [field]: value } : t)));
+  };
+  const addTranche = () => setTranches((prev) => [...prev, { label: "", condition: "", amount: "" }]);
+  const removeTranche = (index: number) => setTranches((prev) => prev.filter((_, i) => i !== index));
 
   const [createdLoan, setCreatedLoan] = useState<Loan | null>(null);
   const [docCategory, setDocCategory] = useState<LoanDocumentCategory>("identity");
@@ -245,6 +273,10 @@ export default function LoanPanel() {
       setFormError("Montant invalide.");
       return;
     }
+    if (useTranches && Math.round(trancheTotal * 100) !== Math.round(amount * 100)) {
+      setFormError("Le total des tranches doit être égal au montant demandé.");
+      return;
+    }
 
     setApplying(true);
     try {
@@ -273,6 +305,9 @@ export default function LoanPanel() {
           currency,
           principal: amount,
           termMonths: term,
+          tranches: useTranches
+            ? tranches.map((t) => ({ label: t.label, condition: t.condition, amount: Number(t.amount) }))
+            : undefined,
         }),
       });
       const data = await res.json();
@@ -355,6 +390,27 @@ export default function LoanPanel() {
       setBanner(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setPayingLoanId(null);
+    }
+  };
+
+  const handleUploadToExistingLoan = async (loanId: string) => {
+    const file = docUploadFile[loanId];
+    if (!file) return;
+    setUploadingLoanId(loanId);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("category", docUploadCategory[loanId] || "other");
+      const res = await fetch(`/api/credit/loans/${loanId}/documents`, { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Erreur upload");
+      setBanner("Document ajouté.");
+      setDocUploadFile((prev) => ({ ...prev, [loanId]: null }));
+      await loadLoans();
+    } catch (err) {
+      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setUploadingLoanId(null);
     }
   };
 
@@ -594,6 +650,64 @@ export default function LoanPanel() {
                   </p>
                 </div>
               )}
+
+              <div className="mt-4 pt-3 border-t border-slate-200">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={useTranches}
+                    onChange={(e) => setUseTranches(e.target.checked)}
+                  />
+                  Décaissement par tranches liées à l&apos;avancement du chantier
+                </label>
+
+                {useTranches && (
+                  <div className="mt-3 space-y-2">
+                    {tranches.map((tranche, index) => (
+                      <div key={index} className="grid grid-cols-1 sm:grid-cols-[2fr,2fr,1fr,auto] gap-2">
+                        <input
+                          value={tranche.label}
+                          onChange={(e) => updateTranche(index, "label", e.target.value)}
+                          placeholder="Étape (ex: Fondations)"
+                          className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
+                        />
+                        <input
+                          value={tranche.condition}
+                          onChange={(e) => updateTranche(index, "condition", e.target.value)}
+                          placeholder="Condition de libération"
+                          className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          value={tranche.amount}
+                          onChange={(e) => updateTranche(index, "amount", e.target.value)}
+                          placeholder="Montant"
+                          className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeTranche(index)}
+                          className="text-xs text-red-600"
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addTranche}
+                      className="text-xs font-semibold text-slate-600 hover:text-slate-800"
+                    >
+                      + Ajouter une tranche
+                    </button>
+                    <p className="text-xs text-slate-500">
+                      Total des tranches : {trancheTotal.toLocaleString("fr-FR")} {currency} — doit être égal
+                      au montant demandé ({Number(principal || 0).toLocaleString("fr-FR")} {currency}).
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -765,7 +879,7 @@ export default function LoanPanel() {
           {formError && <p className="mt-3 text-sm text-red-600">{formError}</p>}
 
           {step < 7 && (
-            <div className="mt-4 flex justify-between">
+            <div className="mt-4 flex flex-wrap gap-2 justify-between">
               <button
                 type="button"
                 onClick={step === 1 ? resetWizard : goBack}
@@ -859,13 +973,107 @@ export default function LoanPanel() {
                     <p className="mt-1 text-xs text-emerald-700">Prêt intégralement remboursé.</p>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => setExpandedLoanId(expanded ? null : loan.id)}
-                    className="mt-2 text-xs font-semibold text-slate-500 hover:text-slate-700"
-                  >
-                    {expanded ? "Masquer l'historique ▲" : "Voir l'historique ▼"}
-                  </button>
+                  {loan.disbursementMode === "tranches" && loan.tranches && (
+                    <div className="mt-2">
+                      <p className="text-xs font-semibold text-slate-600">Décaissement par tranches</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {loan.tranches.map((tranche) => (
+                          <li key={tranche.id} className="text-xs text-slate-600 flex items-center gap-2">
+                            <span
+                              className={
+                                tranche.status === "released"
+                                  ? "rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                  : "rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+                              }
+                            >
+                              {tranche.status === "released" ? "Libérée" : "En attente"}
+                            </span>
+                            {tranche.label} — {formatAmount(tranche.amount, loan.currency)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedLoanId(expanded ? null : loan.id)}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                    >
+                      {expanded ? "Masquer l'historique ▲" : "Voir l'historique ▼"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocsPanelLoanId(docsPanelLoanId === loan.id ? null : loan.id)}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                    >
+                      {docsPanelLoanId === loan.id
+                        ? "Masquer les documents ▲"
+                        : `Documents (${loan.documents.length}) ▼`}
+                    </button>
+                  </div>
+
+                  {docsPanelLoanId === loan.id && (
+                    <div className="mt-2 border-t border-slate-100 pt-2">
+                      {loan.documents.length > 0 && (
+                        <ul className="space-y-1">
+                          {loan.documents.map((doc) => (
+                            <li key={doc.id} className="text-xs text-slate-600">
+                              <a
+                                href={`/api/credit/loans/${loan.id}/documents/${doc.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-orange-600 hover:text-orange-700 font-medium"
+                              >
+                                {doc.fileName}
+                              </a>{" "}
+                              <span className="text-slate-400">
+                                ({DOCUMENT_CHECKLIST.find((d) => d.category === doc.category)?.label || doc.category}
+                                , {formatDate(doc.uploadedAt)})
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <select
+                          aria-label="Catégorie du document"
+                          value={docUploadCategory[loan.id] || "other"}
+                          onChange={(e) =>
+                            setDocUploadCategory((prev) => ({
+                              ...prev,
+                              [loan.id]: e.target.value as LoanDocumentCategory,
+                            }))
+                          }
+                          className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs"
+                        >
+                          {DOCUMENT_CHECKLIST.map((item) => (
+                            <option key={item.category} value={item.category}>
+                              {item.label}
+                            </option>
+                          ))}
+                          <option value="other">Autre</option>
+                        </select>
+                        <input
+                          type="file"
+                          accept="application/pdf,image/jpeg,image/png"
+                          onChange={(e) =>
+                            setDocUploadFile((prev) => ({ ...prev, [loan.id]: e.target.files?.[0] || null }))
+                          }
+                          className="text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleUploadToExistingLoan(loan.id)}
+                          disabled={!docUploadFile[loan.id] || uploadingLoanId === loan.id}
+                          className="rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5"
+                        >
+                          {uploadingLoanId === loan.id ? "Envoi…" : "+ Ajouter"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {expanded && (
                     <ul className="mt-2 space-y-1 border-t border-slate-100 pt-2">
