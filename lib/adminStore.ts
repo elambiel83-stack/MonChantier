@@ -13,11 +13,13 @@ export type AdminEvent = {
   createdAt: string;
 };
 
+import type { AppRole } from '@/lib/roles';
+
 export type AdminUser = {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'agent';
+  role: AppRole;
   active: boolean;
   createdAt: string;
 };
@@ -203,7 +205,7 @@ export function listUsers() {
 export function addUser(payload: {
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'agent';
+  role: AppRole;
 }) {
   const user: AdminUser = {
     id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,

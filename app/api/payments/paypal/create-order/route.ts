@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { registerPendingPayment, confirmPayment } from '@/lib/paymentConfirmation';
-import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
-import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
-
-// Devises acceptées par l'API PayPal (le CDF n'en fait pas partie).
-const PAYPAL_SUPPORTED_CURRENCIES = new Set([
-  'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'HKD', 'NZD',
-  'SGD', 'SEK', 'DKK', 'PLN', 'NOK', 'HUF', 'CZK', 'ILS', 'MXN', 'MYR',
-  'PHP', 'TWD', 'THB', 'BRL',
-]);
+import { recordPayment } from '@/lib/adminStore';
+import { buildInvoiceText, createInvoice } from '@/lib/invoice';
+import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -27,6 +20,10 @@ export async function POST(request: NextRequest) {
     const { amount, currency, items, deliveryAddress, location, returnUrl, cancelUrl, customerName, customerEmail } = body;
 
     const normalizedItems = Array.isArray(items) ? items : [];
+    const totalQty = normalizedItems.reduce(
+      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
+      0
+    );
     const productSummary = normalizedItems
       .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
       .join(', ');
@@ -34,6 +31,7 @@ export async function POST(request: NextRequest) {
     const parsedAmount = parsePositiveAmount(amount);
     const parsedCurrency = sanitizeCurrency(currency);
 
+    // Validation
     if (!parsedAmount || !returnUrl || !cancelUrl || normalizedItems.length === 0) {
       return NextResponse.json(
         { message: 'Montant, URLs de redirection et articles requis' },
@@ -41,83 +39,72 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
-    const resolvedCustomerEmail = (customerEmail || '').trim();
-    const normalizedLineItems = normalizedItems.map(
-      (item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
-        productName: item.productName || 'Produit',
-        quantity: Number(item.quantity || 1),
-        unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
-      })
-    );
-
-    if (isPayPalConfigured()) {
-      if (!PAYPAL_SUPPORTED_CURRENCIES.has(parsedCurrency)) {
-        return NextResponse.json(
-          {
-            message: `PayPal ne prend pas en charge la devise ${parsedCurrency}. Merci de sélectionner USD pour ce moyen de paiement.`,
-          },
-          { status: 400 }
-        );
-      }
-
-      const paymentReference = `PAYPAL-${Date.now()}`;
-      const invoicePayload = encodeInvoicePayload({
-        reference: paymentReference,
-        method: 'paypal',
-        amount: parsedAmount,
-        currency: parsedCurrency,
-        customerName: resolvedCustomerName,
-        customerEmail: resolvedCustomerEmail,
-        items: normalizedLineItems,
-        deliveryAddress,
-        location,
-      });
-
-      const order = await createPayPalOrder({
-        amount: parsedAmount,
-        currency: parsedCurrency,
-        productSummary,
-        returnUrl: `${returnUrl}?reference=${encodeURIComponent(paymentReference)}`,
-        cancelUrl,
-        customId: invoicePayload,
-      });
-
-      await registerPendingPayment(paymentReference, 'paypal');
-
-      return NextResponse.json({
-        success: true,
-        approveUrl: order.approveUrl,
-        orderId: order.orderId,
-      });
-    }
-
-    // Pas de credentials PayPal: mode démo, confirmation immédiate locale.
-    console.log('=== COMMANDE PAYPAL (MODE DEMO) ===');
+    // En production: utiliser PayPal SDK
+    console.log('=== CRÉATION COMMANDE PAYPAL ===');
     console.log('Montant:', parsedAmount, parsedCurrency);
     console.log('Résumé:', productSummary);
-    console.log('====================================');
+    console.log('Quantité totale:', totalQty);
+    console.log('Return URL:', returnUrl);
+    console.log('Cancel URL:', cancelUrl);
+    console.log('Email fourni:', Boolean(customerEmail));
+    console.log('================================');
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Simuler la création d'une commande PayPal
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const paymentReference = `PAYPAL-DEMO-${Date.now()}`;
-    const result = await confirmPayment({
-      reference: paymentReference,
+    const paymentReference = `PAYPAL-${Date.now()}`;
+
+    recordPayment({
       method: 'paypal',
       amount: parsedAmount,
       currency: parsedCurrency,
+      reference: paymentReference,
+    });
+
+    const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
+    const resolvedCustomerEmail = (customerEmail || '').trim();
+    const invoice = createInvoice({
+      reference: paymentReference,
       customerName: resolvedCustomerName,
       customerEmail: resolvedCustomerEmail,
-      items: normalizedLineItems,
+      method: 'paypal',
+      amount: parsedAmount,
+      currency: parsedCurrency,
+      items: normalizedItems.map((item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
+        productName: item.productName || 'Produit',
+        quantity: Number(item.quantity || 1),
+        unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
+      })),
       deliveryAddress,
       location,
     });
 
-    return NextResponse.json({
+    let invoiceSent = false;
+    if (resolvedCustomerEmail && isMailerConfigured()) {
+      try {
+        await sendInvoiceEmail({
+          to: resolvedCustomerEmail,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customerName,
+          text: buildInvoiceText(invoice),
+        });
+        invoiceSent = true;
+      } catch (mailError) {
+        console.error('Erreur envoi facture PayPal:', mailError);
+      }
+    }
+
+    // En production: retourner l'URL d'approbation PayPal réelle
+    // Pour la démo, on simule avec une page locale
+    return NextResponse.json({ 
       success: true,
-      approveUrl: `${returnUrl}?reference=${encodeURIComponent(paymentReference)}&paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
+      approveUrl: `${returnUrl}?paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
       orderId: paymentReference,
-      invoice: result.invoice,
+      invoice: {
+        number: invoice.invoiceNumber,
+        sent: invoiceSent,
+        email: resolvedCustomerEmail || null,
+      },
     });
   } catch (error) {
     console.error('Erreur création commande PayPal:', error);

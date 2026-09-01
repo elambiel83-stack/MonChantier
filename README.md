@@ -20,10 +20,11 @@
 
 ## Authentification (Google, Facebook, TikTok, Téléphone)
 
-L'application utilise `NextAuth` avec 4 méthodes de connexion:
+L'application utilise `NextAuth` avec 5 méthodes de connexion:
 - Google OAuth
 - Facebook OAuth
 - TikTok OAuth
+- Apple OAuth
 - Numéro de téléphone (OTP)
 
 ### Variables d'environnement
@@ -34,6 +35,7 @@ Copier `.env.example` vers `.env.local` puis renseigner:
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`
 - `TIKTOK_CLIENT_ID` / `TIKTOK_CLIENT_SECRET`
+- `APPLE_ID` / `APPLE_SECRET`
 
 ### Email de devis (SMTP)
 
@@ -165,16 +167,17 @@ L'envoi de facture utilise la même configuration SMTP que les emails de devis.
 ### Activer Google OAuth (effectif)
 
 1. Créer un client OAuth 2.0 Web dans Google Cloud Console.
-2. Ajouter l'URI de redirection autorisée suivante:
-   - `http://localhost:3000/api/auth/callback/google`
+2. Ajouter l'URI de redirection autorisée qui correspond exactement à `NEXTAUTH_URL`:
+   - en développement courant: `http://localhost:3001/api/auth/callback/google`
+   - en production: `https://votre-domaine.tld/api/auth/callback/google`
 3. Renseigner dans `.env.local`:
-   - `NEXTAUTH_URL=http://localhost:3000`
+   - `NEXTAUTH_URL=http://localhost:3001`
    - `NEXTAUTH_SECRET=<une valeur longue et aléatoire>`
    - `GOOGLE_CLIENT_ID=<client id Google>`
    - `GOOGLE_CLIENT_SECRET=<client secret Google>`
 4. Redémarrer le serveur (`npm run dev`).
 
-Note: le bouton Google n'apparaît que si `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET` sont définis.
+Note: le bouton Google n'apparaît que si `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET` sont définis. Une erreur Google `400` indique généralement que l'URI de redirection déclarée dans Google Cloud ne correspond pas à `NEXTAUTH_URL`.
 
 ### OTP téléphone (mode dev)
 

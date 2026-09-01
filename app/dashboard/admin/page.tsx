@@ -160,7 +160,7 @@ type AdminUser = {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'agent';
+  role: AppRole;
   active: boolean;
   createdAt: string;
 };
@@ -207,7 +207,7 @@ export default function AdminPage() {
   const [usersApiOnline, setUsersApiOnline] = useState<boolean | null>(null);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState<'admin' | 'manager' | 'agent'>('agent');
+  const [newUserRole, setNewUserRole] = useState<AppRole>('client');
   const [platformRoles, setPlatformRoles] = useState<PlatformRoleAssignment[]>([]);
   const [roleIdentity, setRoleIdentity] = useState('');
   const [roleToAssign, setRoleToAssign] = useState<AppRole>('client');
@@ -289,32 +289,6 @@ export default function AdminPage() {
     }
   };
 
-  const reviewLoan = async (loanId: string) => {
-    try {
-      setDecidingLoanId(loanId);
-      const response = await fetch(`/api/credit/loans/${loanId}/review`, { method: 'POST' });
-      if (!response.ok) throw new Error('Erreur mise en analyse');
-      await loadLoans();
-    } finally {
-      setDecidingLoanId(null);
-    }
-  };
-
-  const decideLoan = async (loanId: string, decision: 'approved' | 'rejected') => {
-    try {
-      setDecidingLoanId(loanId);
-      const response = await fetch(`/api/credit/loans/${loanId}/decide`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision }),
-      });
-      if (!response.ok) throw new Error('Erreur décision prêt');
-      await loadLoans();
-    } finally {
-      setDecidingLoanId(null);
-    }
-  };
-
   const assignAgentToLoan = async (loanId: string) => {
     const agentIdentity = (agentAssignInput[loanId] || '').trim();
     if (!agentIdentity) return;
@@ -327,37 +301,6 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error('Erreur assignation');
       setAgentAssignInput((prev) => ({ ...prev, [loanId]: '' }));
-      await loadLoans();
-    } finally {
-      setDecidingLoanId(null);
-    }
-  };
-
-  const logCollectionAction = async (
-    loanId: string,
-    type: 'called' | 'notified' | 'promise_to_pay' | 'escalated'
-  ) => {
-    try {
-      setDecidingLoanId(loanId);
-      const response = await fetch(`/api/credit/loans/${loanId}/collections`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type }),
-      });
-      if (!response.ok) throw new Error('Erreur action recouvrement');
-      await loadLoans();
-    } finally {
-      setDecidingLoanId(null);
-    }
-  };
-
-  const releaseTranche = async (loanId: string, trancheId: string) => {
-    try {
-      setDecidingLoanId(loanId);
-      const response = await fetch(`/api/credit/loans/${loanId}/tranches/${trancheId}/release`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Erreur libération tranche');
       await loadLoans();
     } finally {
       setDecidingLoanId(null);
@@ -785,7 +728,7 @@ export default function AdminPage() {
       }
       setNewUserName('');
       setNewUserEmail('');
-      setNewUserRole('agent');
+      setNewUserRole('client');
       await Promise.all([loadUsers(), loadStats()]);
     } finally {
       setSavingUser(false);
@@ -924,7 +867,7 @@ export default function AdminPage() {
           </ul>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Paiements récents', 'Recent payments')}</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -962,7 +905,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Gestion des commandes', 'Order management')}</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -1048,7 +991,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="utilisateurs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Gestion des utilisateurs', 'User management')}</h2>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1068,14 +1011,14 @@ export default function AdminPage() {
             />
             <select
               value={newUserRole}
-              onChange={(event) => setNewUserRole(event.target.value as 'admin' | 'manager' | 'agent')}
+              onChange={(event) => setNewUserRole(event.target.value as AppRole)}
               aria-label={t('Rôle utilisateur', 'User role')}
               title={t('Rôle utilisateur', 'User role')}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
             >
-              <option value="agent">{getRoleLabel('agent')}</option>
-              <option value="manager">{getRoleLabel('manager')}</option>
-              <option value="admin">{getRoleLabel('admin')}</option>
+              {APP_ROLES.map((role) => (
+                <option key={role} value={role}>{ROLE_LABELS[role][lang]}</option>
+              ))}
             </select>
             <button
               type="button"
@@ -1263,39 +1206,7 @@ export default function AdminPage() {
                           <td className="py-3 pr-4">{loan.status}</td>
                           <td className="py-3 pr-4">{healthLabels[loan.repaymentHealth]}</td>
                           <td className="py-3 pr-4">
-                            <div className="flex flex-wrap gap-2">
-                              {loan.status === 'submitted' && (
-                                <button
-                                  type="button"
-                                  onClick={() => reviewLoan(loan.id)}
-                                  disabled={decidingLoanId === loan.id}
-                                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                                >
-                                  {t('Examiner', 'Review')}
-                                </button>
-                              )}
-                              {(loan.status === 'submitted' || loan.status === 'under_review') && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => decideLoan(loan.id, 'approved')}
-                                    disabled={decidingLoanId === loan.id}
-                                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-3 py-1.5 text-xs font-medium"
-                                  >
-                                    {t('Approuver', 'Approve')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => decideLoan(loan.id, 'rejected')}
-                                    disabled={decidingLoanId === loan.id}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                                  >
-                                    {t('Refuser', 'Reject')}
-                                  </button>
-                                </>
-                              )}
-                              {loan.status !== 'submitted' && loan.status !== 'under_review' && '-'}
-                            </div>
+                            <p className="text-xs text-slate-500">{t('Supervision et attribution uniquement', 'Oversight and assignment only')}</p>
                             {loan.status !== 'rejected' && loan.status !== 'paid_off' && (
                               <div className="mt-2 flex flex-wrap gap-2">
                                 <input
@@ -1401,14 +1312,7 @@ export default function AdminPage() {
                                             {t('Libérée', 'Released')}
                                           </span>
                                         ) : loan.status === 'active' ? (
-                                          <button
-                                            type="button"
-                                            onClick={() => releaseTranche(loan.id, tranche.id)}
-                                            disabled={decidingLoanId === loan.id}
-                                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-2 py-1 font-medium"
-                                          >
-                                            {t('Libérer', 'Release')}
-                                          </button>
+                                          <span className="text-slate-400">{t('Libération réservée à la comptabilité', 'Release reserved for accounting')}</span>
                                         ) : (
                                           <span className="text-slate-400">{t('En attente', 'Pending')}</span>
                                         )}
@@ -1418,45 +1322,9 @@ export default function AdminPage() {
                                 </div>
                               )}
                               {(loan.repaymentHealth === 'late' || loan.repaymentHealth === 'defaulted') && (
-                                <div className="mt-4 pt-3 border-t border-slate-200">
-                                  <p className="text-xs font-semibold uppercase tracking-wide text-red-500">
-                                    {t('Recouvrement', 'Collections')}
-                                  </p>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => logCollectionAction(loan.id, 'called')}
-                                      disabled={decidingLoanId === loan.id}
-                                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                                    >
-                                      {t('Appeler', 'Call')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => logCollectionAction(loan.id, 'notified')}
-                                      disabled={decidingLoanId === loan.id}
-                                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                                    >
-                                      {t('Notifier', 'Notify')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => logCollectionAction(loan.id, 'promise_to_pay')}
-                                      disabled={decidingLoanId === loan.id}
-                                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                                    >
-                                      {t('Promesse de paiement', 'Promise to pay')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => logCollectionAction(loan.id, 'escalated')}
-                                      disabled={decidingLoanId === loan.id}
-                                      className="rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white px-3 py-1.5 text-xs font-medium"
-                                    >
-                                      {t('Escalader', 'Escalate')}
-                                    </button>
-                                  </div>
-                                </div>
+                                <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500">
+                                  {t('Le recouvrement est traité par la comptabilité ou l’agent crédit assigné.', 'Collections are handled by accounting or the assigned credit agent.')}
+                                </p>
                               )}
                             </td>
                           </tr>
@@ -1470,7 +1338,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="livraisons" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Livraisons', 'Deliveries')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1536,7 +1404,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="produits" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Produits', 'Products')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(

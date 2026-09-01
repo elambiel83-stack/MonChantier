@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { confirmPayment } from '@/lib/paymentConfirmation';
+import { recordPayment } from '@/lib/adminStore';
+import { buildInvoiceText, createInvoice } from '@/lib/invoice';
+import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -24,6 +26,10 @@ export async function POST(request: NextRequest) {
     const { amount, currency, phone, network, fullname, email, customerName, customerEmail, tx_ref, metadata } = body;
 
     const items = Array.isArray(metadata?.items) ? metadata.items : [];
+    const totalQty = items.reduce(
+      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
+      0
+    );
     const productSummary = items
       .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
       .join(', ');
@@ -31,6 +37,7 @@ export async function POST(request: NextRequest) {
     const parsedAmount = parsePositiveAmount(amount);
     const parsedCurrency = sanitizeCurrency(currency);
 
+    // Validation
     if (!parsedAmount || !phone || !network || !tx_ref) {
       return NextResponse.json(
         { message: 'Montant, téléphone, réseau et référence requis' },
@@ -38,6 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normaliser le numéro de téléphone
     const normalizedPhone = String(phone).replace(/\s+/g, '');
     if (normalizedPhone.length < 8) {
       return NextResponse.json(
@@ -51,23 +59,32 @@ export async function POST(request: NextRequest) {
     console.log('Montant:', parsedAmount, parsedCurrency);
     console.log('Téléphone:', maskPhone(normalizedPhone));
     console.log('Réseau:', network);
+    console.log('Client fourni:', Boolean(fullname || customerName));
+    console.log('Email fourni:', Boolean(customerEmail || email));
     console.log('Référence:', tx_ref);
     console.log('Résumé:', productSummary);
+    console.log('Quantité totale:', totalQty);
     console.log('=======================================');
 
     // Simuler un délai de traitement
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const resolvedCustomerName = (customerName || fullname || 'Client MonChantier').trim();
-    const resolvedCustomerEmail = (customerEmail || email || '').trim();
-
-    const result = await confirmPayment({
-      reference: tx_ref,
+    recordPayment({
       method: 'mobilemoney',
       amount: parsedAmount,
       currency: parsedCurrency,
+      reference: tx_ref,
+    });
+
+    const resolvedCustomerName = (customerName || fullname || 'Client MonChantier').trim();
+    const resolvedCustomerEmail = (customerEmail || email || '').trim();
+    const invoice = createInvoice({
+      reference: tx_ref,
       customerName: resolvedCustomerName,
       customerEmail: resolvedCustomerEmail,
+      method: 'mobilemoney',
+      amount: parsedAmount,
+      currency: parsedCurrency,
       items: items.map((item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
         productName: item.productName || 'Produit',
         quantity: Number(item.quantity || 1),
@@ -77,13 +94,33 @@ export async function POST(request: NextRequest) {
       location: metadata?.location,
     });
 
-    return NextResponse.json({
+    let invoiceSent = false;
+    if (resolvedCustomerEmail && isMailerConfigured()) {
+      try {
+        await sendInvoiceEmail({
+          to: resolvedCustomerEmail,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customerName,
+          text: buildInvoiceText(invoice),
+        });
+        invoiceSent = true;
+      } catch (mailError) {
+        console.error('Erreur envoi facture Mobile Money:', mailError);
+      }
+    }
+
+    // Simuler une réponse de succès
+    return NextResponse.json({ 
       success: true,
       transaction_id: `TXN-${Date.now()}`,
       status: 'pending',
       message: `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
       reference: tx_ref,
-      invoice: result.invoice,
+      invoice: {
+        number: invoice.invoiceNumber,
+        sent: invoiceSent,
+        email: resolvedCustomerEmail || null,
+      },
     });
   } catch (error) {
     console.error('Erreur paiement Mobile Money:', error);

@@ -74,9 +74,9 @@ export default function CreditCommitteePanel() {
   };
 
   return (
-    <div>
+    <div id="dossiers-a-decider">
       <h1 className="text-2xl font-bold tracking-tight">Comité de crédit</h1>
-      <p className="mt-1 text-slate-600">Décider de l'octroi ou du refus des crédits soumis.</p>
+      <p className="mt-1 text-slate-600">Décider de l&apos;octroi ou du refus des crédits soumis.</p>
 
       {banner && (
         <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">

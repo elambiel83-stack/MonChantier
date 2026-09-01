@@ -21,7 +21,9 @@ export default function SignInPage() {
   const [callbackUrl, setCallbackUrl] = useState("/");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminTotp, setAdminTotp] = useState("");
   const [adminSubmitting, setAdminSubmitting] = useState(false);
+  const [phoneSubmitting, setPhoneSubmitting] = useState(false);
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -38,6 +40,7 @@ export default function SignInPage() {
     { id: "google", label: "Continuer avec Google" },
     { id: "facebook", label: "Continuer avec Facebook" },
     { id: "tiktok", label: "Continuer avec TikTok" },
+    { id: "apple", label: "Continuer avec Apple" },
   ].filter((provider) => Boolean(enabledProviders[provider.id]));
 
   const requestCode = async () => {
@@ -57,14 +60,25 @@ export default function SignInPage() {
 
   const handlePhoneLogin = async (e: FormEvent) => {
     e.preventDefault();
-    const result = await signIn("phone", {
-      phone,
-      code,
-      callbackUrl,
-    });
+    setPhoneSubmitting(true);
+    setMessage("");
 
-    if (!result?.ok) {
-      setMessage("Échec de connexion : vérifiez votre code et réessayez.");
+    try {
+      const result = await signIn("phone", {
+        phone,
+        code,
+        callbackUrl,
+        redirect: false,
+      });
+
+      if (!result?.ok) {
+        setMessage("Échec de connexion : vérifiez votre code et réessayez.");
+        return;
+      }
+
+      window.location.assign(result.url || callbackUrl);
+    } finally {
+      setPhoneSubmitting(false);
     }
   };
 
@@ -76,6 +90,7 @@ export default function SignInPage() {
       const result = await signIn("admin-login", {
         email: adminEmail,
         password: adminPassword,
+        totp: adminTotp,
         callbackUrl,
         redirect: false,
       });
@@ -133,8 +148,12 @@ export default function SignInPage() {
               Envoyer
             </button>
           </div>
-          <button type="submit" className="w-full rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">
-            Se connecter avec numéro
+          <button
+            type="submit"
+            disabled={phoneSubmitting}
+            className="w-full rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {phoneSubmitting ? "Connexion…" : "Se connecter avec numéro"}
           </button>
         </form>
 
@@ -156,6 +175,16 @@ export default function SignInPage() {
               onChange={(e) => setAdminPassword(e.target.value)}
               placeholder="Mot de passe"
               autoComplete="current-password"
+            />
+            <input
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={adminTotp}
+              onChange={(e) => setAdminTotp(e.target.value.replace(/\D/g, ""))}
+              placeholder="Code MFA à 6 chiffres"
+              autoComplete="one-time-code"
             />
             <button
               type="submit"

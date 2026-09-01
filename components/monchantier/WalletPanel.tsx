@@ -254,7 +254,7 @@ export default function WalletPanel() {
   };
 
   return (
-    <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="porte-monnaie" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold">Mon porte-monnaie</h2>
       <p className="mt-1 text-sm text-slate-500">
         Gardez de l&apos;argent en réserve pour vos prochains achats, rechargez-le via vos moyens de

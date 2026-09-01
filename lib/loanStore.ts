@@ -318,7 +318,7 @@ export function reviewLoan(args: {
 
 export type DecideLoanResult =
   | { success: true; loan: Loan }
-  | { success: false; error: 'not_found' | 'not_decidable' };
+  | { success: false; error: 'not_found' | 'not_decidable' | 'separation_of_duties' };
 
 export async function decideLoan(args: {
   id: string;
@@ -332,6 +332,9 @@ export async function decideLoan(args: {
     if (!loan) return { success: false as const, error: 'not_found' as const };
     if (loan.status !== 'submitted' && loan.status !== 'under_review') {
       return { success: false as const, error: 'not_decidable' as const };
+    }
+    if (normalizeIdentity(loan.reviewedBy || '') === normalizeIdentity(args.decidedBy)) {
+      return { success: false as const, error: 'separation_of_duties' as const };
     }
 
     loan.decidedAt = new Date().toISOString();
@@ -392,7 +395,7 @@ export async function decideLoan(args: {
 
 export type ReleaseTrancheResult =
   | { success: true; loan: Loan }
-  | { success: false; error: 'not_found' | 'tranche_not_found' | 'not_active' | 'already_released' };
+  | { success: false; error: 'not_found' | 'tranche_not_found' | 'not_active' | 'already_released' | 'separation_of_duties' };
 
 export async function releaseTranche(args: {
   id: string;
@@ -401,6 +404,12 @@ export async function releaseTranche(args: {
 }): Promise<ReleaseTrancheResult> {
   const loan = await getLoanById(args.id);
   if (!loan) return { success: false, error: 'not_found' };
+  if (
+    normalizeIdentity(loan.reviewedBy || '') === normalizeIdentity(args.releasedBy) ||
+    normalizeIdentity(loan.decidedBy || '') === normalizeIdentity(args.releasedBy)
+  ) {
+    return { success: false, error: 'separation_of_duties' };
+  }
   if (loan.status !== 'active') return { success: false, error: 'not_active' };
 
   const tranche = loan.tranches?.find((item) => item.id === args.trancheId);

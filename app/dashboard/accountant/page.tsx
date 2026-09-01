@@ -1,5 +1,5 @@
-import RoleComingSoon from "../_components/RoleComingSoon";
+import AccountantPanel from "@/components/monchantier/AccountantPanel";
 
 export default function Page() {
-  return <RoleComingSoon role="accountant" />;
+  return <AccountantPanel />;
 }

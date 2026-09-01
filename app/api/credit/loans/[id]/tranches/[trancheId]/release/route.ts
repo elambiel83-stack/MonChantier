@@ -8,6 +8,7 @@ const ERROR_MESSAGES: Record<string, { message: string; status: number }> = {
   tranche_not_found: { message: 'Tranche introuvable', status: 404 },
   not_active: { message: "Ce prêt n'est pas actif", status: 400 },
   already_released: { message: 'Cette tranche a déjà été libérée', status: 400 },
+  separation_of_duties: { message: 'Le décideur ou l’analyste ne peut pas décaisser', status: 403 },
 };
 
 export async function POST(

@@ -1,5 +1,5 @@
-import RoleComingSoon from "../_components/RoleComingSoon";
+import SiteManagerPanel from "@/components/monchantier/SiteManagerPanel";
 
 export default function Page() {
-  return <RoleComingSoon role="site-manager" />;
+  return <SiteManagerPanel />;
 }

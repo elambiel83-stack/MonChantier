@@ -14,9 +14,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const role = session!.user!.role || DEFAULT_ROLE;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 lg:flex">
+    <div className="dashboard-shell min-h-screen bg-[#f4f6f2] text-slate-800 lg:flex">
       <DashboardSidebar sessionRole={role} />
-      <main className="flex-1 p-6 lg:p-10">{children}</main>
+      <main className="dashboard-content flex-1 px-5 py-7 sm:px-8 lg:px-12 lg:py-10">{children}</main>
     </div>
   );
 }

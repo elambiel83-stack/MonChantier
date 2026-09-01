@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteProduct, updateProduct, UpdateProductPatch } from '@/lib/productStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const id = Number(params.id);
     if (!Number.isFinite(id)) {
@@ -42,7 +46,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const id = Number(params.id);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ message: 'Identifiant invalide' }, { status: 400 });

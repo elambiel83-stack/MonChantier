@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
-import { canLogCollectionAction } from '@/lib/loanPermissions';
-import { CollectionActionType, logCollectionAction } from '@/lib/loanStore';
+import { canLogLoanCollection } from '@/lib/loanPermissions';
+import { CollectionActionType, getLoanById, logCollectionAction } from '@/lib/loanStore';
 
 const VALID_TYPES: CollectionActionType[] = [
   'called',
@@ -15,7 +15,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const actor = await getSessionActor();
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
-    if (!canLogCollectionAction(actor.role)) {
+    const loan = await getLoanById(params.id);
+    if (!loan) return NextResponse.json({ message: 'Prêt introuvable' }, { status: 404 });
+    if (!canLogLoanCollection(actor, loan)) {
       return NextResponse.json({ message: 'Accès refusé' }, { status: 403 });
     }
 

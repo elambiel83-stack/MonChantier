@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderStatus, updateOrderStatus } from '@/lib/paymentStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 const VALID_STATUSES: OrderStatus[] = ['processing', 'shipped', 'delivered', 'cancelled'];
 
 export async function PATCH(request: NextRequest, { params }: { params: { reference: string } }) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const body = await request.json();
     const nextStatus = String(body?.orderStatus || '') as OrderStatus;

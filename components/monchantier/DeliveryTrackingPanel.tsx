@@ -89,7 +89,7 @@ export default function DeliveryTrackingPanel() {
   }, []);
 
   return (
-    <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="livraisons" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold">Mes livraisons</h2>
       <p className="mt-1 text-sm text-slate-500">
         Suivi de la progression de vos commandes, du dépôt jusqu&apos;à votre adresse.

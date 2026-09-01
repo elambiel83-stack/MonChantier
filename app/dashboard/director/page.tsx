@@ -31,7 +31,7 @@ export default async function DirectorDashboardPage() {
         restent à construire.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div id="vue-generale" className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statusCards.map((card) => (
           <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-slate-500">{card.title}</p>
@@ -40,7 +40,7 @@ export default async function DirectorDashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="finance" className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-500">Capital décaissé</p>
           <p className="mt-1 text-lg font-semibold">
@@ -64,7 +64,7 @@ export default async function DirectorDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="performance" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Performance de remboursement</h2>
         <p className="mt-1 text-sm text-slate-500">
           Taux de remboursement (échéances payées / échéances dues sur crédits actifs et soldés) :{" "}

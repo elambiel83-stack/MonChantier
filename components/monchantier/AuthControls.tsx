@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { getProviders, signIn, useSession } from "next-auth/react";
 
 interface AuthControlsProps {
   t: (fr: string, en: string) => string;
@@ -15,6 +15,18 @@ export function AuthControls({ t }: AuthControlsProps) {
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [enabledProviders, setEnabledProviders] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    void getProviders().then((providers) => setEnabledProviders(providers || {}));
+  }, []);
+
+  const oauthProviders = [
+    { id: "google", label: "Google" },
+    { id: "facebook", label: "Facebook" },
+    { id: "tiktok", label: "TikTok" },
+    { id: "apple", label: "Apple" },
+  ].filter((provider) => Boolean(enabledProviders[provider.id]));
 
   const handleRequestCode = async () => {
     setLoading(true);
@@ -73,13 +85,6 @@ export function AuthControls({ t }: AuthControlsProps) {
         >
           {t("Tableau de bord", "Dashboard")}
         </Link>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold"
-        >
-          {t("Déconnexion", "Sign out")}
-        </button>
       </div>
     );
   }
@@ -96,17 +101,20 @@ export function AuthControls({ t }: AuthControlsProps) {
 
       {panelOpen && (
         <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-lg z-50">
-          <div className="grid grid-cols-2 gap-2">
-            <button className="rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold hover:bg-slate-50" onClick={() => signIn("google")}>
-              Google
-            </button>
-            <button className="rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold hover:bg-slate-50" onClick={() => signIn("facebook")}>
-              Facebook
-            </button>
-            <button className="rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold hover:bg-slate-50 col-span-2" onClick={() => signIn("tiktok")}>
-              TikTok
-            </button>
-          </div>
+          {oauthProviders.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {oauthProviders.map((provider) => (
+                <button
+                  key={provider.id}
+                  type="button"
+                  className="rounded-lg border border-slate-300 px-2 py-2 text-xs font-semibold hover:bg-slate-50"
+                  onClick={() => signIn(provider.id)}
+                >
+                  {provider.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <form className="mt-3 space-y-2" onSubmit={handlePhoneSignIn}>
             <input

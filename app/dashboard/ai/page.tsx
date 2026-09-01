@@ -29,7 +29,7 @@ export default async function AiDashboardPage() {
         une fois les modules correspondants alimentés en données.
       </p>
 
-      <div className="mt-6 space-y-3">
+      <div id="alertes" className="mt-6 space-y-3">
         {alerts.length === 0 ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm font-medium text-emerald-800">

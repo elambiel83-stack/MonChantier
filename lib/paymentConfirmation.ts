@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { recordPayment } from '@/lib/adminStore';
 import { buildInvoiceText, createInvoice, InvoicePaymentMethod } from '@/lib/invoice';
 import { buildInvoicePdf } from '@/lib/invoicePdf';
@@ -42,6 +43,15 @@ function parsePositiveAmount(value: unknown) {
 
 export function isSupportedMethod(value: unknown): value is InvoicePaymentMethod {
   return value === 'mobilemoney' || value === 'card' || value === 'paypal';
+}
+
+/**
+ * References are looked up unauthenticated (see /api/payments/status), so they
+ * double as bearer tokens: a timestamp alone is guessable/enumerable, hence the
+ * random suffix.
+ */
+export function generatePaymentReference(prefix: string): string {
+  return `${prefix}-${Date.now()}-${randomBytes(9).toString('base64url')}`;
 }
 
 export async function registerPendingPayment(reference: string, method: InvoicePaymentMethod) {

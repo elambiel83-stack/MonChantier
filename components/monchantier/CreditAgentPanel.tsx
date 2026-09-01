@@ -106,7 +106,7 @@ export default function CreditAgentPanel() {
   };
 
   return (
-    <div>
+    <div id="dossiers-assignes">
       <h1 className="text-2xl font-bold tracking-tight">Agent crédit</h1>
       <p className="mt-1 text-slate-600">Analyser les dossiers de crédit qui vous sont assignés.</p>
 

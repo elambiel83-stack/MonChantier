@@ -415,7 +415,7 @@ export default function LoanPanel() {
   };
 
   return (
-    <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="credit" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Crédit immobilier</h2>
         {!showWizard && (

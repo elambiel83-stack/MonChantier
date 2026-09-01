@@ -6,6 +6,10 @@ import { listQuoteRequestsByEmail } from "@/lib/quoteStore";
 import WalletPanel from "@/components/monchantier/WalletPanel";
 import LoanPanel from "@/components/monchantier/LoanPanel";
 import DeliveryTrackingPanel from "@/components/monchantier/DeliveryTrackingPanel";
+import FavoritesPanel from "@/components/monchantier/FavoritesPanel";
+import AddressesPanel from "@/components/monchantier/AddressesPanel";
+import SupportPanel from "@/components/monchantier/SupportPanel";
+import ProjectsPanel from "@/components/monchantier/ProjectsPanel";
 
 const METHOD_LABELS: Record<string, string> = {
   mobilemoney: "Mobile Money",
@@ -70,6 +74,7 @@ export default async function ClientDashboardPage() {
 
   const confirmedOrders = orders.filter((order) => order.state === "confirmed");
   const pendingOrders = orders.filter((order) => order.state === "pending");
+  const invoicedOrders = orders.filter((order) => order.fullInvoice);
   const totalsByCurrency = confirmedOrders.reduce<Record<string, number>>((acc, order) => {
     const totals = order.invoice?.totals;
     if (!totals) return acc;
@@ -112,7 +117,7 @@ export default async function ClientDashboardPage() {
       <LoanPanel />
       <DeliveryTrackingPanel />
 
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Mes commandes</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -175,7 +180,94 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="factures" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Mes factures</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-slate-500">
+                <th className="py-2 pr-4 font-medium">Facture</th>
+                <th className="py-2 pr-4 font-medium">Référence</th>
+                <th className="py-2 pr-4 font-medium">Montant</th>
+                <th className="py-2 pr-4 font-medium">Date</th>
+                <th className="py-2 pr-4 font-medium">Télécharger</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoicedOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-3 text-slate-500">
+                    Aucune facture pour le moment.
+                  </td>
+                </tr>
+              ) : (
+                invoicedOrders.map((order) => (
+                  <tr key={order.reference} className="border-b border-slate-100 last:border-b-0">
+                    <td className="py-3 pr-4 font-mono text-xs">{order.fullInvoice?.invoiceNumber}</td>
+                    <td className="py-3 pr-4 font-mono text-xs">{order.reference}</td>
+                    <td className="py-3 pr-4">{formatAmount(order)}</td>
+                    <td className="py-3 pr-4">{formatDate(order.updatedAt)}</td>
+                    <td className="py-3 pr-4">
+                      <Link
+                        href={`/api/payments/invoice/${encodeURIComponent(order.reference)}/pdf`}
+                        className="text-orange-600 hover:text-orange-700 font-medium"
+                      >
+                        Télécharger
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Mes paiements</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-slate-500">
+                <th className="py-2 pr-4 font-medium">Date</th>
+                <th className="py-2 pr-4 font-medium">Méthode</th>
+                <th className="py-2 pr-4 font-medium">Montant</th>
+                <th className="py-2 pr-4 font-medium">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-3 text-slate-500">
+                    Aucun paiement pour le moment.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.reference} className="border-b border-slate-100 last:border-b-0">
+                    <td className="py-3 pr-4">{formatDate(order.updatedAt)}</td>
+                    <td className="py-3 pr-4">{METHOD_LABELS[order.method] || order.method}</td>
+                    <td className="py-3 pr-4">{formatAmount(order)}</td>
+                    <td className="py-3 pr-4">
+                      {order.state === "confirmed" ? (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                          Confirmé
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          En attente
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="devis" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Mes devis</h2>
         <ul className="mt-4 space-y-3">
           {quotes.length === 0 ? (
@@ -193,6 +285,11 @@ export default async function ClientDashboardPage() {
           )}
         </ul>
       </div>
+
+      <ProjectsPanel />
+      <FavoritesPanel />
+      <AddressesPanel />
+      <SupportPanel />
     </div>
   );
 }

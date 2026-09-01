@@ -1,12 +1,14 @@
 import { timingSafeEqual, createHash } from "crypto";
 import type { NextAuthOptions } from "next-auth";
+import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import { verifyPhoneOtp } from "./phoneAuth";
 import { AppRole, DEFAULT_ROLE } from "./roles";
-import { getStoredRole } from "./roleStore";
+import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
+import { verifyAdminTotp } from './totp';
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
@@ -23,6 +25,7 @@ function getAdminEmails(): string[] {
 
 export async function resolveRole(identity: string | null): Promise<AppRole> {
   if (!identity) return DEFAULT_ROLE;
+  if (!(await isIdentityActive(identity))) return DEFAULT_ROLE;
 
   if (identity.includes("@") && getAdminEmails().includes(identity)) {
     return "admin";
@@ -98,20 +101,29 @@ const buildProviders = (): NextAuthOptions["providers"] => {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
+        totp: { label: "Code MFA", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         const expectedEmail = (process.env.ADMIN_LOGIN_EMAIL || "").trim().toLowerCase();
         const expectedPassword = process.env.ADMIN_LOGIN_PASSWORD || "";
         if (!expectedEmail || !expectedPassword) return null;
 
         const email = credentials?.email?.trim().toLowerCase() || "";
         const password = credentials?.password || "";
-        if (!email || !password) return null;
+        const totp = credentials?.totp || "";
+        if (!email || !password || !totp) return null;
 
-        const attempts = checkRateLimit(`admin-login:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
-        if (!attempts.allowed) return null;
+        const forwardedFor = req?.headers?.["x-forwarded-for"];
+        const ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "unknown";
 
-        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword)) {
+        // Two independent buckets, as with OTP requests: per-email caps brute-forcing
+        // the known admin password, per-IP caps a single source hammering many emails
+        // and stops one attacker from locking the real admin out via the email bucket.
+        const byEmail = checkRateLimit(`admin-login:email:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
+        const byIp = checkRateLimit(`admin-login:ip:${ip}`, { max: 20, windowMs: 15 * 60 * 1000 });
+        if (!byEmail.allowed || !byIp.allowed) return null;
+
+        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword) || !verifyAdminTotp(totp)) {
           return null;
         }
 
@@ -138,6 +150,10 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         // on désactive la vérification OIDC et on récupère le profil via l'endpoint
         // userinfo classique (OAuth2 pur) à la place.
         idToken: false,
+        // Requis même sans wellKnown: Google renvoie un paramètre `iss` sur le
+        // callback OAuth, qu'openid-client valide contre issuer.issuer — sans
+        // cette valeur l'assertion échoue et le callback part en erreur.
+        issuer: "https://accounts.google.com",
         authorization: {
           url: "https://accounts.google.com/o/oauth2/v2/auth",
           params: { scope: "openid email profile" },
@@ -161,6 +177,15 @@ const buildProviders = (): NextAuthOptions["providers"] => {
     configuredProviders.push(tikTokProvider);
   }
 
+  if (process.env.APPLE_ID && process.env.APPLE_SECRET) {
+    configuredProviders.push(
+      AppleProvider({
+        clientId: process.env.APPLE_ID,
+        clientSecret: process.env.APPLE_SECRET,
+      })
+    );
+  }
+
   return configuredProviders;
 };
 
@@ -174,19 +199,21 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    async jwt({ token }) {
-      const identity =
+      async jwt({ token }) {
+        const identity =
         typeof token.email === "string" && token.email
           ? token.email.toLowerCase()
           : typeof token.sub === "string"
           ? token.sub
           : null;
 
+      token.identity = identity || undefined;
       token.role = await resolveRole(identity);
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.identity = token.identity || session.user.email || undefined;
         session.user.role = token.role;
       }
       return session;

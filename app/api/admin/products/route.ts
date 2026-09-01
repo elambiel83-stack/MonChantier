@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createProduct, listProducts } from '@/lib/productStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const products = await listProducts();
   return NextResponse.json({ products });
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const body = await request.json();
     const fr = String(body?.fr || '').trim();

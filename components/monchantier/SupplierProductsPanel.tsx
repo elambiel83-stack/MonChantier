@@ -113,7 +113,7 @@ export default function SupplierProductsPanel() {
   };
 
   return (
-    <div>
+    <div id="produits">
       <h1 className="text-2xl font-bold tracking-tight">Fournisseur</h1>
       <p className="mt-1 text-slate-600">Gérer ses produits, stocks, commandes et ventes.</p>
 

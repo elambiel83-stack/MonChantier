@@ -124,7 +124,7 @@ export default function TechnicianServicesPanel() {
   };
 
   return (
-    <div>
+    <div id="mes-services">
       <h1 className="text-2xl font-bold tracking-tight">Technicien / Professionnel</h1>
       <p className="mt-1 text-slate-600">Gérer ses interventions et missions.</p>
 

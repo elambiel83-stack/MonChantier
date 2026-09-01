@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canDecideLoan } from '@/lib/loanPermissions';
-import { decideLoan } from '@/lib/loanStore';
+import { decideLoan, getLoanById } from '@/lib/loanStore';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -9,6 +9,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
     if (!canDecideLoan(actor.role)) {
       return NextResponse.json({ message: 'Accès refusé' }, { status: 403 });
+    }
+    const loan = await getLoanById(params.id);
+    if (!loan) return NextResponse.json({ message: 'Prêt introuvable' }, { status: 404 });
+    if (loan.reviewedBy?.trim().toLowerCase() === actor.identity) {
+      return NextResponse.json({ message: 'Séparation des tâches requise' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -23,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     if (!result.success) {
       const status = result.error === 'not_found' ? 404 : 400;
-      const message = result.error === 'not_found' ? 'Prêt introuvable' : "Ce prêt n'est plus décidable";
+      const message = result.error === 'not_found' ? 'Prêt introuvable' : result.error === 'separation_of_duties' ? 'Séparation des tâches requise' : "Ce prêt n'est plus décidable";
       return NextResponse.json({ message }, { status });
     }
 

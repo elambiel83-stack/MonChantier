@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { listPaymentStatuses } from '@/lib/paymentStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const statuses = await listPaymentStatuses();
   const orders = statuses
     .filter((s) => s.state === 'confirmed')

@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { recordPayment } from '@/lib/adminStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 const demoRows = [
   { method: 'mobilemoney' as const, amount: 125000, currency: 'CDF', reference: 'MM-DEMO-001' },
@@ -8,7 +9,10 @@ const demoRows = [
   { method: 'mobilemoney' as const, amount: 240000, currency: 'CDF', reference: 'MM-DEMO-004' },
 ];
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   demoRows.forEach((row) => {
     recordPayment({
       method: row.method,

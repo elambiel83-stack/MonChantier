@@ -9,6 +9,8 @@ export type SessionActor = {
 
 export async function getSessionActor(): Promise<SessionActor | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return null;
-  return { identity: session.user.email, role: session.user.role || DEFAULT_ROLE };
+  const user = session?.user;
+  const identity = user?.identity || user?.email;
+  if (!identity) return null;
+  return { identity: identity.toLowerCase(), role: user?.role || DEFAULT_ROLE };
 }

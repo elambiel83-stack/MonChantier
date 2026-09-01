@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createService, listServices } from '@/lib/serviceStore';
+import { requireAdmin } from '@/lib/requireAdmin';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const services = await listServices();
   return NextResponse.json({ services });
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const body = await request.json();
     const icon = String(body?.icon || '⚙️').trim();

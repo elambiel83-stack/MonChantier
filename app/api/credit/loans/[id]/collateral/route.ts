@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
-import { canDecideLoan, canReviewLoan } from '@/lib/loanPermissions';
+import { canWriteLoanEvidence } from '@/lib/loanPermissions';
 import { addLoanCollateral, getLoanById, LoanCollateralType } from '@/lib/loanStore';
 import { WalletCurrency } from '@/lib/walletExchange';
 
@@ -18,9 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const loan = await getLoanById(params.id);
     if (!loan) return NextResponse.json({ message: 'Prêt introuvable' }, { status: 404 });
 
-    const isOwner = loan.identity === actor.identity;
-    const isStaff = canReviewLoan(actor.role) || canDecideLoan(actor.role);
-    if (!isOwner && !isStaff) {
+    if (!canWriteLoanEvidence(actor, loan)) {
       return NextResponse.json({ message: 'Accès refusé' }, { status: 403 });
     }
 

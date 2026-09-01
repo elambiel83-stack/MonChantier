@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Providers } from './providers'
+import { GlobalSignOutButton } from '@/components/GlobalSignOutButton'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { CONTACT_INFO, LOGO_URL } from '@/components/monchantier/constants'
 
@@ -93,7 +94,10 @@ export default function RootLayout({
             </Script>
           </>
         )}
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <GlobalSignOutButton />
+        </Providers>
       </body>
     </html>
   )

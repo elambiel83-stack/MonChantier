@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
-import { canReviewLoan } from '@/lib/loanPermissions';
-import { reviewLoan } from '@/lib/loanStore';
+import { canReviewAssignedLoan } from '@/lib/loanPermissions';
+import { getLoanById, reviewLoan } from '@/lib/loanStore';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const actor = await getSessionActor();
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
-    if (!canReviewLoan(actor.role)) {
+    const loan = await getLoanById(params.id);
+    if (!loan) return NextResponse.json({ message: 'Prêt introuvable' }, { status: 404 });
+    if (!canReviewAssignedLoan(actor, loan)) {
       return NextResponse.json({ message: 'Accès refusé' }, { status: 403 });
     }
 

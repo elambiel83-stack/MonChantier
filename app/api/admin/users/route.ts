@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addUser, listUsers, toggleUserActive } from '@/lib/adminStore';
+import { requireAdmin } from '@/lib/requireAdmin';
+import { isAppRole } from '@/lib/roles';
+import { getSessionActor } from '@/lib/sessionIdentity';
+import { setIdentityActive, setStoredRole } from '@/lib/roleStore';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   return NextResponse.json({ users: listUsers() });
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const body = await request.json();
   const name = String(body?.name || '').trim();
   const email = String(body?.email || '').trim();
-  const role = body?.role as 'admin' | 'manager' | 'agent';
+  const role = body?.role;
+  const actor = await getSessionActor();
 
   if (!name || !email || !role) {
     return NextResponse.json(
@@ -18,7 +29,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!['admin', 'manager', 'agent'].includes(role)) {
+  if (!isAppRole(role) || !actor) {
     return NextResponse.json(
       { message: 'Rôle invalide' },
       { status: 400 }
@@ -26,12 +37,17 @@ export async function POST(request: NextRequest) {
   }
 
   const created = addUser({ name, email, role });
+  await setStoredRole({ identity: email, role, actor: actor.identity });
   return NextResponse.json({ success: true, user: created });
 }
 
 export async function PATCH(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const body = await request.json();
   const userId = String(body?.userId || '');
+  const actor = await getSessionActor();
 
   if (!userId) {
     return NextResponse.json(
@@ -47,6 +63,7 @@ export async function PATCH(request: NextRequest) {
       { status: 404 }
     );
   }
+  if (actor) await setIdentityActive({ identity: updated.email, active: updated.active, actor: actor.identity });
 
   return NextResponse.json({ success: true, user: updated });
 }

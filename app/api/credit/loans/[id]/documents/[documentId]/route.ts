@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getSessionActor } from '@/lib/sessionIdentity';
-import { canDecideLoan, canReviewLoan } from '@/lib/loanPermissions';
+import { canAccessLoan } from '@/lib/loanPermissions';
 import { getLoanById } from '@/lib/loanStore';
 
 export async function GET(
@@ -15,9 +15,7 @@ export async function GET(
   const loan = await getLoanById(params.id);
   if (!loan) return NextResponse.json({ message: 'Prêt introuvable' }, { status: 404 });
 
-  const isOwner = loan.identity === actor.identity;
-  const isStaff = canReviewLoan(actor.role) || canDecideLoan(actor.role);
-  if (!isOwner && !isStaff) {
+  if (!canAccessLoan(actor, loan)) {
     return NextResponse.json({ message: 'Accès refusé' }, { status: 403 });
   }
 

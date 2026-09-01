@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+	:is(button, .liquid-control):not([data-liquid="off"]) {
+		isolation: isolate;
+		position: relative;
+		overflow: hidden;
+		transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+	}
+
+	:is(button, .liquid-control):not([data-liquid="off"])::after {
+		position: absolute;
+		inset: -80% -45%;
+		z-index: 1;
+		content: "";
+		pointer-events: none;
+		background: linear-gradient(112deg, transparent 42%, rgb(255 255 255 / 0.38) 50%, transparent 58%);
+		transform: translateX(-58%) rotate(8deg);
+		transition: transform 560ms cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	:is(button, .liquid-control):not(:disabled):not([data-liquid="off"]):hover {
+		transform: translateY(-1px);
+		box-shadow: 0 7px 16px rgb(20 42 34 / 0.16);
+	}
+
+	:is(button, .liquid-control):not(:disabled):not([data-liquid="off"]):hover::after {
+		transform: translateX(58%) rotate(8deg);
+	}
+
+	:is(button, .liquid-control):not(:disabled):not([data-liquid="off"]):active {
+		transform: translateY(0) scale(0.98);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:is(button, .liquid-control):not([data-liquid="off"]),
+		:is(button, .liquid-control):not([data-liquid="off"])::after {
+			transition: none;
+		}
+	}
+}
+
+@layer components {
+	.dashboard-content > div {
+		width: 100%;
+	}
+
+	.dashboard-content h1 {
+		color: #1b3027;
+	}
+
+	.dashboard-content > div > h1 {
+		margin-top: 0.25rem;
+	}
+
+	.dashboard-content .rounded-xl.border.bg-white {
+		border-color: #d9e2da;
+		box-shadow: 0 1px 2px rgb(27 48 39 / 0.06);
+	}
+}
