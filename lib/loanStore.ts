@@ -1,5 +1,3 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { WalletCurrency } from '@/lib/walletExchange';
 import {
   buildAmortizationSchedule,
@@ -7,6 +5,7 @@ import {
   getLoanLateThresholdDays,
 } from '@/lib/loanCalculator';
 import { creditLoanDisbursement, debitLoanRepayment } from '@/lib/walletStore';
+import { readStore, withStore } from './storeDb';
 
 export type LoanStatus = 'submitted' | 'under_review' | 'approved' | 'rejected' | 'active' | 'paid_off';
 
@@ -140,43 +139,8 @@ export type Loan = {
 
 type LoanStoreModel = { loans: Loan[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'loan-store.json');
-const INITIAL_STORE: LoanStoreModel = { loans: [] };
-
-let storeMutex: Promise<void> = Promise.resolve();
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
-
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
-
-async function readStore(): Promise<LoanStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-  try {
-    const parsed = JSON.parse(raw) as Partial<LoanStoreModel>;
-    return { loans: Array.isArray(parsed.loans) ? parsed.loans : [] };
-  } catch {
-    return { loans: [] };
-  }
-}
-
-async function writeStore(store: LoanStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
+const STORE_KEY = 'loan-store';
+const buildInitialStore = (): LoanStoreModel => ({ loans: [] });
 
 function normalizeIdentity(identity: string): string {
   return identity.trim().toLowerCase();
@@ -216,8 +180,7 @@ export function createLoanApplication(args: {
   termMonths: number;
   tranches?: Array<{ label: string; condition: string; amount: number }>;
 }): Promise<Loan> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const annualInterestRate = getLoanAnnualInterestRate();
     const now = new Date();
     const schedule = buildAmortizationSchedule({
@@ -263,31 +226,24 @@ export function createLoanApplication(args: {
     appendAudit(loan, { by: identity, action: 'submitted' });
 
     store.loans.unshift(loan);
-    await writeStore(store);
     return loan;
   });
 }
 
-export function listLoansByIdentity(identity: string): Promise<Loan[]> {
+export async function listLoansByIdentity(identity: string): Promise<Loan[]> {
   const normalized = normalizeIdentity(identity);
-  return withLock(async () => {
-    const store = await readStore();
-    return store.loans.filter((loan) => loan.identity === normalized);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.loans.filter((loan) => loan.identity === normalized);
 }
 
-export function listAllLoans(): Promise<Loan[]> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.loans;
-  });
+export async function listAllLoans(): Promise<Loan[]> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.loans;
 }
 
-export function getLoanById(id: string): Promise<Loan | null> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.loans.find((loan) => loan.id === id) || null;
-  });
+export async function getLoanById(id: string): Promise<Loan | null> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.loans.find((loan) => loan.id === id) || null;
 }
 
 export type ReviewLoanResult =
@@ -299,8 +255,7 @@ export function reviewLoan(args: {
   reviewedBy: string;
   note?: string;
 }): Promise<ReviewLoanResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
     if (loan.status !== 'submitted') return { success: false as const, error: 'not_submitted' as const };
@@ -311,7 +266,6 @@ export function reviewLoan(args: {
     loan.reviewNote = args.note;
     appendAudit(loan, { by: args.reviewedBy, action: 'review_started', note: args.note });
 
-    await writeStore(store);
     return { success: true as const, loan };
   });
 }
@@ -326,8 +280,7 @@ export async function decideLoan(args: {
   decidedBy: string;
   rejectionReason?: string;
 }): Promise<DecideLoanResult> {
-  const result = await withLock(async () => {
-    const store = await readStore();
+  const result = await withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
     if (loan.status !== 'submitted' && loan.status !== 'under_review') {
@@ -349,7 +302,6 @@ export async function decideLoan(args: {
       appendAudit(loan, { by: args.decidedBy, action: 'approved' });
     }
 
-    await writeStore(store);
     return { success: true as const, loan };
   });
 
@@ -360,20 +312,18 @@ export async function decideLoan(args: {
   if (result.loan.disbursementMode === 'tranches') {
     // Décaissement par tranches: aucun versement automatique, chaque
     // tranche sera libérée manuellement via releaseTranche().
-    return withLock(async () => {
-      const store = await readStore();
+    return withStore(STORE_KEY, buildInitialStore, (store) => {
       const loan = store.loans.find((item) => item.id === args.id);
       if (!loan) return { success: false as const, error: 'not_found' as const };
       loan.status = 'active';
       loan.disbursedAt = new Date().toISOString();
       appendAudit(loan, { by: 'system', action: 'disbursed', note: 'Décaissement par tranches activé' });
-      await writeStore(store);
       return { success: true as const, loan };
     });
   }
 
-  // Décaissement effectif dans le porte-monnaie du client, hors verrou du
-  // store des prêts (le verrou du wallet store est indépendant).
+  // Décaissement effectif dans le porte-monnaie du client, dans sa propre
+  // transaction (indépendante de celle du store des prêts).
   await creditLoanDisbursement({
     identity: result.loan.identity,
     loanId: result.loan.id,
@@ -381,14 +331,12 @@ export async function decideLoan(args: {
     amount: result.loan.principal,
   });
 
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
     loan.status = 'active';
     loan.disbursedAt = new Date().toISOString();
     appendAudit(loan, { by: 'system', action: 'disbursed' });
-    await writeStore(store);
     return { success: true as const, loan };
   });
 }
@@ -423,8 +371,7 @@ export async function releaseTranche(args: {
     amount: tranche.amount,
   });
 
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const stored = store.loans.find((item) => item.id === args.id);
     if (!stored) return { success: false as const, error: 'not_found' as const };
 
@@ -440,7 +387,6 @@ export async function releaseTranche(args: {
       note: `${tranche.label} (${tranche.amount} ${stored.currency})`,
     });
 
-    await writeStore(store);
     return { success: true as const, loan: stored };
   });
 }
@@ -473,8 +419,7 @@ export async function payNextInstallment(args: {
     return { success: false, error: 'insufficient_balance' };
   }
 
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const stored = store.loans.find((item) => item.id === args.id);
     if (!stored) return { success: false as const, error: 'not_found' as const };
 
@@ -495,7 +440,6 @@ export async function payNextInstallment(args: {
       appendAudit(stored, { by: 'system', action: 'paid_off' });
     }
 
-    await writeStore(store);
     return { success: true as const, loan: stored };
   });
 }
@@ -508,12 +452,10 @@ export function getDaysLate(loan: Loan): number {
   return days > 0 ? Math.floor(days) : 0;
 }
 
-export function listLoansForAgent(agentIdentity: string): Promise<Loan[]> {
+export async function listLoansForAgent(agentIdentity: string): Promise<Loan[]> {
   const normalized = normalizeIdentity(agentIdentity);
-  return withLock(async () => {
-    const store = await readStore();
-    return store.loans.filter((loan) => loan.assignedAgentIdentity === normalized);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.loans.filter((loan) => loan.assignedAgentIdentity === normalized);
 }
 
 export type AssignAgentResult =
@@ -525,8 +467,7 @@ export function assignAgent(args: {
   agentIdentity: string;
   assignedBy: string;
 }): Promise<AssignAgentResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
 
@@ -537,7 +478,6 @@ export function assignAgent(args: {
       note: loan.assignedAgentIdentity,
     });
 
-    await writeStore(store);
     return { success: true as const, loan };
   });
 }
@@ -555,8 +495,7 @@ export function addLoanDocument(args: {
   storagePath: string;
   uploadedBy: string;
 }): Promise<AddDocumentResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
 
@@ -573,7 +512,6 @@ export function addLoanDocument(args: {
     loan.documents.push(document);
     appendAudit(loan, { by: args.uploadedBy, action: 'document_added', note: args.fileName });
 
-    await writeStore(store);
     return { success: true as const, loan, document };
   });
 }
@@ -592,8 +530,7 @@ export function addLoanCollateral(args: {
   documentId?: string;
   addedBy: string;
 }): Promise<AddCollateralResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
 
@@ -610,7 +547,6 @@ export function addLoanCollateral(args: {
     loan.collateral.push(collateral);
     appendAudit(loan, { by: args.addedBy, action: 'collateral_added', note: args.description });
 
-    await writeStore(store);
     return { success: true as const, loan, collateral };
   });
 }
@@ -625,14 +561,12 @@ export function logCollectionAction(args: {
   type: CollectionActionType;
   note?: string;
 }): Promise<LogCollectionActionResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const loan = store.loans.find((item) => item.id === args.id);
     if (!loan) return { success: false as const, error: 'not_found' as const };
 
     appendAudit(loan, { by: args.by, action: `collection_${args.type}`, note: args.note });
 
-    await writeStore(store);
     return { success: true as const, loan };
   });
 }

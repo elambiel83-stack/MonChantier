@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     // Simuler un délai de traitement
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    recordPayment({
+    await recordPayment({
       method: 'mobilemoney',
       amount: parsedAmount,
       currency: parsedCurrency,

@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { products as seedProducts } from '@/components/monchantier/constants';
+import { readStore, withStore } from './storeDb';
 
 export type StoredProduct = {
   id: number;
@@ -22,18 +21,7 @@ export type StoredProduct = {
 
 type ProductStoreModel = { products: StoredProduct[]; nextId: number };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'product-store.json');
-
-let storeMutex: Promise<void> = Promise.resolve();
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
+const STORE_KEY = 'product-store';
 
 function buildSeedStore(): ProductStoreModel {
   const now = new Date().toISOString();
@@ -55,53 +43,20 @@ function buildSeedStore(): ProductStoreModel {
   return { products: seeded, nextId };
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(buildSeedStore(), null, 2), 'utf8');
-  }
+export async function listProducts(options?: { activeOnly?: boolean }): Promise<StoredProduct[]> {
+  const store = await readStore(STORE_KEY, buildSeedStore);
+  return options?.activeOnly ? store.products.filter((p) => p.active) : store.products;
 }
 
-async function readStore(): Promise<ProductStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-  try {
-    const parsed = JSON.parse(raw) as Partial<ProductStoreModel>;
-    return {
-      products: Array.isArray(parsed.products) ? parsed.products : [],
-      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
-    };
-  } catch {
-    return buildSeedStore();
-  }
+export async function getProduct(id: number): Promise<StoredProduct | null> {
+  const store = await readStore(STORE_KEY, buildSeedStore);
+  return store.products.find((p) => p.id === id) || null;
 }
 
-async function writeStore(store: ProductStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
-
-export function listProducts(options?: { activeOnly?: boolean }): Promise<StoredProduct[]> {
-  return withLock(async () => {
-    const store = await readStore();
-    return options?.activeOnly ? store.products.filter((p) => p.active) : store.products;
-  });
-}
-
-export function getProduct(id: number): Promise<StoredProduct | null> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.products.find((p) => p.id === id) || null;
-  });
-}
-
-export function listProductsByOwner(ownerIdentity: string): Promise<StoredProduct[]> {
+export async function listProductsByOwner(ownerIdentity: string): Promise<StoredProduct[]> {
   const normalized = ownerIdentity.trim().toLowerCase();
-  return withLock(async () => {
-    const store = await readStore();
-    return store.products.filter((p) => p.ownerIdentity === normalized);
-  });
+  const store = await readStore(STORE_KEY, buildSeedStore);
+  return store.products.filter((p) => p.ownerIdentity === normalized);
 }
 
 export function createProduct(input: {
@@ -115,8 +70,7 @@ export function createProduct(input: {
   fallback?: string;
   ownerIdentity?: string;
 }): Promise<StoredProduct> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildSeedStore, (store) => {
     const now = new Date().toISOString();
     const product: StoredProduct = {
       id: store.nextId,
@@ -135,7 +89,6 @@ export function createProduct(input: {
     };
     store.products.push(product);
     store.nextId += 1;
-    await writeStore(store);
     return product;
   });
 }
@@ -145,23 +98,19 @@ export type UpdateProductPatch = Partial<
 >;
 
 export function updateProduct(id: number, patch: UpdateProductPatch): Promise<StoredProduct | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildSeedStore, (store) => {
     const product = store.products.find((p) => p.id === id);
     if (!product) return null;
     Object.assign(product, patch, { updatedAt: new Date().toISOString() });
-    await writeStore(store);
     return product;
   });
 }
 
 export function deleteProduct(id: number): Promise<boolean> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildSeedStore, (store) => {
     const index = store.products.findIndex((p) => p.id === id);
     if (index === -1) return false;
     store.products.splice(index, 1);
-    await writeStore(store);
     return true;
   });
 }

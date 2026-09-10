@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       fullMessage,
     ].join('\n');
 
-    recordContact({ name: cleanName, email: cleanEmail });
+    await recordContact({ name: cleanName, email: cleanEmail });
     await recordQuoteRequest({
       name: cleanName,
       email: cleanEmail,

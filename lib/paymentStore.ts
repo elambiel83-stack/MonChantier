@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { InvoiceData, InvoicePaymentMethod } from '@/lib/invoice';
+import { readStore, withStore } from './storeDb';
 
 export type StoredInvoice = {
   number: string;
@@ -45,79 +44,31 @@ type PaymentStoreModel = {
   };
 };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'payment-webhook-store.json');
+const STORE_KEY = 'payment-webhook-store';
 const MAX_WEBHOOK_EVENT_IDS = 5000;
 
-const INITIAL_STORE: PaymentStoreModel = {
+const buildInitialStore = (): PaymentStoreModel => ({
   paymentStatuses: {},
   processedWebhookEvents: {
     stripe: [],
     paypal: [],
   },
-};
+});
 
-let storeMutex: Promise<void> = Promise.resolve();
-
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
-
-async function readStore(): Promise<PaymentStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<PaymentStoreModel>;
-    return {
-      paymentStatuses: parsed.paymentStatuses || {},
-      processedWebhookEvents: {
-        stripe: parsed.processedWebhookEvents?.stripe || [],
-        paypal: parsed.processedWebhookEvents?.paypal || [],
-      },
-    };
-  } catch {
-    return INITIAL_STORE;
-  }
-}
-
-async function writeStore(store: PaymentStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
-
-export function getStoredPaymentStatus(reference: string): Promise<StoredPaymentStatus | null> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.paymentStatuses[reference] || null;
-  });
+export async function getStoredPaymentStatus(reference: string): Promise<StoredPaymentStatus | null> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.paymentStatuses[reference] || null;
 }
 
 export function setStoredPaymentStatus(status: StoredPaymentStatus): Promise<void> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     store.paymentStatuses[status.reference] = status;
-    await writeStore(store);
   });
 }
 
-export function listPaymentStatuses(): Promise<StoredPaymentStatus[]> {
-  return withLock(async () => {
-    const store = await readStore();
-    return Object.values(store.paymentStatuses);
-  });
+export async function listPaymentStatuses(): Promise<StoredPaymentStatus[]> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return Object.values(store.paymentStatuses);
 }
 
 const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -132,8 +83,7 @@ export function updateOrderStatus(
   nextStatus: OrderStatus,
   cancelReason?: string
 ): Promise<{ status: StoredPaymentStatus } | { error: string }> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const existing = store.paymentStatuses[reference];
     if (!existing || existing.state !== 'confirmed') {
       return { error: 'Commande introuvable ou non confirmée' };
@@ -150,35 +100,29 @@ export function updateOrderStatus(
       existing.cancelReason = cancelReason;
     }
 
-    await writeStore(store);
     return { status: existing };
   });
 }
 
-export function hasProcessedWebhookEvent(
+export async function hasProcessedWebhookEvent(
   provider: WebhookProvider,
   eventId: string
 ): Promise<boolean> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.processedWebhookEvents[provider].includes(eventId);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.processedWebhookEvents[provider].includes(eventId);
 }
 
 export function markWebhookEventProcessed(
   provider: WebhookProvider,
   eventId: string
 ): Promise<void> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const events = store.processedWebhookEvents[provider];
-
     if (!events.includes(eventId)) {
       events.push(eventId);
       if (events.length > MAX_WEBHOOK_EVENT_IDS) {
         events.splice(0, events.length - MAX_WEBHOOK_EVENT_IDS);
       }
-      await writeStore(store);
     }
   });
 }

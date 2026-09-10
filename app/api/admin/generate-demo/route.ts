@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
-  demoRows.forEach((row) => {
-    recordPayment({
+  for (const row of demoRows) {
+    await recordPayment({
       method: row.method,
       amount: row.amount,
       currency: row.currency,
       reference: row.reference,
     });
-  });
+  }
 
   return NextResponse.json({
     success: true,

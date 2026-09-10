@@ -6,26 +6,34 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql"
   },
   "dependencies": {
+    "argon2": "^0.41.1",
+    "ioredis": "^5.4.1",
     "next": "^14.0.4",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.13",
     "pdf-lib": "^1.17.1",
+    "pg": "^8.13.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "stripe": "^22.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4",
+    "pg-mem": "^2.8.1",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.8"
   }
 }

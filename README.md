@@ -1,14 +1,17 @@
 # MonChantier Livraison
 
-## Démarrage rapide (après redémarrage du PC)
+## Démarrage rapide
 
-1. Ouvrir un terminal dans le dossier du projet :
-   - `/home/erick-lambi/Musique/MonChantier_Livraison`
-2. Installer les dépendances (si nécessaire) :
+1. Installer les dépendances :
    - `npm install`
-3. Lancer le serveur de développement :
+2. Démarrer une base PostgreSQL locale (Docker) :
+   - `docker compose up -d db`
+3. Copier `.env.example` vers `.env.local` et renseigner au minimum `DATABASE_URL` (voir `docker-compose.yml` pour les identifiants par défaut).
+4. Appliquer le schéma (idempotent, à rejouer à chaque déploiement) :
+   - `npm run db:migrate`
+5. Lancer le serveur de développement :
    - `npm run dev`
-4. Ouvrir l’application dans le navigateur :
+6. Ouvrir l'application dans le navigateur :
    - `http://localhost:3000`
 
 ## Commandes utiles
@@ -17,6 +20,28 @@
 - Rebuild production : `npm run build`
 - Démarrer en production : `npm run start`
 - Linter : `npm run lint`
+- Tests : `npm test`
+
+## Base de données
+
+Toute la persistance applicative (produits, commandes, prêts, wallet, rôles,
+livraisons, etc.) vit dans PostgreSQL (`DATABASE_URL`), voir `db/schema.sql`.
+Ce fichier est idempotent et doit être rejoué à chaque déploiement (comme
+`backend/schema.sql` dans le dépôt Chantier) : `npm run db:migrate`.
+
+Chaque domaine métier est stocké comme un document JSON dans la table
+`kv_store` (une ligne par store, verrouillée avec `SELECT ... FOR UPDATE`
+pendant les écritures — voir `lib/storeDb.ts`), ce qui conserve la même
+forme de données que l'ancien système de fichiers `data/*.json` tout en la
+rendant compatible avec un déploiement serverless ou multi-instance : les
+fichiers JSON ne survivaient pas à un redémarrage à froid en serverless et
+divergeaient entre plusieurs instances du serveur.
+
+**Note sur le reste de ce document** : les sections ci-dessous mentionnent
+encore par endroits `data/<nom>.json` pour décrire où vit chaque donnée —
+lire cela comme le nom du store correspondant dans `kv_store` (ex.
+`data/wallet-store.json` → clé `wallet-store`), la logique métier étant
+inchangée.
 
 ## Authentification (Google, Facebook, TikTok, Téléphone)
 
@@ -288,10 +313,13 @@ En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Admini
 
 - Configurer dans `.env.local` :
   - `ADMIN_LOGIN_EMAIL=admin@monchantier.net`
-  - `ADMIN_LOGIN_PASSWORD=<mot de passe>`
+  - `ADMIN_LOGIN_PASSWORD_HASH=<hash Argon2id>` (recommandé en production) ou `ADMIN_LOGIN_PASSWORD=<mot de passe en clair>` (dev uniquement)
+  - `ADMIN_TOTP_SECRET=<secret Base32>` (MFA, obligatoire en production)
   - Ajouter aussi cet email dans `ADMIN_EMAILS` pour qu'il obtienne le rôle `admin`.
-- Sans ces deux variables, le formulaire reste affiché mais refuse toute connexion (comportement sûr par défaut).
-- Le mot de passe est comparé par hash SHA-256 en temps constant (`lib/auth.ts`) pour limiter les attaques par mesure de temps ; il n'est jamais stocké ailleurs que dans `.env.local` (non versionné).
+- Sans identifiants configurés, le formulaire reste affiché mais refuse toute connexion (comportement sûr par défaut).
+- Le mot de passe est vérifié par Argon2id (`ADMIN_LOGIN_PASSWORD_HASH`) quand disponible, sinon comparé en clair par hash SHA-256 en temps constant (dev uniquement) ; il n'est jamais stocké ailleurs que dans `.env.local` (non versionné).
+- Deux compartiments de rate limiting (par email, par IP) protègent contre le brute-force, partagés entre toutes les instances du serveur si `REDIS_URL` est configuré (repli en mémoire locale sinon).
+- Si `TURNSTILE_SECRET_KEY` est configuré, un CAPTCHA Cloudflare Turnstile est aussi requis (no-op sinon).
 
 ### Confirmation manuelle de paiement (ops)
 

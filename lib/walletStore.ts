@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { WalletCurrency } from '@/lib/walletExchange';
+import { readStore, withStore } from './storeDb';
 
 export type WalletDepositMethod = 'mobilemoney' | 'card' | 'paypal';
 
@@ -55,44 +54,9 @@ type WalletStoreModel = {
   wallets: Record<string, Wallet>;
 };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'wallet-store.json');
-const INITIAL_STORE: WalletStoreModel = { wallets: {} };
+const STORE_KEY = 'wallet-store';
+const buildInitialStore = (): WalletStoreModel => ({ wallets: {} });
 const MAX_TRANSACTIONS = 500;
-
-let storeMutex: Promise<void> = Promise.resolve();
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
-
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
-
-async function readStore(): Promise<WalletStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-  try {
-    const parsed = JSON.parse(raw) as Partial<WalletStoreModel>;
-    return { wallets: parsed.wallets && typeof parsed.wallets === 'object' ? parsed.wallets : {} };
-  } catch {
-    return { wallets: {} };
-  }
-}
-
-async function writeStore(store: WalletStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
 
 function normalizeIdentity(identity: string): string {
   return identity.trim().toLowerCase();
@@ -114,12 +78,10 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function getWallet(identity: string): Promise<Wallet> {
+export async function getWallet(identity: string): Promise<Wallet> {
   const normalized = normalizeIdentity(identity);
-  return withLock(async () => {
-    const store = await readStore();
-    return store.wallets[normalized] || emptyWallet(normalized);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.wallets[normalized] || emptyWallet(normalized);
 }
 
 export function registerPendingDeposit(args: {
@@ -130,8 +92,7 @@ export function registerPendingDeposit(args: {
   amount: number;
 }): Promise<Wallet> {
   const normalized = normalizeIdentity(args.identity);
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const wallet = store.wallets[normalized] || emptyWallet(normalized);
 
     const alreadyExists = wallet.transactions.some(
@@ -156,7 +117,6 @@ export function registerPendingDeposit(args: {
     }
 
     store.wallets[normalized] = wallet;
-    await writeStore(store);
     return wallet;
   });
 }
@@ -169,8 +129,7 @@ export function confirmDeposit(args: {
   amount: number;
 }): Promise<{ wallet: Wallet; alreadyConfirmed: boolean }> {
   const normalized = normalizeIdentity(args.identity);
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const wallet = store.wallets[normalized] || emptyWallet(normalized);
 
     const existing = wallet.transactions.find(
@@ -209,7 +168,6 @@ export function confirmDeposit(args: {
     }
 
     store.wallets[normalized] = wallet;
-    await writeStore(store);
     return { wallet, alreadyConfirmed: false };
   });
 }
@@ -229,8 +187,7 @@ export function applyExchange(args: {
   marginPercent: number;
 }): Promise<ApplyExchangeResult> {
   const normalized = normalizeIdentity(args.identity);
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const wallet = store.wallets[normalized] || emptyWallet(normalized);
 
     const currentFromBalance = wallet.balances[args.fromCurrency] || 0;
@@ -259,7 +216,6 @@ export function applyExchange(args: {
     }
 
     store.wallets[normalized] = wallet;
-    await writeStore(store);
     return { success: true, wallet, transaction };
   });
 }
@@ -271,8 +227,7 @@ export function creditLoanDisbursement(args: {
   amount: number;
 }): Promise<{ wallet: Wallet; transaction: WalletLoanTransaction }> {
   const normalized = normalizeIdentity(args.identity);
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const wallet = store.wallets[normalized] || emptyWallet(normalized);
 
     const newBalance = round2((wallet.balances[args.currency] || 0) + args.amount);
@@ -293,7 +248,6 @@ export function creditLoanDisbursement(args: {
     }
 
     store.wallets[normalized] = wallet;
-    await writeStore(store);
     return { wallet, transaction };
   });
 }
@@ -309,8 +263,7 @@ export function debitLoanRepayment(args: {
   amount: number;
 }): Promise<DebitLoanRepaymentResult> {
   const normalized = normalizeIdentity(args.identity);
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const wallet = store.wallets[normalized] || emptyWallet(normalized);
 
     const currentBalance = wallet.balances[args.currency] || 0;
@@ -336,7 +289,6 @@ export function debitLoanRepayment(args: {
     }
 
     store.wallets[normalized] = wallet;
-    await writeStore(store);
     return { success: true, wallet, transaction };
   });
 }

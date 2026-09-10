@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const paymentReference = `PAYPAL-${Date.now()}`;
 
-    recordPayment({
+    await recordPayment({
       method: 'paypal',
       amount: parsedAmount,
       currency: parsedCurrency,

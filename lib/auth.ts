@@ -1,4 +1,5 @@
 import { timingSafeEqual, createHash } from "crypto";
+import argon2 from "argon2";
 import type { NextAuthOptions } from "next-auth";
 import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -9,11 +10,28 @@ import { AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
 import { verifyAdminTotp } from './totp';
+import { verifyTurnstileToken } from './turnstile';
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
   const hashB = createHash("sha256").update(b).digest();
   return timingSafeEqual(hashA, hashB);
+}
+
+// Préfère un hash Argon2id (ADMIN_LOGIN_PASSWORD_HASH) en production : le
+// mot de passe admin en clair dans une variable d'env (ADMIN_LOGIN_PASSWORD)
+// reste supporté pour le dev local, mais ne devrait jamais l'être en prod.
+async function verifyAdminPassword(password: string): Promise<boolean> {
+  const hash = process.env.ADMIN_LOGIN_PASSWORD_HASH;
+  if (hash) {
+    try {
+      return await argon2.verify(hash, password);
+    } catch {
+      return false;
+    }
+  }
+  const plaintext = process.env.ADMIN_LOGIN_PASSWORD || "";
+  return Boolean(plaintext) && safeEqual(password, plaintext);
 }
 
 function getAdminEmails(): string[] {
@@ -102,11 +120,12 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
         totp: { label: "Code MFA", type: "text" },
+        turnstileToken: { label: "Turnstile", type: "text" },
       },
       async authorize(credentials, req) {
         const expectedEmail = (process.env.ADMIN_LOGIN_EMAIL || "").trim().toLowerCase();
-        const expectedPassword = process.env.ADMIN_LOGIN_PASSWORD || "";
-        if (!expectedEmail || !expectedPassword) return null;
+        const hasPassword = Boolean(process.env.ADMIN_LOGIN_PASSWORD_HASH || process.env.ADMIN_LOGIN_PASSWORD);
+        if (!expectedEmail || !hasPassword) return null;
 
         const email = credentials?.email?.trim().toLowerCase() || "";
         const password = credentials?.password || "";
@@ -119,11 +138,15 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         // Two independent buckets, as with OTP requests: per-email caps brute-forcing
         // the known admin password, per-IP caps a single source hammering many emails
         // and stops one attacker from locking the real admin out via the email bucket.
-        const byEmail = checkRateLimit(`admin-login:email:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
-        const byIp = checkRateLimit(`admin-login:ip:${ip}`, { max: 20, windowMs: 15 * 60 * 1000 });
+        const byEmail = await checkRateLimit(`admin-login:email:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
+        const byIp = await checkRateLimit(`admin-login:ip:${ip}`, { max: 20, windowMs: 15 * 60 * 1000 });
         if (!byEmail.allowed || !byIp.allowed) return null;
 
-        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword) || !verifyAdminTotp(totp)) {
+        const captchaOk = await verifyTurnstileToken(credentials?.turnstileToken, ip);
+        if (!captchaOk) return null;
+
+        const passwordOk = await verifyAdminPassword(password);
+        if (!safeEqual(email, expectedEmail) || !passwordOk || !verifyAdminTotp(totp)) {
           return null;
         }
 

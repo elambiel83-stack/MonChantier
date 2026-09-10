@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const paymentReference = `cs_demo_${Date.now()}`;
 
-    recordPayment({
+    await recordPayment({
       method: 'card',
       amount: parsedAmount,
       currency: parsedCurrency,

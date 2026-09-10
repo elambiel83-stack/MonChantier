@@ -87,7 +87,7 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     };
   }
 
-  recordPayment({
+  await recordPayment({
     method: payload.method,
     amount: parsedAmount,
     currency: sanitizeCurrency(payload.currency),
