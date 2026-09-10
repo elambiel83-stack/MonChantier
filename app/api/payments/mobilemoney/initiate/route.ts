@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordPayment } from '@/lib/adminStore';
-import { buildInvoiceText, createInvoice } from '@/lib/invoice';
-import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
+import { isMobileMoneyConfigured, initiateMobileMoneyCharge } from '@/lib/mobileMoney';
+import { confirmPayment, registerPendingPayment } from '@/lib/paymentConfirmation';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -14,30 +13,22 @@ function sanitizeCurrency(value: unknown) {
   return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
 }
 
-function maskPhone(phone: string) {
-  const compact = phone.replace(/\D/g, '');
-  if (compact.length <= 4) return '****';
-  return `${'*'.repeat(compact.length - 4)}${compact.slice(-4)}`;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { amount, currency, phone, network, fullname, email, customerName, customerEmail, tx_ref, metadata } = body;
 
     const items = Array.isArray(metadata?.items) ? metadata.items : [];
-    const totalQty = items.reduce(
-      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
-      0
-    );
-    const productSummary = items
-      .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
-      .join(', ');
+    const invoiceItems = items.map((item: { productId?: number; productName?: string; quantity?: number; unitPrice?: number }) => ({
+      productId: typeof item?.productId === 'number' ? item.productId : undefined,
+      productName: item.productName || 'Produit',
+      quantity: Number(item.quantity || 1),
+      unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
+    }));
 
     const parsedAmount = parsePositiveAmount(amount);
     const parsedCurrency = sanitizeCurrency(currency);
 
-    // Validation
     if (!parsedAmount || !phone || !network || !tx_ref) {
       return NextResponse.json(
         { message: 'Montant, téléphone, réseau et référence requis' },
@@ -45,7 +36,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Normaliser le numéro de téléphone
     const normalizedPhone = String(phone).replace(/\s+/g, '');
     if (normalizedPhone.length < 8) {
       return NextResponse.json(
@@ -54,73 +44,81 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // En production: intégration Klasha, Flutterwave ou autre
-    console.log('=== DEMANDE DE PAIEMENT MOBILE MONEY ===');
-    console.log('Montant:', parsedAmount, parsedCurrency);
-    console.log('Téléphone:', maskPhone(normalizedPhone));
-    console.log('Réseau:', network);
-    console.log('Client fourni:', Boolean(fullname || customerName));
-    console.log('Email fourni:', Boolean(customerEmail || email));
-    console.log('Référence:', tx_ref);
-    console.log('Résumé:', productSummary);
-    console.log('Quantité totale:', totalQty);
-    console.log('=======================================');
-
-    // Simuler un délai de traitement
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    await recordPayment({
-      method: 'mobilemoney',
-      amount: parsedAmount,
-      currency: parsedCurrency,
-      reference: tx_ref,
-    });
-
     const resolvedCustomerName = (customerName || fullname || 'Client MonChantier').trim();
     const resolvedCustomerEmail = (customerEmail || email || '').trim();
-    const invoice = createInvoice({
+
+    if (isMobileMoneyConfigured()) {
+      const charge = await initiateMobileMoneyCharge({
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        phone: normalizedPhone,
+        network,
+        email: resolvedCustomerEmail || undefined,
+        fullname: resolvedCustomerName,
+        txRef: tx_ref,
+      });
+
+      if (charge.status !== 'pending') {
+        return NextResponse.json({ message: 'Le prestataire Mobile Money a refusé la demande.' }, { status: 502 });
+      }
+
+      // Rien n'est confirmé ici : seule la vérification côté serveur via
+      // /api/payments/mobilemoney/check (après validation du client sur son
+      // téléphone) peut faire passer ce paiement à "confirmed".
+      await registerPendingPayment(tx_ref, 'mobilemoney', {
+        reference: tx_ref,
+        method: 'mobilemoney',
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        customerName: resolvedCustomerName,
+        customerEmail: resolvedCustomerEmail,
+        items: invoiceItems,
+        deliveryAddress: metadata?.deliveryAddress,
+        location: metadata?.location,
+      });
+
+      return NextResponse.json({
+        success: true,
+        status: 'pending',
+        message: `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
+        reference: tx_ref,
+        redirectUrl: charge.redirectUrl,
+      });
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        {
+          message:
+            'Paiement Mobile Money indisponible : MOBILE_MONEY_API_KEY (et MOBILE_MONEY_API_URL/MOBILE_MONEY_VERIFY_URL en mode generic) non configurés.',
+        },
+        { status: 503 }
+      );
+    }
+
+    // Mode démo (dev/local uniquement, sans prestataire configuré) :
+    // confirmation immédiate locale pour pouvoir tester le parcours.
+    const result = await confirmPayment({
       reference: tx_ref,
-      customerName: resolvedCustomerName,
-      customerEmail: resolvedCustomerEmail,
       method: 'mobilemoney',
       amount: parsedAmount,
       currency: parsedCurrency,
-      items: items.map((item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
-        productName: item.productName || 'Produit',
-        quantity: Number(item.quantity || 1),
-        unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
-      })),
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
+      items: invoiceItems,
       deliveryAddress: metadata?.deliveryAddress,
       location: metadata?.location,
     });
 
-    let invoiceSent = false;
-    if (resolvedCustomerEmail && isMailerConfigured()) {
-      try {
-        await sendInvoiceEmail({
-          to: resolvedCustomerEmail,
-          invoiceNumber: invoice.invoiceNumber,
-          customerName: invoice.customerName,
-          text: buildInvoiceText(invoice),
-        });
-        invoiceSent = true;
-      } catch (mailError) {
-        console.error('Erreur envoi facture Mobile Money:', mailError);
-      }
-    }
-
-    // Simuler une réponse de succès
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      transaction_id: `TXN-${Date.now()}`,
-      status: 'pending',
-      message: `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
+      transaction_id: `TXN-DEMO-${Date.now()}`,
+      status: 'confirmed',
+      message: `Paiement simulé confirmé (mode démo, sans prestataire configuré).`,
       reference: tx_ref,
-      invoice: {
-        number: invoice.invoiceNumber,
-        sent: invoiceSent,
-        email: resolvedCustomerEmail || null,
-      },
+      invoice: result.invoice
+        ? { number: result.invoice.number, sent: result.invoice.sent, email: result.invoice.email }
+        : null,
     });
   } catch (error) {
     console.error('Erreur paiement Mobile Money:', error);

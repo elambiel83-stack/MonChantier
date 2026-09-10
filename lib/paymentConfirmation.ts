@@ -4,11 +4,14 @@ import { buildInvoiceText, createInvoice, InvoicePaymentMethod } from '@/lib/inv
 import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 import {
+  claimPaymentConfirmation,
   getStoredPaymentStatus,
+  releasePaymentClaim,
   setStoredPaymentStatus,
   StoredInvoice,
 } from '@/lib/paymentStore';
 import { createDeliveryFromPayment } from '@/lib/deliveryStore';
+import { decrementStock } from '@/lib/productStore';
 
 export type ConfirmPaymentPayload = {
   reference: string;
@@ -17,14 +20,14 @@ export type ConfirmPaymentPayload = {
   currency?: string;
   customerName?: string;
   customerEmail?: string;
-  items?: Array<{ productName?: string; quantity?: number; unitPrice?: number }>;
+  items?: Array<{ productId?: number; productName?: string; quantity?: number; unitPrice?: number }>;
   deliveryAddress?: string;
   location?: { lat?: number; lng?: number } | null;
 };
 
 export type PaymentStatus = {
   reference: string;
-  state: 'pending' | 'confirmed';
+  state: 'pending' | 'confirming' | 'confirmed';
   method: InvoicePaymentMethod;
   updatedAt: string;
   invoice?: StoredInvoice;
@@ -54,12 +57,17 @@ export function generatePaymentReference(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomBytes(9).toString('base64url')}`;
 }
 
-export async function registerPendingPayment(reference: string, method: InvoicePaymentMethod) {
+export async function registerPendingPayment(
+  reference: string,
+  method: InvoicePaymentMethod,
+  pendingPayload?: ConfirmPaymentPayload
+) {
   await setStoredPaymentStatus({
     reference,
     method,
     state: 'pending',
     updatedAt: new Date().toISOString(),
+    pendingPayload: pendingPayload as unknown as Record<string, unknown> | undefined,
   });
 }
 
@@ -78,93 +86,135 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     throw new Error('Montant invalide pour confirmation de paiement');
   }
 
-  const existingStatus = await getStoredPaymentStatus(payload.reference);
-  if (existingStatus?.state === 'confirmed' && existingStatus.invoice) {
+  // Réservation atomique : si un autre appel (webhook redélivré, double
+  // clic) a déjà confirmé — ou est en train de confirmer — cette référence,
+  // on ne refait pas le travail (facture, email) une deuxième fois.
+  const claim = await claimPaymentConfirmation(payload.reference, payload.method);
+  if (claim.outcome === 'already_confirmed') {
     return {
       success: true,
       alreadyConfirmed: true,
-      invoice: existingStatus.invoice,
+      invoice: claim.status.invoice,
+    };
+  }
+  if (claim.outcome === 'in_progress') {
+    return {
+      success: true,
+      alreadyConfirmed: false,
+      inProgress: true,
+      invoice: undefined,
     };
   }
 
-  await recordPayment({
-    method: payload.method,
-    amount: parsedAmount,
-    currency: sanitizeCurrency(payload.currency),
-    reference: payload.reference,
-  });
-
-  const invoice = createInvoice({
-    reference: payload.reference,
-    customerName: (payload.customerName || 'Client MonChantier').trim(),
-    customerEmail: (payload.customerEmail || '').trim(),
-    method: payload.method,
-    amount: parsedAmount,
-    currency: sanitizeCurrency(payload.currency),
-    items: (Array.isArray(payload.items) ? payload.items : []).map((item) => ({
+  try {
+    const items = (Array.isArray(payload.items) ? payload.items : []).map((item) => ({
+      productId: typeof item.productId === 'number' ? item.productId : undefined,
       productName: item.productName || 'Produit',
       quantity: Number(item.quantity || 1),
       unitPrice: item.unitPrice !== undefined ? Number(item.unitPrice) : undefined,
-    })),
-    deliveryAddress: payload.deliveryAddress,
-    location: payload.location,
-  });
+    }));
 
-  let invoiceSent = false;
-  if (invoice.customerEmail && isMailerConfigured()) {
-    try {
-      const invoicePdf = await buildInvoicePdf(invoice);
-      await sendInvoiceEmail({
-        to: invoice.customerEmail,
-        invoiceNumber: invoice.invoiceNumber,
-        customerName: invoice.customerName,
-        text: buildInvoiceText(invoice),
-        pdf: invoicePdf,
-      });
-      invoiceSent = true;
-    } catch (mailError) {
-      console.error('Erreur envoi facture à la confirmation:', mailError);
+    // Décrément atomique du stock pour les articles qui référencent un vrai
+    // produit du catalogue (stock non suivi = ignoré, voir decrementStock).
+    // L'argent étant déjà encaissé à ce stade (webhook provider), une
+    // rupture ne bloque pas la facture — elle est journalisée pour un
+    // traitement manuel plutôt que de survendre en silence.
+    const stockItems = items
+      .filter((item) => item.productId !== undefined)
+      .map((item) => ({ productId: item.productId!, quantity: item.quantity }));
+    let stockShortfall: Awaited<ReturnType<typeof decrementStock>> | null = null;
+    if (stockItems.length > 0) {
+      stockShortfall = await decrementStock(stockItems);
+      if (!stockShortfall.success) {
+        console.error(
+          `Rupture de stock à la confirmation du paiement ${payload.reference}:`,
+          stockShortfall.shortfalls
+        );
+      }
     }
-  }
 
-  const invoiceResponse = {
-    standard: invoice.standard,
-    legalReference: invoice.legalReference,
-    number: invoice.invoiceNumber,
-    sent: invoiceSent,
-    email: invoice.customerEmail || null,
-    taxRate: invoice.taxRate,
-    totals: {
-      ht: invoice.totalHT,
-      tva: invoice.totalTVA,
-      ttc: invoice.totalTTC,
-      currency: invoice.currency,
-    },
-  };
-
-  await setStoredPaymentStatus({
-    reference: payload.reference,
-    method: payload.method,
-    state: 'confirmed',
-    updatedAt: new Date().toISOString(),
-    invoice: invoiceResponse,
-    fullInvoice: invoice,
-    orderStatus: 'processing',
-  });
-
-  if (invoice.deliveryAddress && invoice.customerEmail) {
-    await createDeliveryFromPayment({
+    const invoice = createInvoice({
       reference: payload.reference,
-      clientIdentity: invoice.customerEmail,
-      clientName: invoice.customerName,
-      deliveryAddress: invoice.deliveryAddress,
-      location: invoice.location,
+      customerName: (payload.customerName || 'Client MonChantier').trim(),
+      customerEmail: (payload.customerEmail || '').trim(),
+      method: payload.method,
+      amount: parsedAmount,
+      currency: sanitizeCurrency(payload.currency),
+      items,
+      deliveryAddress: payload.deliveryAddress,
+      location: payload.location,
     });
-  }
 
-  return {
-    success: true,
-    alreadyConfirmed: false,
-    invoice: invoiceResponse,
-  };
+    await recordPayment({
+      method: payload.method,
+      amount: parsedAmount,
+      currency: sanitizeCurrency(payload.currency),
+      reference: payload.reference,
+    });
+
+    let invoiceSent = false;
+    if (invoice.customerEmail && isMailerConfigured()) {
+      try {
+        const invoicePdf = await buildInvoicePdf(invoice);
+        await sendInvoiceEmail({
+          to: invoice.customerEmail,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customerName,
+          text: buildInvoiceText(invoice),
+          pdf: invoicePdf,
+        });
+        invoiceSent = true;
+      } catch (mailError) {
+        console.error('Erreur envoi facture à la confirmation:', mailError);
+      }
+    }
+
+    const invoiceResponse = {
+      standard: invoice.standard,
+      legalReference: invoice.legalReference,
+      number: invoice.invoiceNumber,
+      sent: invoiceSent,
+      email: invoice.customerEmail || null,
+      taxRate: invoice.taxRate,
+      totals: {
+        ht: invoice.totalHT,
+        tva: invoice.totalTVA,
+        ttc: invoice.totalTTC,
+        currency: invoice.currency,
+      },
+    };
+
+    await setStoredPaymentStatus({
+      reference: payload.reference,
+      method: payload.method,
+      state: 'confirmed',
+      updatedAt: new Date().toISOString(),
+      invoice: invoiceResponse,
+      fullInvoice: invoice,
+      orderStatus: 'processing',
+    });
+
+    if (invoice.deliveryAddress && invoice.customerEmail) {
+      await createDeliveryFromPayment({
+        reference: payload.reference,
+        clientIdentity: invoice.customerEmail,
+        clientName: invoice.customerName,
+        deliveryAddress: invoice.deliveryAddress,
+        location: invoice.location,
+      });
+    }
+
+    return {
+      success: true,
+      alreadyConfirmed: false,
+      invoice: invoiceResponse,
+      stockShortfall: stockShortfall && !stockShortfall.success ? stockShortfall.shortfalls : undefined,
+    };
+  } catch (error) {
+    // Le paiement reste "confirming" sinon : on repasse en "pending" pour
+    // qu'une nouvelle tentative (retry webhook, admin) soit possible plutôt
+    // que de bloquer définitivement cette référence.
+    await releasePaymentClaim(payload.reference);
+    throw error;
+  }
 }

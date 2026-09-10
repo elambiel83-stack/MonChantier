@@ -4,10 +4,7 @@ import { confirmPayment } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { confirmDeposit } from '@/lib/walletStore';
-import {
-  hasProcessedWebhookEvent,
-  markWebhookEventProcessed,
-} from '@/lib/paymentStore';
+import { claimWebhookEvent, unclaimWebhookEvent } from '@/lib/paymentStore';
 
 function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
   const chunks = signatureHeader.split(',');
@@ -62,43 +59,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (await hasProcessedWebhookEvent('stripe', eventId)) {
+    // Claim atomique avant traitement : deux redélivrances concurrentes du
+    // même event_id (Stripe le fait réellement) ne peuvent pas toutes les
+    // deux passer ce test, contrairement à un has()-puis-mark() en deux temps.
+    const claimed = await claimWebhookEvent('stripe', eventId);
+    if (!claimed) {
       return NextResponse.json({ received: true, duplicate: true });
     }
 
-    if (event.type !== 'checkout.session.completed') {
-      await markWebhookEventProcessed('stripe', eventId);
-      return NextResponse.json({ received: true, ignored: true });
+    try {
+      if (event.type !== 'checkout.session.completed') {
+        return NextResponse.json({ received: true, ignored: true });
+      }
+
+      const session = event.data?.object || {};
+      const metadata = (session.metadata || {}) as Record<string, string>;
+      const rawPayload = metadata.invoice_payload || null;
+
+      const walletPayload = decodeWalletDepositPayload(rawPayload);
+      if (walletPayload) {
+        const { wallet, alreadyConfirmed } = await confirmDeposit({
+          identity: walletPayload.identity,
+          reference: walletPayload.reference,
+          method: walletPayload.method,
+          currency: walletPayload.currency,
+          amount: walletPayload.amount,
+        });
+        return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
+      }
+
+      const invoicePayload = decodeInvoicePayload(rawPayload);
+      if (!invoicePayload) {
+        await unclaimWebhookEvent('stripe', eventId);
+        return NextResponse.json(
+          { message: 'invoice_payload absent ou invalide dans metadata Stripe' },
+          { status: 400 }
+        );
+      }
+
+      const result = await confirmPayment(invoicePayload);
+      return NextResponse.json({ received: true, validated: true, ...result });
+    } catch (error) {
+      // Laisse Stripe retenter cet event_id: un échec de traitement ne doit
+      // pas le perdre silencieusement pour toujours.
+      await unclaimWebhookEvent('stripe', eventId);
+      throw error;
     }
-
-    const session = event.data?.object || {};
-    const metadata = (session.metadata || {}) as Record<string, string>;
-    const rawPayload = metadata.invoice_payload || null;
-
-    const walletPayload = decodeWalletDepositPayload(rawPayload);
-    if (walletPayload) {
-      const { wallet, alreadyConfirmed } = await confirmDeposit({
-        identity: walletPayload.identity,
-        reference: walletPayload.reference,
-        method: walletPayload.method,
-        currency: walletPayload.currency,
-        amount: walletPayload.amount,
-      });
-      await markWebhookEventProcessed('stripe', eventId);
-      return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
-    }
-
-    const invoicePayload = decodeInvoicePayload(rawPayload);
-    if (!invoicePayload) {
-      return NextResponse.json(
-        { message: 'invoice_payload absent ou invalide dans metadata Stripe' },
-        { status: 400 }
-      );
-    }
-
-    const result = await confirmPayment(invoicePayload);
-    await markWebhookEventProcessed('stripe', eventId);
-    return NextResponse.json({ received: true, validated: true, ...result });
   } catch (error) {
     console.error('Erreur webhook Stripe:', error);
     return NextResponse.json(

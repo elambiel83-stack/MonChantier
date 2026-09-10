@@ -23,6 +23,8 @@ export async function POST(request: NextRequest) {
     const img = String(body?.img || '').trim();
     const priceUSD = body?.priceUSD !== undefined && body.priceUSD !== '' ? Number(body.priceUSD) : null;
     const priceCDF = body?.priceCDF !== undefined && body.priceCDF !== '' ? Number(body.priceCDF) : null;
+    // stock absent/null = non suivi (comportement historique, illimité).
+    const stock = body?.stock !== undefined && body.stock !== '' && body.stock !== null ? Number(body.stock) : null;
 
     if (!fr || !unitFr || !img) {
       return NextResponse.json({ message: 'Nom (FR), unité (FR) et image sont requis' }, { status: 400 });
@@ -33,6 +35,9 @@ export async function POST(request: NextRequest) {
     if (priceCDF !== null && !Number.isFinite(priceCDF)) {
       return NextResponse.json({ message: 'Prix CDF invalide' }, { status: 400 });
     }
+    if (stock !== null && (!Number.isFinite(stock) || stock < 0)) {
+      return NextResponse.json({ message: 'Stock invalide' }, { status: 400 });
+    }
 
     const product = await createProduct({
       fr,
@@ -42,6 +47,7 @@ export async function POST(request: NextRequest) {
       priceUSD,
       priceCDF,
       img,
+      stock,
     });
 
     return NextResponse.json({ success: true, product });

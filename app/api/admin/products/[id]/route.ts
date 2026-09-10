@@ -33,6 +33,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         return NextResponse.json({ message: 'Prix CDF invalide' }, { status: 400 });
       }
     }
+    if (body?.stock !== undefined) {
+      // null = repasser en stock non suivi (illimité).
+      patch.stock = body.stock === null || body.stock === '' ? null : Number(body.stock);
+      if (patch.stock !== null && (!Number.isFinite(patch.stock) || patch.stock < 0)) {
+        return NextResponse.json({ message: 'Stock invalide' }, { status: 400 });
+      }
+    }
 
     const product = await updateProduct(id, patch);
     if (!product) {
