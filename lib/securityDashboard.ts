@@ -22,8 +22,10 @@ export async function buildSecurityDashboardSummary() {
   const throttledBuckets = rateLimitBuckets.filter((bucket) => !bucket.allowed);
   const recentEvents24h = securityEvents.filter((event) => isRecent(event.createdAt, DAY_MS));
   const inactiveAssignments = Object.values(roleAssignments).filter((assignment) => !isAssignmentActive(assignment));
-  const privilegedAssignments = Object.values(roleAssignments).filter((assignment) =>
-    ['admin', 'director', 'accountant', 'credit-agent', 'credit-committee'].includes(assignment.role)
+  const privilegedAssignments = Object.values(roleAssignments).filter(
+    (assignment) =>
+      isAssignmentActive(assignment) &&
+      ['admin', 'director', 'accountant', 'credit-agent', 'credit-committee'].includes(assignment.role)
   );
 
   return {

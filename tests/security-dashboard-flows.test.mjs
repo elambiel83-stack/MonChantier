@@ -12,6 +12,49 @@ async function read(relativePath) {
   return fs.readFile(path.join(repoRoot, relativePath), 'utf8');
 }
 
+
+async function importPhoneSecurityModules() {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'monchantier-phone-security-'));
+  const [rateLimitSource, securityStoreSource, phoneAuthSource] = await Promise.all([
+    read('lib/rateLimit.ts'),
+    read('lib/securityStore.ts'),
+    read('lib/phoneAuth.ts'),
+  ]);
+
+  const rateLimitOutput = ts.transpileModule(rateLimitSource, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const securityStoreOutput = ts.transpileModule(securityStoreSource, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const phoneAuthOutput = ts
+    .transpileModule(phoneAuthSource, {
+      compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+    })
+    .outputText
+    .replace('./rateLimit', './rateLimit.mjs')
+    .replace('./securityStore', './securityStore.mjs');
+
+  await Promise.all([
+    fs.writeFile(path.join(tempDir, 'rateLimit.mjs'), rateLimitOutput, 'utf8'),
+    fs.writeFile(path.join(tempDir, 'securityStore.mjs'), securityStoreOutput, 'utf8'),
+    fs.writeFile(path.join(tempDir, 'phoneAuth.mjs'), phoneAuthOutput, 'utf8'),
+  ]);
+
+  const previousCwd = process.cwd();
+  process.chdir(tempDir);
+  try {
+    const [phoneAuth, securityStore] = await Promise.all([
+      import(`file://${path.join(tempDir, 'phoneAuth.mjs')}`),
+      import(`file://${path.join(tempDir, 'securityStore.mjs')}`),
+    ]);
+    return { phoneAuth, securityStore, restore: () => process.chdir(previousCwd) };
+  } catch (error) {
+    process.chdir(previousCwd);
+    throw error;
+  }
+}
+
 async function importSecurityDashboardModule() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'monchantier-security-dashboard-'));
   const dashboardSource = await read('lib/securityDashboard.ts');
@@ -78,14 +121,32 @@ export function __setEvents(value) { events = value; }
   return { dashboard, adminStore, rateLimit, roleStore, securityStore };
 }
 
-test('security store persists auth and throttling telemetry', async () => {
-  const source = await read('lib/securityStore.ts');
+test('security store persists OTP failure and throttling telemetry with normalized identities', async () => {
+  const { phoneAuth, securityStore, restore } = await importPhoneSecurityModules();
 
-  assert.match(source, /export type SecurityEventType/);
-  assert.match(source, /otp_requested/);
-  assert.match(source, /admin_login_rate_limited/);
-  assert.match(source, /recordSecurityEvent/);
-  assert.match(source, /listSecurityEvents/);
+  try {
+    const otp = await phoneAuth.createPhoneOtp('+243 900 000 001');
+    assert.equal(await phoneAuth.verifyPhoneOtpWithContext(otp.phone, '000000', { ip: '2001:DB8::1' }), false);
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await phoneAuth.verifyPhoneOtpWithContext(otp.phone, '111111', { ip: '2001:DB8::1' });
+    }
+
+    const secondOtp = await phoneAuth.createPhoneOtp('+243 900 000 002');
+    assert.equal(await phoneAuth.verifyPhoneOtpWithContext(secondOtp.phone, secondOtp.code, { ip: '198.51.100.10' }), true);
+
+    const events = await securityStore.listSecurityEvents();
+    assert.equal(events[0].type, 'otp_verified');
+    assert.equal(events[0].identity, '+243900000002');
+    assert.equal(events[0].ip, '198.51.100.10');
+    assert.equal(events[1].type, 'otp_verify_rate_limited');
+    assert.equal(events[1].identity, '+243900000001');
+    assert.equal(events[1].ip, '2001:DB8::1');
+    assert.match(events[1].detail, /Retry in/);
+    assert.equal(events.some((event) => event.type === 'otp_verify_failed'), true);
+  } finally {
+    restore();
+  }
 });
 
 test('security dashboard aggregates full 24h telemetry and limits only displayed events', async () => {
@@ -161,7 +222,7 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
 
   assert.equal(summary.summary.inactiveUsers, 1);
   assert.equal(summary.summary.inactiveAssignments, 1);
-  assert.equal(summary.summary.privilegedAssignments, 2);
+  assert.equal(summary.summary.privilegedAssignments, 1);
   assert.equal(summary.summary.throttledSources, 1);
   assert.equal(summary.summary.alerts24h, 3);
   assert.equal(summary.authActivity.otpRequested24h, 31);
