@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SiteStatus = "planning" | "active" | "paused" | "completed";
 type IncidentSeverity = "low" | "medium" | "high";
 
 type SiteTeamMember = { identity: string; name: string; role: string };
-type SiteTask = { id: string; label: string; done: boolean; dueDate?: string };
-type SiteIncident = { id: string; label: string; severity: IncidentSeverity; resolved: boolean };
+type SiteTask = { id: string; label: string; done: boolean; dueDate?: string; createdAt?: string };
+type SiteIncident = { id: string; label: string; severity: IncidentSeverity; resolved: boolean; createdAt?: string };
 
 type Site = {
   id: string;
@@ -16,6 +16,8 @@ type Site = {
   status: SiteStatus;
   budget?: number;
   currency?: "USD" | "CDF";
+  createdAt?: string;
+  updatedAt?: string;
   team: SiteTeamMember[];
   tasks: SiteTask[];
   incidents: SiteIncident[];
@@ -34,11 +36,16 @@ const SEVERITY_LABELS: Record<IncidentSeverity, { label: string; className: stri
   high: { label: "Élevée", className: "bg-red-100 text-red-700" },
 };
 
+function formatDate(value?: string) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("fr-FR");
+}
+
 export default function SiteManagerPanel() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [banner, setBanner] = useState("");
+  const [banner, setBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [newSite, setNewSite] = useState({ name: "", address: "" });
@@ -53,7 +60,7 @@ export default function SiteManagerPanel() {
       const data = await res.json();
       const list: Site[] = res.ok ? data.sites || [] : [];
       setSites(list);
-      setSelectedSiteId((current) => current && list.some((s) => s.id === current) ? current : list[0]?.id || null);
+      setSelectedSiteId((current) => (current && list.some((s) => s.id === current) ? current : list[0]?.id || null));
     } catch {
       setSites([]);
     } finally {
@@ -79,11 +86,11 @@ export default function SiteManagerPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Erreur création chantier");
       setNewSite({ name: "", address: "" });
-      setBanner("Chantier créé.");
+      setBanner({ type: "success", message: "Chantier créé." });
       await load();
       setSelectedSiteId(data.site?.id || null);
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -99,9 +106,10 @@ export default function SiteManagerPanel() {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("Erreur mise à jour statut");
+      setBanner({ type: "success", message: "Statut du chantier mis à jour." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -119,9 +127,10 @@ export default function SiteManagerPanel() {
       });
       if (!res.ok) throw new Error("Erreur ajout membre");
       setNewTeamMember({ identity: "", name: "", role: "" });
+      setBanner({ type: "success", message: "Membre ajouté à l'équipe." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -138,9 +147,10 @@ export default function SiteManagerPanel() {
       });
       if (!res.ok) throw new Error("Erreur ajout tâche");
       setNewTask("");
+      setBanner({ type: "success", message: "Tâche ajoutée." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -156,9 +166,10 @@ export default function SiteManagerPanel() {
         body: JSON.stringify({ done: !task.done }),
       });
       if (!res.ok) throw new Error("Erreur mise à jour tâche");
+      setBanner({ type: "success", message: task.done ? "Tâche rouverte." : "Tâche clôturée." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -175,9 +186,10 @@ export default function SiteManagerPanel() {
       });
       if (!res.ok) throw new Error("Erreur ajout incident");
       setNewIncident({ label: "", severity: "medium" });
+      setBanner({ type: "success", message: "Incident signalé." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
@@ -191,117 +203,121 @@ export default function SiteManagerPanel() {
         method: "PATCH",
       });
       if (!res.ok) throw new Error("Erreur résolution incident");
+      setBanner({ type: "success", message: "Incident résolu." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusy(false);
     }
   };
 
+  const stats = useMemo(() => {
+    const activeSites = sites.filter((site) => site.status === "active").length;
+    const taskCount = sites.reduce((sum, site) => sum + site.tasks.length, 0);
+    const doneTasks = sites.reduce((sum, site) => sum + site.tasks.filter((task) => task.done).length, 0);
+    const openIncidents = sites.reduce(
+      (sum, site) => sum + site.incidents.filter((incident) => !incident.resolved).length,
+      0
+    );
+    const budgetSites = sites.filter((site) => typeof site.budget === "number");
+    return {
+      siteCount: sites.length,
+      activeSites,
+      taskCount,
+      doneTasks,
+      openIncidents,
+      trackedBudget: budgetSites.length,
+    };
+  }, [sites]);
+
+  const bannerClassName =
+    banner?.type === "error"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight">Chef de chantier</h1>
-      <p className="mt-1 text-slate-600">Piloter l&apos;exécution du chantier.</p>
+    <div className="space-y-6">
+      <div id="chantiers">
+        <h1 className="text-2xl font-bold tracking-tight">Chef de chantier</h1>
+        <p className="mt-1 text-slate-600">Piloter l&apos;exécution du chantier.</p>
 
-      {banner && (
-        <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
-          {banner}
-        </div>
-      )}
+        {banner && <div className={`mt-3 rounded-lg border p-3 text-sm ${bannerClassName}`}>{banner.message}</div>}
 
-      <div id="chantiers" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">Mes chantiers</h2>
-
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            value={newSite.name}
-            onChange={(e) => setNewSite((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Nom du chantier"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <input
-            value={newSite.address}
-            onChange={(e) => setNewSite((prev) => ({ ...prev, address: e.target.value }))}
-            placeholder="Adresse"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="button"
-            onClick={createSite}
-            disabled={busy}
-            className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
-          >
-            + Créer le chantier
-          </button>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          {[
+            ["Chantiers", stats.siteCount],
+            ["Actifs", stats.activeSites],
+            ["Tâches", stats.taskCount],
+            ["Terminées", stats.doneTasks],
+            ["Incidents ouverts", stats.openIncidents],
+            ["Budgets suivis", stats.trackedBudget],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">{label}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-4 space-y-2">
-          {loading ? (
-            <p className="text-sm text-slate-500">Chargement…</p>
-          ) : sites.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucun chantier pour le moment.</p>
-          ) : (
-            sites.map((site) => (
-              <button
-                key={site.id}
-                type="button"
-                onClick={() => setSelectedSiteId(site.id)}
-                className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${
-                  selectedSiteId === site.id ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white"
-                }`}
-              >
-                <span>
-                  <span className="font-medium">{site.name}</span>{" "}
-                  <span className="text-xs text-slate-500">— {site.address}</span>
-                </span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                  {STATUS_LABELS[site.status]}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-
-        {selectedSite && (
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Statut</span>
-            {(Object.keys(STATUS_LABELS) as SiteStatus[]).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => changeStatus(status)}
-                disabled={busy || selectedSite.status === status}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-60 ${
-                  selectedSite.status === status
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-300 bg-white"
-                }`}
-              >
-                {STATUS_LABELS[status]}
-              </button>
-            ))}
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">Créer un chantier</h2>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <input value={newSite.name} onChange={(e) => setNewSite((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom du chantier" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <input value={newSite.address} onChange={(e) => setNewSite((prev) => ({ ...prev, address: e.target.value }))} placeholder="Adresse" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <button type="button" onClick={createSite} disabled={busy} className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-60">
+              + Créer le chantier
+            </button>
           </div>
-        )}
+
+          <div className="mt-4 space-y-2">
+            {loading ? (
+              <p className="text-sm text-slate-500">Chargement…</p>
+            ) : sites.length === 0 ? (
+              <p className="text-sm text-slate-500">Aucun chantier pour le moment.</p>
+            ) : (
+              sites.map((site) => (
+                <button key={site.id} type="button" onClick={() => setSelectedSiteId(site.id)} className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${selectedSiteId === site.id ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white"}`}>
+                  <span>
+                    <span className="font-medium">{site.name}</span>{" "}
+                    <span className="text-xs text-slate-500">— {site.address}</span>
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{STATUS_LABELS[site.status]}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {selectedSite && (
         <>
-          <div id="taches" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="planning" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Planning — {selectedSite.name}</h2>
+            <p className="mt-2 text-sm text-slate-600">Créé le {formatDate(selectedSite.createdAt)} · Mis à jour le {formatDate(selectedSite.updatedAt)}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(Object.keys(STATUS_LABELS) as SiteStatus[]).map((status) => (
+                <button key={status} type="button" onClick={() => changeStatus(status)} disabled={busy || selectedSite.status === status} className={`rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-60 ${selectedSite.status === status ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white"}`}>
+                  {STATUS_LABELS[status]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div id="budget" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Budget</h2>
+            {typeof selectedSite.budget === "number" ? (
+              <p className="mt-3 text-sm text-slate-700">{selectedSite.budget.toLocaleString("fr-FR")} {selectedSite.currency || "USD"}</p>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">Aucun budget saisi pour ce chantier.</p>
+            )}
+          </div>
+
+          <div id="taches" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Tâches — {selectedSite.name}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              <input
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Nouvelle tâche"
-                className="min-w-[200px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={addTask}
-                disabled={busy}
-                className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
-              >
+              <input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Nouvelle tâche" className="min-w-[200px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addTask} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
                 Ajouter
               </button>
             </div>
@@ -312,12 +328,7 @@ export default function SiteManagerPanel() {
                 selectedSite.tasks.map((task) => (
                   <li key={task.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                     <span className={`text-sm ${task.done ? "text-slate-400 line-through" : ""}`}>{task.label}</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleTask(task)}
-                      disabled={busy}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                    >
+                    <button type="button" onClick={() => toggleTask(task)} disabled={busy} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60">
                       {task.done ? "Marquer à faire" : "Marquer fait"}
                     </button>
                   </li>
@@ -326,33 +337,13 @@ export default function SiteManagerPanel() {
             </ul>
           </div>
 
-          <div id="equipe" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="equipe" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Équipe — {selectedSite.name}</h2>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input
-                value={newTeamMember.identity}
-                onChange={(e) => setNewTeamMember((prev) => ({ ...prev, identity: e.target.value }))}
-                placeholder="Email ou téléphone"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <input
-                value={newTeamMember.name}
-                onChange={(e) => setNewTeamMember((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Nom"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <input
-                value={newTeamMember.role}
-                onChange={(e) => setNewTeamMember((prev) => ({ ...prev, role: e.target.value }))}
-                placeholder="Rôle sur le chantier"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={addTeamMember}
-                disabled={busy}
-                className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
-              >
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+              <input value={newTeamMember.identity} onChange={(e) => setNewTeamMember((prev) => ({ ...prev, identity: e.target.value }))} placeholder="Email ou téléphone" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newTeamMember.name} onChange={(e) => setNewTeamMember((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newTeamMember.role} onChange={(e) => setNewTeamMember((prev) => ({ ...prev, role: e.target.value }))} placeholder="Rôle sur le chantier" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addTeamMember} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
                 Ajouter
               </button>
             </div>
@@ -363,40 +354,23 @@ export default function SiteManagerPanel() {
                 selectedSite.team.map((member) => (
                   <li key={member.identity} className="rounded-lg border border-slate-200 p-3 text-sm">
                     <span className="font-medium">{member.name || member.identity}</span>{" "}
-                    <span className="text-xs text-slate-500">
-                      {member.role ? `— ${member.role}` : ""} · {member.identity}
-                    </span>
+                    <span className="text-xs text-slate-500">{member.role ? `— ${member.role}` : ""} · {member.identity}</span>
                   </li>
                 ))
               )}
             </ul>
           </div>
 
-          <div id="incidents" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="incidents" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Incidents — {selectedSite.name}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              <input
-                value={newIncident.label}
-                onChange={(e) => setNewIncident((prev) => ({ ...prev, label: e.target.value }))}
-                placeholder="Décrire l'incident"
-                className="min-w-[200px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <select
-                value={newIncident.severity}
-                onChange={(e) => setNewIncident((prev) => ({ ...prev, severity: e.target.value as IncidentSeverity }))}
-                aria-label="Gravité"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              >
+              <input value={newIncident.label} onChange={(e) => setNewIncident((prev) => ({ ...prev, label: e.target.value }))} placeholder="Décrire l'incident" className="min-w-[200px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <select value={newIncident.severity} onChange={(e) => setNewIncident((prev) => ({ ...prev, severity: e.target.value as IncidentSeverity }))} aria-label="Gravité" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
                 <option value="low">Faible</option>
                 <option value="medium">Moyenne</option>
                 <option value="high">Élevée</option>
               </select>
-              <button
-                type="button"
-                onClick={addIncident}
-                disabled={busy}
-                className="rounded-lg bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
-              >
+              <button type="button" onClick={addIncident} disabled={busy} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60">
                 Signaler
               </button>
             </div>
@@ -407,23 +381,13 @@ export default function SiteManagerPanel() {
                 selectedSite.incidents.map((incident) => {
                   const severity = SEVERITY_LABELS[incident.severity];
                   return (
-                    <li
-                      key={incident.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3"
-                    >
+                    <li key={incident.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3">
                       <span className="flex items-center gap-2 text-sm">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${severity.className}`}>
-                          {severity.label}
-                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${severity.className}`}>{severity.label}</span>
                         <span className={incident.resolved ? "text-slate-400 line-through" : ""}>{incident.label}</span>
                       </span>
                       {!incident.resolved && (
-                        <button
-                          type="button"
-                          onClick={() => resolveIncident(incident)}
-                          disabled={busy}
-                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60"
-                        >
+                        <button type="button" onClick={() => resolveIncident(incident)} disabled={busy} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-60">
                           Résoudre
                         </button>
                       )}
@@ -432,6 +396,40 @@ export default function SiteManagerPanel() {
                 })
               )}
             </ul>
+          </div>
+
+          <div id="materiaux" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Matériaux</h2>
+            <p className="mt-3 text-sm text-slate-500">Aucun stock matière n&apos;est encore relié aux chantiers dans le modèle actuel.</p>
+          </div>
+
+          <div id="commandes" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Commandes</h2>
+            <p className="mt-3 text-sm text-slate-500">Les commandes fournisseurs ne sont pas encore rattachées directement aux chantiers.</p>
+          </div>
+
+          <div id="livraisons" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Livraisons</h2>
+            <p className="mt-3 text-sm text-slate-500">Le store de livraison actuel n&apos;associe pas encore les tournées à un chantier précis.</p>
+          </div>
+
+          <div id="rapports" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Rapports</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <p className="rounded-lg border border-slate-100 p-3 text-sm text-slate-700">{selectedSite.tasks.filter((task) => task.done).length}/{selectedSite.tasks.length} tâche(s) terminée(s).</p>
+              <p className="rounded-lg border border-slate-100 p-3 text-sm text-slate-700">{selectedSite.team.length} membre(s) affecté(s).</p>
+              <p className="rounded-lg border border-slate-100 p-3 text-sm text-slate-700">{selectedSite.incidents.filter((incident) => !incident.resolved).length} incident(s) ouvert(s).</p>
+            </div>
+          </div>
+
+          <div id="documents" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Documents</h2>
+            <p className="mt-3 text-sm text-slate-500">Aucune GED de chantier n&apos;est encore branchée sur ce tableau de bord.</p>
+          </div>
+
+          <div id="photos" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Photos</h2>
+            <p className="mt-3 text-sm text-slate-500">Le suivi photo terrain n&apos;est pas encore stocké dans les données de chantier.</p>
           </div>
         </>
       )}

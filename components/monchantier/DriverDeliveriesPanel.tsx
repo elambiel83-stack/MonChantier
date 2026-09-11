@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type DeliveryStatus = "pending" | "assigned" | "picked_up" | "in_transit" | "delivered" | "cancelled";
 
@@ -10,6 +10,10 @@ type Delivery = {
   clientName: string;
   status: DeliveryStatus;
   deliveryAddress: string;
+  createdAt?: string;
+  currentPosition?: { lat: number; lng: number; at: string };
+  positionHistory?: Array<{ lat: number; lng: number; at: string }>;
+  statusHistory?: Array<{ id: string; at: string; by: string; status: DeliveryStatus; note?: string }>;
 };
 
 const STATUS_LABELS: Record<DeliveryStatus, { label: string; className: string }> = {
@@ -27,17 +31,23 @@ const NEXT_STATUS: Partial<Record<DeliveryStatus, { status: DeliveryStatus; labe
   in_transit: { status: "delivered", label: "Marquer livrée" },
 };
 
+function formatDate(value?: string) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("fr-FR");
+}
+
 export default function DriverDeliveriesPanel() {
   const [myDeliveries, setMyDeliveries] = useState<Delivery[]>([]);
   const [available, setAvailable] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [banner, setBanner] = useState("");
+  const [banner, setBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [autoSendId, setAutoSendId] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/deliveries", { cache: "no-store" });
       const data = await res.json();
       if (res.ok) {
@@ -82,10 +92,10 @@ export default function DriverDeliveriesPanel() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Erreur");
-      setBanner("Mission acceptée.");
+      setBanner({ type: "success", message: "Mission acceptée." });
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusyId(null);
     }
@@ -101,11 +111,11 @@ export default function DriverDeliveriesPanel() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Erreur");
-      setBanner("Statut mis à jour.");
+      setBanner({ type: "success", message: "Statut mis à jour." });
       if (status === "delivered" && autoSendId === id) setAutoSendId(null);
       await load();
     } catch (err) {
-      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
     } finally {
       setBusyId(null);
     }
@@ -113,7 +123,7 @@ export default function DriverDeliveriesPanel() {
 
   const sendPosition = (id: string, silent = false) => {
     if (!navigator.geolocation) {
-      if (!silent) setBanner("Géolocalisation non supportée par ce navigateur.");
+      if (!silent) setBanner({ type: "error", message: "Géolocalisation non supportée par ce navigateur." });
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -129,34 +139,96 @@ export default function DriverDeliveriesPanel() {
           });
           if (!res.ok && !silent) {
             const data = await res.json();
-            setBanner(data?.message || "Erreur envoi position");
+            setBanner({ type: "error", message: data?.message || "Erreur envoi position" });
           } else if (!silent) {
-            setBanner("Position envoyée.");
+            setBanner({ type: "success", message: "Position envoyée." });
           }
+          await load();
         } catch {
-          if (!silent) setBanner("Erreur envoi position");
+          if (!silent) setBanner({ type: "error", message: "Erreur envoi position" });
         }
       },
       () => {
-        if (!silent) setBanner("Impossible d'obtenir votre position.");
+        if (!silent) setBanner({ type: "error", message: "Impossible d'obtenir votre position." });
       }
     );
   };
 
+  const bannerClassName =
+    banner?.type === "error"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+
+  const stats = useMemo(() => {
+    const active = myDeliveries.filter((delivery) => delivery.status !== "delivered" && delivery.status !== "cancelled");
+    const delivered = myDeliveries.filter((delivery) => delivery.status === "delivered");
+    const gpsTracked = myDeliveries.filter((delivery) => (delivery.positionHistory?.length || 0) > 0);
+    return {
+      assigned: myDeliveries.length,
+      active: active.length,
+      delivered: delivered.length,
+      available: available.length,
+      gpsTracked: gpsTracked.length,
+    };
+  }, [available.length, myDeliveries]);
+
+  const activeMission = myDeliveries.find((delivery) => autoSendId === delivery.id) || myDeliveries[0] || null;
+  const historyRows = useMemo(
+    () =>
+      myDeliveries
+        .flatMap((delivery) =>
+          (delivery.statusHistory || []).map((entry) => ({
+            deliveryReference: delivery.reference,
+            address: delivery.deliveryAddress,
+            ...entry,
+          }))
+        )
+        .sort((left, right) => new Date(right.at).getTime() - new Date(left.at).getTime())
+        .slice(0, 10),
+    [myDeliveries]
+  );
+
   return (
-    <div id="mes-missions">
-      <h1 className="text-2xl font-bold tracking-tight">Transporteur / Livreur</h1>
-      <p className="mt-1 text-slate-600">Accepter et exécuter les missions de livraison.</p>
+    <div className="space-y-6">
+      <div id="mes-missions">
+        <h1 className="text-2xl font-bold tracking-tight">Transporteur / Livreur</h1>
+        <p className="mt-1 text-slate-600">Accepter et exécuter les missions de livraison.</p>
 
-      {banner && (
-        <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
-          {banner}
+        {banner && <div className={`mt-3 rounded-lg border p-3 text-sm ${bannerClassName}`}>{banner.message}</div>}
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {[
+            ["Missions", stats.assigned],
+            ["Actives", stats.active],
+            ["Livrées", stats.delivered],
+            ["Disponibles", stats.available],
+            ["GPS suivies", stats.gpsTracked],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">{label}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
-      <div className="mt-6">
-        <h2 className="text-sm font-semibold text-slate-700">Mes missions</h2>
-        <div className="mt-3 space-y-3">
+      <div id="gps" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">GPS</h2>
+        {activeMission ? (
+          <div className="mt-4 space-y-2 text-sm">
+            <p className="font-medium text-slate-900">{activeMission.deliveryAddress}</p>
+            <p className="text-slate-600">{activeMission.reference}</p>
+            <p className="text-slate-500">Dernière position: {activeMission.currentPosition ? `${activeMission.currentPosition.lat.toFixed(5)}, ${activeMission.currentPosition.lng.toFixed(5)}` : "aucune position envoyée"}</p>
+            <p className="text-slate-400">Horodatage: {formatDate(activeMission.currentPosition?.at)}</p>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">Activez le partage de position sur une mission en cours.</p>
+        )}
+      </div>
+
+      <div id="livraisons" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Mes livraisons</h2>
+        <div className="mt-4 space-y-3">
           {loading ? (
             <p className="text-sm text-slate-500">Chargement…</p>
           ) : myDeliveries.length === 0 ? (
@@ -170,37 +242,24 @@ export default function DriverDeliveriesPanel() {
                 <div key={delivery.id} className="rounded-lg border border-slate-200 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-medium">{delivery.deliveryAddress}</p>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${status.className}`}>
-                      {status.label}
-                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${status.className}`}>{status.label}</span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {delivery.clientName} · {delivery.reference}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{delivery.clientName} · {delivery.reference}</p>
+                  <p className="mt-1 text-xs text-slate-400">Créée le {formatDate(delivery.createdAt)}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {next && (
-                      <button
-                        type="button"
-                        onClick={() => advanceStatus(delivery.id, next.status)}
-                        disabled={busyId === delivery.id}
-                        className="rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5"
-                      >
+                      <button type="button" onClick={() => advanceStatus(delivery.id, next.status)} disabled={busyId === delivery.id} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60">
                         {next.label}
                       </button>
                     )}
                     {(delivery.status === "picked_up" || delivery.status === "in_transit") && (
-                      <button
-                        type="button"
-                        onClick={() => setAutoSendId(isTracking ? null : delivery.id)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-                          isTracking
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                            : "border-slate-300 bg-white"
-                        }`}
-                      >
+                      <button type="button" onClick={() => setAutoSendId(isTracking ? null : delivery.id)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${isTracking ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-300 bg-white"}`}>
                         {isTracking ? "Partage de position actif ●" : "Partager ma position"}
                       </button>
                     )}
+                    <button type="button" onClick={() => sendPosition(delivery.id)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold">
+                      Ping GPS
+                    </button>
                   </div>
                 </div>
               );
@@ -209,9 +268,46 @@ export default function DriverDeliveriesPanel() {
         </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold text-slate-700">Missions disponibles</h2>
-        <div className="mt-3 space-y-3">
+      <div id="historique" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Historique</h2>
+        <div className="mt-4 space-y-3">
+          {historyRows.length ? historyRows.map((entry) => (
+            <div key={entry.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-900">{entry.deliveryReference}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_LABELS[entry.status].className}`}>{STATUS_LABELS[entry.status].label}</span>
+              </div>
+              <p className="mt-1 text-slate-600">{entry.address}</p>
+              <p className="mt-1 text-xs text-slate-400">{formatDate(entry.at)} · {entry.by}</p>
+            </div>
+          )) : <p className="text-sm text-slate-500">Aucun historique de statut disponible.</p>}
+        </div>
+      </div>
+
+      <div id="revenus" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Revenus</h2>
+        <p className="mt-3 text-sm text-slate-500">Le modèle actuel suit les missions et leurs statuts, mais ne stocke pas encore de rémunération par livraison.</p>
+        <p className="mt-2 text-sm text-slate-700">{stats.delivered} mission(s) livrée(s) peuvent servir de base à un futur calcul.</p>
+      </div>
+
+      <div id="vehicule" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Véhicule</h2>
+        <p className="mt-3 text-sm text-slate-500">Aucune fiche véhicule n&apos;est encore modélisée dans le store.</p>
+      </div>
+
+      <div id="documents" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Documents</h2>
+        <p className="mt-3 text-sm text-slate-500">Les preuves de livraison et documents du chauffeur ne sont pas encore stockés.</p>
+      </div>
+
+      <div id="support" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Support</h2>
+        <p className="mt-3 text-sm text-slate-500">En cas de blocage sur une mission, utilisez le suivi de statut et le partage GPS pour donner le plus de contexte possible à l&apos;équipe support.</p>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Missions disponibles</h2>
+        <div className="mt-4 space-y-3">
           {loading ? (
             <p className="text-sm text-slate-500">Chargement…</p>
           ) : available.length === 0 ? (
@@ -221,18 +317,11 @@ export default function DriverDeliveriesPanel() {
               <div key={delivery.id} className="rounded-lg border border-slate-200 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-medium">{delivery.deliveryAddress}</p>
-                  <button
-                    type="button"
-                    onClick={() => accept(delivery.id)}
-                    disabled={busyId === delivery.id}
-                    className="rounded-lg bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5"
-                  >
+                  <button type="button" onClick={() => accept(delivery.id)} disabled={busyId === delivery.id} className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60">
                     Accepter
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {delivery.clientName} · {delivery.reference}
-                </p>
+                <p className="mt-1 text-xs text-slate-500">{delivery.clientName} · {delivery.reference}</p>
               </div>
             ))
           )}
