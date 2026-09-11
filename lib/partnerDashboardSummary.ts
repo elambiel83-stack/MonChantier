@@ -175,6 +175,14 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
     (payment.fullInvoice?.items || []).some((item) => serviceNames.has(normalizeLabel(item.productName || '')))
   );
   const matchedConfirmed = matchedPayments.filter((payment) => payment.state === 'confirmed');
+  const matchedConfirmedDetails = matchedConfirmed
+    .map((payment) => {
+      const matchedItems = (payment.fullInvoice?.items || []).filter((item) =>
+        serviceNames.has(normalizeLabel(item.productName || ''))
+      );
+      return matchedItems.length > 0 ? { payment, matchedItems } : null;
+    })
+    .filter((entry): entry is { payment: StoredPaymentStatus; matchedItems: NonNullable<StoredPaymentStatus['fullInvoice']>['items'] } => Boolean(entry));
 
   const matchedQuotes = quotes.filter((quote) =>
     (quote.services || []).some((serviceName) => serviceNames.has(normalizeLabel(serviceName)))
@@ -182,14 +190,12 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
 
   const interventions = services.map((service) => {
     const names = new Set([normalizeLabel(service.fr), normalizeLabel(service.en)]);
-    const linked = matchedConfirmed
-      .map((payment) => {
-        const matchedItems = (payment.fullInvoice?.items || []).filter((item) =>
-          names.has(normalizeLabel(item.productName || ''))
-        );
-        return matchedItems.length > 0 ? { payment, matchedItems } : null;
-      })
-      .filter((entry): entry is { payment: StoredPaymentStatus; matchedItems: NonNullable<StoredPaymentStatus['fullInvoice']>['items'] } => Boolean(entry));
+    const linked = matchedConfirmedDetails
+      .map(({ payment, matchedItems }) => ({
+        payment,
+        matchedItems: matchedItems.filter((item) => names.has(normalizeLabel(item.productName || ''))),
+      }))
+      .filter(({ matchedItems }) => matchedItems.length > 0);
 
     return {
       id: service.id,
@@ -207,14 +213,14 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
   });
 
   const clients = Object.values(
-    matchedConfirmed.reduce<
+    matchedConfirmedDetails.reduce<
       Record<string, { label: string; jobs: number; spendByCurrency: Record<string, number> }>
-    >((acc, payment) => {
+>((acc, { payment, matchedItems }) => {
       const key = payment.fullInvoice?.customerEmail || payment.reference;
       const current = acc[key] || { label: getInvoiceCustomer(payment), jobs: 0, spendByCurrency: {} };
       current.jobs += 1;
       const currency = payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A';
-      const amount = payment.fullInvoice?.totalTTC ?? payment.invoice?.totals.ttc ?? 0;
+      const amount = matchedItems.reduce((sum, item) => sum + item.lineTotal, 0);
       current.spendByCurrency[currency] = (current.spendByCurrency[currency] || 0) + amount;
       acc[key] = current;
       return acc;
@@ -232,11 +238,11 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
       serviceCount: services.length,
       activeCount: services.filter((service) => service.active).length,
       quoteCount: matchedQuotes.length,
-      confirmedJobs: matchedConfirmed.length,
+      confirmedJobs: matchedConfirmedDetails.length,
       revenueByCurrency: groupCurrencyTotals(
-        matchedConfirmed.map((payment) => ({
+        matchedConfirmedDetails.map(({ payment, matchedItems }) => ({
           currency: payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A',
-          amount: payment.fullInvoice?.totalTTC ?? payment.invoice?.totals.ttc ?? 0,
+          amount: matchedItems.reduce((sum, item) => sum + item.lineTotal, 0),
         }))
       ),
     },
@@ -263,12 +269,12 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
     clients,
     quotes: matchedQuotes.slice(0, 8),
     paymentsByMethod: Object.values(
-      matchedConfirmed.reduce<Record<string, { method: string; count: number; totalsByCurrency: Record<string, number> }>>(
-        (acc, payment) => {
+      matchedConfirmedDetails.reduce<Record<string, { method: string; count: number; totalsByCurrency: Record<string, number> }>>(
+        (acc, { payment, matchedItems }) => {
           const current = acc[payment.method] || { method: payment.method, count: 0, totalsByCurrency: {} };
           current.count += 1;
           const currency = payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A';
-          const amount = payment.fullInvoice?.totalTTC ?? payment.invoice?.totals.ttc ?? 0;
+          const amount = matchedItems.reduce((sum, item) => sum + item.lineTotal, 0);
           current.totalsByCurrency[currency] = (current.totalsByCurrency[currency] || 0) + amount;
           acc[payment.method] = current;
           return acc;

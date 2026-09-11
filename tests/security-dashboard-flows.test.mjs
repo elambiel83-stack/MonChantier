@@ -186,14 +186,14 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
   ];
 
   securityStore.__setEvents([
-    ...recentInfoEvents,
-    ...recentAlertEvents,
     {
       id: 'old-alert',
       type: 'admin_login_failed',
       severity: 'critical',
       createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(),
     },
+    ...recentAlertEvents.reverse(),
+    ...recentInfoEvents.reverse(),
   ]);
   adminStore.__setUsers([
     { id: 'admin-1', active: true },
@@ -210,7 +210,7 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
   });
   roleStore.__setAudit(
     Array.from({ length: 12 }, (_, index) => ({
-      at: new Date(now - index * 1000).toISOString(),
+      at: new Date(now - (11 - index) * 1000).toISOString(),
       actor: 'admin@monchantier.cd',
       identity: `user-${index}@monchantier.cd`,
       action: 'assigned',
@@ -230,8 +230,10 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
   assert.equal(summary.authActivity.adminFailures24h, 1);
   assert.equal(summary.authActivity.adminSuccess24h, 1);
   assert.equal(summary.recentEvents.length, 30);
+  assert.equal(summary.recentEvents[0].id, 'otp-0');
   assert.equal(summary.throttledBuckets.length, 1);
   assert.equal(summary.recentRoleAudit.length, 10);
+  assert.equal(summary.recentRoleAudit[0].identity, 'user-11@monchantier.cd');
 });
 
 test('authentication flows record security telemetry for the admin dashboard', async () => {

@@ -5,7 +5,7 @@ import { getDaysLate, getPortfolioSummary, getRepaymentHealth, Loan } from '@/li
 import { StoredPaymentStatus } from '@/lib/paymentStore';
 import { StoredProduct } from '@/lib/productStore';
 import { StoredQuoteRequest } from '@/lib/quoteStore';
-import { RoleAssignment, RoleAuditEvent } from '@/lib/roleStore';
+import { RoleAssignment, RoleAuditEvent, isAssignmentActive } from '@/lib/roleStore';
 import { StoredService } from '@/lib/serviceStore';
 import { Site } from '@/lib/siteStore';
 import { computeTaxSummary } from '@/lib/taxSummary';
@@ -309,7 +309,7 @@ export function buildDashboardInsights(input: {
 
   for (const assignment of Object.values(roleAssignments)) {
     roleCounts[assignment.role] += 1;
-    if (assignment.active) activeAssignments += 1;
+    if (isAssignmentActive(assignment)) activeAssignments += 1;
     else inactiveAssignments += 1;
   }
 

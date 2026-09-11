@@ -20,7 +20,13 @@ export async function buildSecurityDashboardSummary() {
   const users = listUsers();
   const rateLimitBuckets = listRateLimitBuckets();
   const throttledBuckets = rateLimitBuckets.filter((bucket) => !bucket.allowed);
-  const recentEvents24h = securityEvents.filter((event) => isRecent(event.createdAt, DAY_MS));
+  const sortedSecurityEvents = [...securityEvents].sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+  );
+  const sortedRoleAudit = [...roleAudit].sort(
+    (left, right) => new Date(right.at).getTime() - new Date(left.at).getTime()
+  );
+  const recentEvents24h = sortedSecurityEvents.filter((event) => isRecent(event.createdAt, DAY_MS));
   const inactiveAssignments = Object.values(roleAssignments).filter((assignment) => !isAssignmentActive(assignment));
   const privilegedAssignments = Object.values(roleAssignments).filter(
     (assignment) =>
@@ -47,7 +53,7 @@ export async function buildSecurityDashboardSummary() {
       adminSuccess24h: recentEvents24h.filter((event) => event.type === 'admin_login_succeeded').length,
     },
     throttledBuckets: throttledBuckets.slice(0, 10),
-    recentEvents: securityEvents.slice(0, 30),
-    recentRoleAudit: roleAudit.slice(0, 10),
+    recentEvents: sortedSecurityEvents.slice(0, 30),
+    recentRoleAudit: sortedRoleAudit.slice(0, 10),
   };
 }
