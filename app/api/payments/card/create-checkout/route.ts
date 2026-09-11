@@ -5,6 +5,7 @@ import {
   registerPendingPayment,
 } from '@/lib/paymentConfirmation';
 import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { resolveTrustedRedirectUrl, withSearchParam } from '@/lib/paymentRedirect';
 import { createStripeCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 
 function parsePositiveAmount(value: unknown) {
@@ -16,12 +17,6 @@ function sanitizeCurrency(value: unknown) {
   if (typeof value !== 'string') return 'CDF';
   const normalized = value.trim().toUpperCase();
   return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
-}
-
-function withSearchParam(url: string, key: string, value: string, baseOrigin: string) {
-  const nextUrl = new URL(url, baseOrigin);
-  nextUrl.searchParams.set(key, value);
-  return nextUrl.toString();
 }
 
 export async function POST(request: NextRequest) {
@@ -45,6 +40,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const baseOrigin = request.nextUrl.origin;
+    const safeSuccessUrl = resolveTrustedRedirectUrl(successUrl, baseOrigin);
+    const safeCancelUrl = resolveTrustedRedirectUrl(cancelUrl, baseOrigin);
+    if (!safeSuccessUrl.ok || !safeCancelUrl.ok) {
+      return NextResponse.json(
+        { message: 'URLs de redirection invalides' },
+        { status: 400 }
+      );
+    }
+
     const paymentReference = generatePaymentReference('CARD');
     const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
     const resolvedCustomerEmail = (customerEmail || '').trim();
@@ -64,9 +69,8 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    const baseOrigin = request.nextUrl.origin;
     const successUrlWithReference = withSearchParam(
-      successUrl,
+      safeSuccessUrl.url,
       'reference',
       paymentReference,
       baseOrigin
@@ -78,7 +82,7 @@ export async function POST(request: NextRequest) {
         currency: parsedCurrency,
         productSummary,
         successUrl: successUrlWithReference,
-        cancelUrl,
+        cancelUrl: safeCancelUrl.url,
         customerEmail: resolvedCustomerEmail || undefined,
         invoicePayload,
       });

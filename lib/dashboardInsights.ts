@@ -168,10 +168,11 @@ export function buildDashboardInsights(input: {
     addCurrencyAmount(averageBasketByCurrency, currency, amount);
     basketCounts[currency] = (basketCounts[currency] || 0) + 1;
 
-    const age = now - new Date(payment.updatedAt).getTime();
-    if (age <= THIRTY_DAYS) {
+    const updatedAtMs = new Date(payment.updatedAt).getTime();
+    const age = now - updatedAtMs;
+    if (Number.isFinite(updatedAtMs) && age >= 0 && age <= THIRTY_DAYS) {
       addCurrencyAmount(current30DayRevenueByCurrency, currency, amount);
-    } else if (age <= THIRTY_DAYS * 2) {
+    } else if (Number.isFinite(updatedAtMs) && age > THIRTY_DAYS && age <= THIRTY_DAYS * 2) {
       addCurrencyAmount(previous30DayRevenueByCurrency, currency, amount);
     }
 
