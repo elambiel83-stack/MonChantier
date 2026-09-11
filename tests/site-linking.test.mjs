@@ -37,6 +37,55 @@ function createSiteLinkingHarness(source) {
   return new Function(`${helperSource}; return { addressesLikelyMatch, findBestMatchingSiteIndex, backfillSiteReferences };`)();
 }
 
+function createPaymentConfirmationHarness(source, overrides = {}) {
+  const runtimeSource = source
+    .slice(source.indexOf('function sanitizeCurrency'))
+    .replace('function sanitizeCurrency(value: unknown)', 'function sanitizeCurrency(value)')
+    .replace('function parsePositiveAmount(value: unknown)', 'function parsePositiveAmount(value)')
+    .replace(
+      'export function isSupportedMethod(value: unknown): value is InvoicePaymentMethod',
+      'function isSupportedMethod(value)'
+    )
+    .replace('export function generatePaymentReference(prefix: string): string', 'function generatePaymentReference(prefix)')
+    .replace(
+      'export async function registerPendingPayment(reference: string, method: InvoicePaymentMethod)',
+      'async function registerPendingPayment(reference, method)'
+    )
+    .replace('export async function getPaymentStatus(reference: string)', 'async function getPaymentStatus(reference)')
+    .replace('export async function confirmPayment(payload: ConfirmPaymentPayload)', 'async function confirmPayment(payload)');
+
+  const factory = new Function(
+    'recordPayment',
+    'buildInvoiceText',
+    'createInvoice',
+    'buildInvoicePdf',
+    'isMailerConfigured',
+    'sendInvoiceEmail',
+    'getStoredPaymentStatus',
+    'setStoredPaymentStatus',
+    'createDeliveryFromPayment',
+    'autoLinkDeliveryReferenceToSite',
+    'autoLinkOrderReferenceToSite',
+    'randomBytes',
+    `${runtimeSource}; return { confirmPayment };`
+  );
+
+  return factory(
+    overrides.recordPayment || (() => undefined),
+    overrides.buildInvoiceText || (() => ''),
+    overrides.createInvoice || ((payload) => payload),
+    overrides.buildInvoicePdf || (async () => Buffer.from('')),
+    overrides.isMailerConfigured || (() => false),
+    overrides.sendInvoiceEmail || (async () => undefined),
+    overrides.getStoredPaymentStatus || (async () => null),
+    overrides.setStoredPaymentStatus || (async () => undefined),
+    overrides.createDeliveryFromPayment || (async (payload) => payload),
+    overrides.autoLinkDeliveryReferenceToSite || (async () => null),
+    overrides.autoLinkOrderReferenceToSite || (async () => null),
+    overrides.randomBytes || (() => Buffer.from('fixed-reference'))
+  );
+}
+
 test('site store helpers normalize and match likely addresses', async () => {
   const source = await read('lib/siteStore.ts');
   const { addressesLikelyMatch, findBestMatchingSiteIndex } = createSiteLinkingHarness(source);
@@ -52,6 +101,16 @@ test('site store helpers normalize and match likely addresses', async () => {
       { address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' }
     ),
     1
+  );
+  assert.equal(
+    findBestMatchingSiteIndex(
+      [
+        { address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' },
+        { address: 'Boulevard 30 Juin', clientIdentity: 'client@example.com' },
+      ],
+      { address: 'Adresse inconnue', clientIdentity: 'client@example.com' }
+    ),
+    -1
   );
 });
 
@@ -94,11 +153,58 @@ test('site store backfill only links historical references for the same client',
 
 test('payment confirmation auto-links matching sites for orders and deliveries', async () => {
   const source = await read('lib/paymentConfirmation.ts');
+  const linkedSite = {
+    clientIdentity: 'client@example.com',
+    address: 'Avenue Kasavubu 10',
+    orderReferences: [],
+    deliveryReferences: [],
+  };
+  const { confirmPayment } = createPaymentConfirmationHarness(source, {
+    createInvoice: (payload) => ({
+      standard: 'OHADA',
+      legalReference: 'SYSCOHADA',
+      invoiceNumber: 'INV-1',
+      customerName: payload.customerName,
+      customerEmail: payload.customerEmail,
+      taxRate: 16,
+      totalHT: 100,
+      totalTVA: 16,
+      totalTTC: 116,
+      currency: 'CDF',
+      deliveryAddress: payload.deliveryAddress,
+      location: payload.location,
+    }),
+    autoLinkOrderReferenceToSite: async ({ reference, clientIdentity, deliveryAddress }) => {
+      if (clientIdentity === linkedSite.clientIdentity && deliveryAddress === linkedSite.address) {
+        linkedSite.orderReferences.push(reference);
+      }
+      return linkedSite;
+    },
+    createDeliveryFromPayment: async ({ reference, clientIdentity, deliveryAddress }) => ({
+      reference: `DEL-${reference}`,
+      clientIdentity,
+      deliveryAddress,
+    }),
+    autoLinkDeliveryReferenceToSite: async ({ reference, clientIdentity, deliveryAddress }) => {
+      if (clientIdentity === linkedSite.clientIdentity && deliveryAddress === linkedSite.address) {
+        linkedSite.deliveryReferences.push(reference);
+      }
+      return linkedSite;
+    },
+  });
 
-  assert.match(source, /autoLinkOrderReferenceToSite/);
-  assert.match(source, /autoLinkDeliveryReferenceToSite/);
-  assert.match(source, /if \(invoice\.deliveryAddress\)/);
-  assert.match(source, /const delivery = await createDeliveryFromPayment/);
+  await confirmPayment({
+    reference: 'PAY-1',
+    method: 'mobilemoney',
+    amount: 116,
+    currency: 'CDF',
+    customerName: 'Client MonChantier',
+    customerEmail: linkedSite.clientIdentity,
+    deliveryAddress: linkedSite.address,
+  });
+
+  assert.deepEqual(linkedSite.orderReferences, ['PAY-1']);
+  assert.deepEqual(linkedSite.deliveryReferences, ['DEL-PAY-1']);
 });
 
 test('site manager dashboard explains automatic linkage with manual fallback', async () => {

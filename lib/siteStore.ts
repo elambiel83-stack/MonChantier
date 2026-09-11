@@ -151,9 +151,6 @@ function findBestMatchingSiteIndex(
     if (clientAware) return clientAware.index;
   }
 
-  const clientMatches = scored.filter((entry) => entry.sameClient);
-  if (clientMatches.length === 1) return clientMatches[0].index;
-
   return -1;
 }
 
