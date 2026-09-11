@@ -60,6 +60,7 @@ test('admin dashboard loads expected admin data sources', async () => {
     '/api/admin/products',
     '/api/admin/services',
     '/api/admin/promotions',
+    '/api/admin/security',
     '/api/admin/taxes',
     '/api/deliveries',
     '/api/sites',
@@ -83,6 +84,7 @@ test('mutable admin API routes are protected by requireAdmin', async () => {
     'app/api/admin/products/[id]/route.ts',
     'app/api/admin/promotions/route.ts',
     'app/api/admin/promotions/[id]/route.ts',
+    'app/api/admin/security/route.ts',
     'app/api/admin/roles/route.ts',
     'app/api/admin/services/route.ts',
     'app/api/admin/services/[id]/route.ts',
@@ -110,4 +112,16 @@ test('admin promotions section is backed by stored promotions', async () => {
   assert.match(adminPageSource, /type="datetime-local"/);
   assert.match(productsRouteSource, /applyCatalogPromotions/);
   assert.match(servicesRouteSource, /applyCatalogPromotions/);
+});
+
+test('admin security section is backed by dedicated security telemetry', async () => {
+  const [adminPageSource, securityRouteSource] = await Promise.all([
+    read('app/dashboard/admin/page.tsx'),
+    read('app/api/admin/security/route.ts'),
+  ]);
+
+  assert.doesNotMatch(adminPageSource, /Aucun audit de connexion ni alerting dédié n’est encore branché/);
+  assert.match(adminPageSource, /fetch\('\/api\/admin\/security'/);
+  assert.match(adminPageSource, /Événements de sécurité récents/);
+  assert.match(securityRouteSource, /buildSecurityDashboardSummary/);
 });

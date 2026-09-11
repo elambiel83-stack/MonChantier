@@ -1,4 +1,4 @@
-type Bucket = { count: number; resetAt: number };
+type Bucket = { count: number; resetAt: number; max: number };
 
 // In-memory per-process limiter: sufficient for this single-instance,
 // file-store-backed app. Resets on server restart, which is acceptable for
@@ -25,7 +25,7 @@ export function checkRateLimit(
 
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + opts.windowMs });
+    buckets.set(key, { count: 1, resetAt: now + opts.windowMs, max: opts.max });
     return { allowed: true, remaining: opts.max - 1, retryAfterMs: 0 };
   }
 
@@ -35,6 +35,22 @@ export function checkRateLimit(
 
   bucket.count += 1;
   return { allowed: true, remaining: opts.max - bucket.count, retryAfterMs: 0 };
+}
+
+export function listRateLimitBuckets(prefixes?: string[]) {
+  const now = Date.now();
+  const values = [...buckets.entries()]
+    .filter(([, bucket]) => bucket.resetAt > now)
+    .filter(([key]) => !prefixes?.length || prefixes.some((prefix) => key.startsWith(prefix)));
+
+  return values.map(([key, bucket]) => ({
+    key,
+    count: bucket.count,
+    max: bucket.max,
+    remaining: Math.max(bucket.max - bucket.count, 0),
+    retryAfterMs: Math.max(bucket.resetAt - now, 0),
+    allowed: bucket.count < bucket.max,
+  }));
 }
 
 export function getClientIp(req: Request): string {

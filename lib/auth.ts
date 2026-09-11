@@ -4,11 +4,12 @@ import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
-import { verifyPhoneOtp } from "./phoneAuth";
+import { verifyPhoneOtpWithContext } from "./phoneAuth";
 import { AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
 import { verifyAdminTotp } from './totp';
+import { recordSecurityEvent } from "./securityStore";
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
@@ -79,13 +80,15 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         phone: { label: "Phone", type: "text" },
         code: { label: "Code", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         const phone = credentials?.phone?.trim() || "";
         const code = credentials?.code?.trim() || "";
+        const forwardedFor = req?.headers?.["x-forwarded-for"];
+        const ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "unknown";
 
         if (!phone || !code) return null;
 
-        const isValid = await verifyPhoneOtp(phone, code);
+        const isValid = await verifyPhoneOtpWithContext(phone, code, { ip });
         if (!isValid) return null;
 
         return {
@@ -121,11 +124,35 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         // and stops one attacker from locking the real admin out via the email bucket.
         const byEmail = checkRateLimit(`admin-login:email:${email}`, { max: 5, windowMs: 15 * 60 * 1000 });
         const byIp = checkRateLimit(`admin-login:ip:${ip}`, { max: 20, windowMs: 15 * 60 * 1000 });
-        if (!byEmail.allowed || !byIp.allowed) return null;
-
-        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword) || !verifyAdminTotp(totp)) {
+        if (!byEmail.allowed || !byIp.allowed) {
+          await recordSecurityEvent({
+            type: "admin_login_rate_limited",
+            severity: "critical",
+            identity: email,
+            ip,
+            detail: `Tentative bloquée (${Math.ceil(Math.max(byEmail.retryAfterMs, byIp.retryAfterMs) / 1000)}s)`,
+          });
           return null;
         }
+
+        if (!safeEqual(email, expectedEmail) || !safeEqual(password, expectedPassword) || !verifyAdminTotp(totp)) {
+          await recordSecurityEvent({
+            type: "admin_login_failed",
+            severity: "warning",
+            identity: email,
+            ip,
+            detail: "Identifiants ou MFA invalides",
+          });
+          return null;
+        }
+
+        await recordSecurityEvent({
+          type: "admin_login_succeeded",
+          severity: "info",
+          identity: email,
+          ip,
+          detail: "Connexion administrateur réussie",
+        });
 
         return {
           id: email,

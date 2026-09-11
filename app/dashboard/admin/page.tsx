@@ -212,6 +212,52 @@ type AdminStats = {
   generatedAt: string;
 };
 
+type SecurityEventRow = {
+  id: string;
+  type: string;
+  severity: 'info' | 'warning' | 'critical';
+  identity?: string;
+  ip?: string;
+  detail?: string;
+  createdAt: string;
+};
+
+type SecurityRateLimitBucket = {
+  key: string;
+  count: number;
+  max: number;
+  remaining: number;
+  retryAfterMs: number;
+  allowed: boolean;
+};
+
+type SecurityRoleAuditEntry = {
+  at: string;
+  actor: string;
+  identity: string;
+  action: string;
+  role?: AppRole;
+};
+
+type AdminSecuritySummary = {
+  summary: {
+    inactiveUsers: number;
+    inactiveAssignments: number;
+    privilegedAssignments: number;
+    throttledSources: number;
+    alerts24h: number;
+  };
+  authActivity: {
+    otpRequested24h: number;
+    otpFailures24h: number;
+    adminFailures24h: number;
+    adminSuccess24h: number;
+  };
+  throttledBuckets: SecurityRateLimitBucket[];
+  recentEvents: SecurityEventRow[];
+  recentRoleAudit: SecurityRoleAuditEntry[];
+};
+
 const defaultStats: AdminStats = {
   summary: {
     contacts: 0,
@@ -296,6 +342,8 @@ export default function AdminPage() {
 
   const [orders, setOrders] = useState<StoredOrder[]>([]);
   const [busyOrderRef, setBusyOrderRef] = useState<string | null>(null);
+  const [securitySummary, setSecuritySummary] = useState<AdminSecuritySummary | null>(null);
+  const [securityApiOnline, setSecurityApiOnline] = useState<boolean | null>(null);
 
   const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
@@ -640,6 +688,19 @@ export default function AdminPage() {
     }
   };
 
+  const loadSecurity = async () => {
+    try {
+      const response = await fetch('/api/admin/security', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger la sécurité');
+      const data = (await response.json()) as AdminSecuritySummary;
+      setSecuritySummary(data);
+      setSecurityApiOnline(true);
+    } catch {
+      setSecuritySummary(null);
+      setSecurityApiOnline(false);
+    }
+  };
+
   const loadOrders = async () => {
     try {
       const response = await fetch('/api/admin/orders', { cache: 'no-store' });
@@ -748,6 +809,7 @@ export default function AdminPage() {
         loadProducts(),
         loadServices(),
         loadPromotions(),
+        loadSecurity(),
         loadTaxes(),
         loadOrders(),
       ]);
@@ -909,6 +971,26 @@ export default function AdminPage() {
     };
 
     return labels[lang][method];
+  };
+
+  const getSecurityEventLabel = (event: SecurityEventRow) => {
+    const labels: Record<string, { fr: string; en: string }> = {
+      otp_requested: { fr: 'OTP demandé', en: 'OTP requested' },
+      otp_request_rate_limited: { fr: 'OTP limité', en: 'OTP rate-limited' },
+      otp_verified: { fr: 'OTP validé', en: 'OTP verified' },
+      otp_verify_failed: { fr: 'OTP refusé', en: 'OTP failed' },
+      otp_verify_rate_limited: { fr: 'OTP bloqué', en: 'OTP blocked' },
+      admin_login_succeeded: { fr: 'Connexion admin réussie', en: 'Admin login succeeded' },
+      admin_login_failed: { fr: 'Connexion admin échouée', en: 'Admin login failed' },
+      admin_login_rate_limited: { fr: 'Connexion admin bloquée', en: 'Admin login blocked' },
+    };
+    return labels[event.type]?.[lang] || event.type;
+  };
+
+  const getSecuritySeverityClass = (severity: SecurityEventRow['severity']) => {
+    if (severity === 'critical') return 'bg-red-100 text-red-700';
+    if (severity === 'warning') return 'bg-amber-100 text-amber-700';
+    return 'bg-emerald-100 text-emerald-700';
   };
 
   const createUser = async () => {
@@ -2263,25 +2345,114 @@ export default function AdminPage() {
 
         <div id="securite" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Sécurité', 'Security')}</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Vue consolidée des tentatives de connexion, limitations anti-bruteforce et changements de rôles récents.',
+              'Consolidated view of sign-in attempts, brute-force throttling, and recent role changes.'
+            )}
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-sm text-slate-500">{t('Utilisateurs inactifs', 'Inactive users')}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{users.filter((user) => !user.active).length}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{securitySummary?.summary.inactiveUsers ?? 0}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">{t('API stats', 'Stats API')}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{apiOnline ? t('OK', 'OK') : t('Hors ligne', 'Offline')}</p>
+              <p className="text-sm text-slate-500">{t('Affectations inactives', 'Inactive assignments')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{securitySummary?.summary.inactiveAssignments ?? 0}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">{t('API utilisateurs', 'Users API')}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{usersApiOnline ? t('OK', 'OK') : t('Hors ligne', 'Offline')}</p>
+              <p className="text-sm text-slate-500">{t('Comptes sensibles', 'Privileged accounts')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{securitySummary?.summary.privilegedAssignments ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Sources ralenties', 'Throttled sources')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{securitySummary?.summary.throttledSources ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Alertes 24h', '24h alerts')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{securitySummary?.summary.alerts24h ?? 0}</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{t('Activité authentification (24h)', 'Authentication activity (24h)')}</h3>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {[
+                  [t('OTP demandés', 'OTP requests'), securitySummary?.authActivity.otpRequested24h ?? 0],
+                  [t('OTP en erreur', 'OTP failures'), securitySummary?.authActivity.otpFailures24h ?? 0],
+                  [t('Échecs admin', 'Admin failures'), securitySummary?.authActivity.adminFailures24h ?? 0],
+                  [t('Succès admin', 'Admin successes'), securitySummary?.authActivity.adminSuccess24h ?? 0],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-lg border border-slate-100 p-3">
+                    <p className="text-xs text-slate-500">{label}</p>
+                    <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{t('Verrous actifs', 'Active throttles')}</h3>
+              <div className="mt-4 space-y-3">
+                {securitySummary?.throttledBuckets.length ? (
+                  securitySummary.throttledBuckets.map((bucket) => (
+                    <div key={bucket.key} className="rounded-lg border border-amber-100 bg-amber-50 p-3 text-sm">
+                      <p className="font-medium text-amber-900">{bucket.key}</p>
+                      <p className="mt-1 text-amber-800">
+                        {bucket.count}/{bucket.max} · {t('réinitialisation dans', 'resets in')} {Math.ceil(bucket.retryAfterMs / 1000)}s
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">{t('Aucun verrou actif.', 'No active throttle.')}</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{t('Événements de sécurité récents', 'Recent security events')}</h3>
+              <div className="mt-4 space-y-3">
+                {securitySummary?.recentEvents.length ? (
+                  securitySummary.recentEvents.map((event) => (
+                    <div key={event.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-slate-900">{getSecurityEventLabel(event)}</p>
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${getSecuritySeverityClass(event.severity)}`}>
+                          {event.severity}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-slate-600">
+                        {[event.identity || '—', event.ip || '—', event.detail || '—'].join(' · ')}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">{formatDate(event.createdAt)}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">{t('Aucun événement sécurité récent.', 'No recent security event.')}</p>
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{t('Audit des rôles récent', 'Recent role audit')}</h3>
+              <div className="mt-4 space-y-3">
+                {securitySummary?.recentRoleAudit.length ? (
+                  securitySummary.recentRoleAudit.map((event) => (
+                    <div key={`${event.at}-${event.identity}-${event.action}`} className="rounded-lg border border-slate-100 p-3 text-sm">
+                      <p className="font-medium text-slate-900">{event.identity}</p>
+                      <p className="mt-1 text-slate-600">
+                        {event.action} {event.role ? `· ${getRoleLabel(event.role)}` : ''} · {event.actor}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">{formatDate(event.at)}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">{t('Aucun audit de rôle récent.', 'No recent role audit.')}</p>
+                )}
+              </div>
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-500">
-            {t(
-              'Aucun audit de connexion ni alerting dédié n’est encore branché ; la surveillance se limite ici aux états des APIs et à l’activation des identités.',
-              'No dedicated sign-in audit or alerting is wired yet; monitoring here is limited to API health and identity activation.'
-            )}
+            {t('API sécurité', 'Security API')}: {securityApiOnline ? t('OK', 'OK') : t('Hors ligne', 'Offline')}
           </p>
         </div>
 

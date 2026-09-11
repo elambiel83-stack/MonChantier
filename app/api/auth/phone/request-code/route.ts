@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createPhoneOtp } from "@/lib/phoneAuth";
 import { isSmsConfigured, sendSms } from "@/lib/sms";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { recordSecurityEvent } from "@/lib/securityStore";
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,13 @@ export async function POST(req: Request) {
     const byIp = checkRateLimit(`otp-request:ip:${ip}`, { max: 10, windowMs: 10 * 60 * 1000 });
     if (!byPhone.allowed || !byIp.allowed) {
       const retryAfterSec = Math.ceil(Math.max(byPhone.retryAfterMs, byIp.retryAfterMs) / 1000);
+      await recordSecurityEvent({
+        type: "otp_request_rate_limited",
+        severity: "warning",
+        identity: phone,
+        ip,
+        detail: `Retry in ${retryAfterSec}s`,
+      });
       return NextResponse.json(
         { message: `Trop de demandes. Réessayez dans ${retryAfterSec}s.` },
         { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
@@ -42,6 +50,14 @@ export async function POST(req: Request) {
     }
 
     const devMode = process.env.NODE_ENV === "development";
+
+    await recordSecurityEvent({
+      type: "otp_requested",
+      severity: smsSent ? "info" : "warning",
+      identity: normalizedPhone,
+      ip,
+      detail: smsSent ? "OTP envoyé par SMS" : "OTP généré sans confirmation SMS",
+    });
 
     return NextResponse.json({
       ok: true,

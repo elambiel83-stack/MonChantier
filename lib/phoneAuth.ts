@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { checkRateLimit } from "./rateLimit";
+import { recordSecurityEvent } from "./securityStore";
 
 type PhoneOtpRecord = {
   code: string;
@@ -58,16 +59,40 @@ export async function createPhoneOtp(phone: string): Promise<{ phone: string; co
 }
 
 export async function verifyPhoneOtp(phone: string, code: string): Promise<boolean> {
+  return verifyPhoneOtpWithContext(phone, code);
+}
+
+export async function verifyPhoneOtpWithContext(
+  phone: string,
+  code: string,
+  context?: { ip?: string }
+): Promise<boolean> {
   const normalizedPhone = normalizePhone(phone);
 
   const attempts = checkRateLimit(`otp-verify:${normalizedPhone}`, { max: 5, windowMs: OTP_TTL_MS });
-  if (!attempts.allowed) return false;
+  if (!attempts.allowed) {
+    await recordSecurityEvent({
+      type: "otp_verify_rate_limited",
+      severity: "warning",
+      identity: normalizedPhone,
+      ip: context?.ip,
+      detail: `Retry in ${Math.ceil(attempts.retryAfterMs / 1000)}s`,
+    });
+    return false;
+  }
 
   const store = cleanupExpired(await readOtpStore());
   const record = store[normalizedPhone];
 
   if (!record) {
     await writeOtpStore(store);
+    await recordSecurityEvent({
+      type: "otp_verify_failed",
+      severity: "warning",
+      identity: normalizedPhone,
+      ip: context?.ip,
+      detail: "OTP introuvable ou expiré",
+    });
     return false;
   }
 
@@ -77,6 +102,13 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<boole
   }
 
   await writeOtpStore(store);
+  await recordSecurityEvent({
+    type: isValid ? "otp_verified" : "otp_verify_failed",
+    severity: isValid ? "info" : "warning",
+    identity: normalizedPhone,
+    ip: context?.ip,
+    detail: isValid ? "Connexion téléphone validée" : "Code OTP invalide",
+  });
 
   return isValid;
 }
