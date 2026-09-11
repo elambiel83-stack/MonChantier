@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/**/*.test.mjs"
+    "test": "node --test"
   },
   "dependencies": {
     "next": "^14.0.4",
