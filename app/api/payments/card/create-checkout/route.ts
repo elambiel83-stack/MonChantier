@@ -18,8 +18,8 @@ function sanitizeCurrency(value: unknown) {
   return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
 }
 
-function withSearchParam(url: string, key: string, value: string) {
-  const nextUrl = new URL(url);
+function withSearchParam(url: string, key: string, value: string, baseOrigin: string) {
+  const nextUrl = new URL(url, baseOrigin);
   nextUrl.searchParams.set(key, value);
   return nextUrl.toString();
 }
@@ -64,7 +64,13 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    const successUrlWithReference = withSearchParam(successUrl, 'reference', paymentReference);
+    const baseOrigin = request.nextUrl.origin;
+    const successUrlWithReference = withSearchParam(
+      successUrl,
+      'reference',
+      paymentReference,
+      baseOrigin
+    );
 
     if (isStripeConfigured()) {
       await registerPendingPayment(paymentReference, 'card');
@@ -102,12 +108,14 @@ export async function POST(request: NextRequest) {
       success: true,
       checkoutUrl: withSearchParam(
         withSearchParam(
-          withSearchParam(successUrlWithReference, 'session_id', `demo_${Date.now()}`),
+          withSearchParam(successUrlWithReference, 'session_id', `demo_${Date.now()}`, baseOrigin),
           'amount',
-          String(amount)
+          String(amount),
+          baseOrigin
         ),
         'items',
-        productSummary
+        productSummary,
+        baseOrigin
       ),
       sessionId: paymentReference,
       reference: paymentReference,

@@ -18,8 +18,8 @@ function sanitizeCurrency(value: unknown) {
   return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
 }
 
-function withSearchParam(url: string, key: string, value: string) {
-  const nextUrl = new URL(url);
+function withSearchParam(url: string, key: string, value: string, baseOrigin: string) {
+  const nextUrl = new URL(url, baseOrigin);
   nextUrl.searchParams.set(key, value);
   return nextUrl.toString();
 }
@@ -64,7 +64,13 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    const returnUrlWithReference = withSearchParam(returnUrl, 'reference', paymentReference);
+    const baseOrigin = request.nextUrl.origin;
+    const returnUrlWithReference = withSearchParam(
+      returnUrl,
+      'reference',
+      paymentReference,
+      baseOrigin
+    );
 
     if (isPayPalConfigured()) {
       await registerPendingPayment(paymentReference, 'paypal');
@@ -101,12 +107,14 @@ export async function POST(request: NextRequest) {
       success: true,
       approveUrl: withSearchParam(
         withSearchParam(
-          withSearchParam(returnUrlWithReference, 'paypal_order_id', `demo_${Date.now()}`),
+          withSearchParam(returnUrlWithReference, 'paypal_order_id', `demo_${Date.now()}`, baseOrigin),
           'amount',
-          String(amount)
+          String(amount),
+          baseOrigin
         ),
         'items',
-        productSummary
+        productSummary,
+        baseOrigin
       ),
       orderId: paymentReference,
       reference: paymentReference,
