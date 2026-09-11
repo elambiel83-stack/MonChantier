@@ -48,7 +48,7 @@ export default async function ClientDashboardPage() {
   const identityLabel = session?.user?.identity || session?.user?.name || 'ce compte';
 
   const [allPayments, quotes] = hasEmail
-    ? await Promise.all([listPaymentStatuses(), listQuoteRequestsByEmail(email)])
+    ? await Promise.all([listPaymentStatuses(), listQuoteRequestsByEmail(email as string)])
     : [[], []];
 
   const normalizedEmail = email?.toLowerCase() || '';
