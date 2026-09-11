@@ -466,7 +466,7 @@ export default async function DirectorDashboardPage() {
         <h2 className="text-lg font-semibold">Performance</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-4">
           {[
-            ['Conversion devis → commandes', rate(dashboard.commerce.quoteToOrderRate)],
+            ['Ratio commandes / devis', rate(dashboard.commerce.ordersToQuotesRatio)],
             ['Livraisons terminées', rate(deliveryCompletionRate)],
             ['Tâches clôturées', rate(taskCompletionRate)],
             ['Remboursement crédit', `${dashboard.portfolio.repaymentRate}%`],

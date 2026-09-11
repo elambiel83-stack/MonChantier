@@ -556,8 +556,14 @@ export function buildDashboardInsights(input: {
       quantity: item.quantity,
     }));
 
-  const salesForecastByCurrency = toSortedCurrencyEntries(current30DayRevenueByCurrency).map(
-    ([currency, currentAmount]) => {
+  const forecastCurrencies = new Set([
+    ...Object.keys(current30DayRevenueByCurrency),
+    ...Object.keys(previous30DayRevenueByCurrency),
+  ]);
+  const salesForecastByCurrency = Array.from(forecastCurrencies)
+    .sort((a, b) => a.localeCompare(b))
+    .map((currency) => {
+      const currentAmount = current30DayRevenueByCurrency[currency] || 0;
       const previousAmount = previous30DayRevenueByCurrency[currency] || 0;
       const projectedAmount = round2(currentAmount);
       const trend =
@@ -565,8 +571,7 @@ export function buildDashboardInsights(input: {
       const deltaPercent =
         previousAmount > 0 ? Math.round(((currentAmount - previousAmount) / previousAmount) * 100) : null;
       return { currency, currentAmount, previousAmount, projectedAmount, trend, deltaPercent };
-    }
-  );
+    });
 
   const insights: string[] = [];
   if (confirmedPayments.length > 0) {
@@ -609,7 +614,7 @@ export function buildDashboardInsights(input: {
         (payment) => !formatClientKey(payment.fullInvoice?.customerEmail, payment.invoice?.email)
       ).length,
       quoteRequestsCount: quotes.length,
-      quoteToOrderRate:
+      ordersToQuotesRatio:
         quotes.length > 0 ? Math.round((confirmedPayments.length / quotes.length) * 100) : null,
       confirmedRevenueByCurrency: toSortedCurrencyEntries(confirmedRevenueByCurrency),
       averageBasketByCurrency: toSortedCurrencyEntries(averageBasketEntries),
