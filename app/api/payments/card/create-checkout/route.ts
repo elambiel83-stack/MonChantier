@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  confirmPayment,
   generatePaymentReference,
   registerPendingPayment,
 } from '@/lib/paymentConfirmation';
@@ -76,54 +75,29 @@ export async function POST(request: NextRequest) {
       baseOrigin
     );
 
-    if (isStripeConfigured()) {
-      const session = await createStripeCheckoutSession({
-        amount: parsedAmount,
-        currency: parsedCurrency,
-        productSummary,
-        successUrl: successUrlWithReference,
-        cancelUrl: safeCancelUrl.url,
-        customerEmail: resolvedCustomerEmail || undefined,
-        invoicePayload,
-      });
-      await registerPendingPayment(paymentReference, 'card');
-
-      return NextResponse.json({
-        success: true,
-        checkoutUrl: session.url,
-        sessionId: session.sessionId,
-        reference: paymentReference,
-      });
+    if (!isStripeConfigured()) {
+      return NextResponse.json(
+        { message: 'Paiement carte indisponible: STRIPE_SECRET_KEY manquant.' },
+        { status: 503 }
+      );
     }
 
-    const confirmation = await confirmPayment({
-      reference: paymentReference,
-      method: 'card',
+    const session = await createStripeCheckoutSession({
       amount: parsedAmount,
       currency: parsedCurrency,
-      customerName: resolvedCustomerName,
-      customerEmail: resolvedCustomerEmail,
-      items: normalizedItems,
-      deliveryAddress,
-      location,
+      productSummary,
+      successUrl: successUrlWithReference,
+      cancelUrl: safeCancelUrl.url,
+      customerEmail: resolvedCustomerEmail || undefined,
+      invoicePayload,
     });
+    await registerPendingPayment(paymentReference, 'card');
 
     return NextResponse.json({
       success: true,
-      checkoutUrl: withSearchParam(
-        withSearchParam(
-          withSearchParam(successUrlWithReference, 'session_id', `demo_${Date.now()}`, baseOrigin),
-          'amount',
-          String(parsedAmount),
-          baseOrigin
-        ),
-        'items',
-        productSummary,
-        baseOrigin
-      ),
-      sessionId: paymentReference,
+      checkoutUrl: session.url,
+      sessionId: session.sessionId,
       reference: paymentReference,
-      invoice: confirmation.invoice,
     });
   } catch (error) {
     console.error('Erreur création checkout:', error);

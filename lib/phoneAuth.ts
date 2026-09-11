@@ -1,5 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { readStorePayload, writeStorePayload } from "./serverStateStore";
 import { checkRateLimit } from "./rateLimit";
 import { recordSecurityEvent } from "./securityStore";
 
@@ -11,8 +10,7 @@ type PhoneOtpRecord = {
 type PhoneOtpStore = Record<string, PhoneOtpRecord>;
 
 const OTP_TTL_MS = 5 * 60 * 1000;
-const OTP_STORE_DIR = path.join(process.cwd(), "data");
-const OTP_STORE_FILE = path.join(OTP_STORE_DIR, "phone-otp-store.json");
+const OTP_STORE_KEY = 'phone-otp-store.json';
 
 function normalizePhone(phone: string): string {
   return phone.trim().replace(/[\s-]/g, "");
@@ -20,7 +18,7 @@ function normalizePhone(phone: string): string {
 
 async function readOtpStore(): Promise<PhoneOtpStore> {
   try {
-    const raw = await readFile(OTP_STORE_FILE, "utf8");
+    const raw = await readStorePayload(OTP_STORE_KEY, () => JSON.stringify({}, null, 2), { legacyFileName: OTP_STORE_KEY });
     const parsed = JSON.parse(raw) as PhoneOtpStore;
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
@@ -29,8 +27,7 @@ async function readOtpStore(): Promise<PhoneOtpStore> {
 }
 
 async function writeOtpStore(store: PhoneOtpStore): Promise<void> {
-  await mkdir(OTP_STORE_DIR, { recursive: true });
-  await writeFile(OTP_STORE_FILE, JSON.stringify(store, null, 2), "utf8");
+  await writeStorePayload(OTP_STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 function cleanupExpired(store: PhoneOtpStore): PhoneOtpStore {
@@ -56,6 +53,18 @@ export async function createPhoneOtp(phone: string): Promise<{ phone: string; co
   await writeOtpStore(store);
 
   return { phone: normalizedPhone, code, expiresAt };
+}
+
+export async function revokePhoneOtp(phone: string): Promise<void> {
+  const normalizedPhone = normalizePhone(phone);
+  const store = cleanupExpired(await readOtpStore());
+
+  if (!(normalizedPhone in store)) {
+    return;
+  }
+
+  delete store[normalizedPhone];
+  await writeOtpStore(store);
 }
 
 export async function verifyPhoneOtp(phone: string, code: string): Promise<boolean> {

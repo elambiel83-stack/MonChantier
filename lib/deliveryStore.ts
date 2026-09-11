@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 import { getCity } from '@/lib/drcCities';
 import { registerDriverDeliveryEarning } from '@/lib/driverStore';
 
@@ -45,7 +44,7 @@ export type Delivery = {
 
 type DeliveryStoreModel = { deliveries: Delivery[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'delivery-store.json');
+const STORE_KEY = 'delivery-store.json';
 const INITIAL_STORE: DeliveryStoreModel = { deliveries: [] };
 const MAX_POSITION_HISTORY = 200;
 
@@ -60,18 +59,9 @@ function withLock<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<DeliveryStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<DeliveryStoreModel>;
     return { deliveries: Array.isArray(parsed.deliveries) ? parsed.deliveries : [] };
@@ -81,7 +71,7 @@ async function readStore(): Promise<DeliveryStoreModel> {
 }
 
 async function writeStore(store: DeliveryStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 function normalizeIdentity(identity: string): string {

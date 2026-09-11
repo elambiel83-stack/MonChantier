@@ -27,6 +27,21 @@ test('payment mobile money initiation registers pending status before confirmati
   assert.ok(pendingIndex < confirmIndex, 'pending registration must happen before the confirmed branch');
 });
 
+test('payment routes no longer contain local demo checkout fallbacks', async () => {
+  const [cardSource, paypalSource, mobileSource] = await Promise.all([
+    read('app/api/payments/card/create-checkout/route.ts'),
+    read('app/api/payments/paypal/create-order/route.ts'),
+    read('app/api/payments/mobilemoney/initiate/route.ts'),
+  ]);
+
+  assert.match(cardSource, /Paiement carte indisponible/);
+  assert.doesNotMatch(cardSource, /demo_/i);
+  assert.match(paypalSource, /Paiement PayPal indisponible/);
+  assert.doesNotMatch(paypalSource, /demo_/i);
+  assert.match(mobileSource, /Paiement Mobile Money indisponible/);
+  assert.doesNotMatch(mobileSource, /TXN-DEMO-/);
+});
+
 test('mobile money helper uses shared phone normalization and provider-aware status parsing', async () => {
   const source = await read('lib/mobileMoney.ts');
 
@@ -37,10 +52,25 @@ test('mobile money helper uses shared phone normalization and provider-aware sta
 });
 
 test('wallet deposit mobile money route reuses the shared phone normalizer', async () => {
-  const source = await read('app/api/wallet/deposit/mobilemoney/route.ts');
+  const [source, panelSource] = await Promise.all([
+    read('app/api/wallet/deposit/mobilemoney/route.ts'),
+    read('components/monchantier/WalletPanel.tsx'),
+  ]);
 
-  assert.match(source, /import\s+\{\s*normalizeMobileMoneyPhone\s*\}\s+from\s+'@\/lib\/mobileMoney'/);
+  assert.match(source, /normalizeMobileMoneyPhone/);
   assert.match(source, /const phone = normalizeMobileMoneyPhone\(body\?\.phone\);/);
+  assert.match(source, /const network = sanitizeNetwork\(body\?\.network\);/);
+  assert.match(panelSource, /depositNetwork/);
+  assert.match(panelSource, /id="deposit-network"/);
+});
+
+test('mobile money webhook route validates encoded payment payloads', async () => {
+  const source = await read('app/api/webhooks/mobilemoney/route.ts');
+
+  assert.match(source, /MOBILE_MONEY_WEBHOOK_SECRET/);
+  assert.match(source, /hasProcessedWebhookEvent\('mobilemoney'/);
+  assert.match(source, /decodeInvoicePayload/);
+  assert.match(source, /decodeWalletDepositPayload/);
 });
 
 test('payment modal no longer sends caller-supplied mobile money references', async () => {

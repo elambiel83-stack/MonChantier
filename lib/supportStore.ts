@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type SupportTicketStatus = 'open' | 'closed';
 
@@ -15,7 +14,7 @@ export type SupportTicket = {
 
 type SupportStoreModel = { tickets: SupportTicket[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'support-store.json');
+const STORE_KEY = 'support-store.json';
 const INITIAL_STORE: SupportStoreModel = { tickets: [] };
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -33,18 +32,9 @@ function generateId() {
   return `TCK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<SupportStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<SupportStoreModel>;
     return { tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [] };
@@ -54,7 +44,7 @@ async function readStore(): Promise<SupportStoreModel> {
 }
 
 async function writeStore(store: SupportStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listTicketsByIdentity(identity: string): Promise<SupportTicket[]> {

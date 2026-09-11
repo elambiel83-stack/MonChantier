@@ -6,6 +6,8 @@ coverage/
 .env
 .env.*
 !.env.example
+data/*.sqlite
+data/*.sqlite-*
 *.log
 .DS_Store
 .vscode/

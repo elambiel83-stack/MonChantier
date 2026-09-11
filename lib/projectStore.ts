@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type ProjectStatus = 'planning' | 'in_progress' | 'completed';
 
@@ -15,7 +14,7 @@ export type ClientProject = {
 
 type ProjectStoreModel = { projects: Record<string, ClientProject[]> };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'project-store.json');
+const STORE_KEY = 'project-store.json';
 const INITIAL_STORE: ProjectStoreModel = { projects: {} };
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -37,18 +36,9 @@ function generateId() {
   return `PRJ-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<ProjectStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<ProjectStoreModel>;
     return { projects: parsed.projects && typeof parsed.projects === 'object' ? parsed.projects : {} };
@@ -58,7 +48,7 @@ async function readStore(): Promise<ProjectStoreModel> {
 }
 
 async function writeStore(store: ProjectStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listProjects(identity: string): Promise<ClientProject[]> {

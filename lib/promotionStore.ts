@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type PromotionTargetType = 'product' | 'service';
 
@@ -18,7 +17,7 @@ export type StoredPromotion = {
 
 type PromotionStoreModel = { promotions: StoredPromotion[]; nextId: number };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'promotion-store.json');
+const STORE_KEY = 'promotion-store.json';
 
 function normalizeDiscountPercent(value: number) {
   if (!Number.isFinite(value) || value <= 0 || value >= 100) {
@@ -43,18 +42,9 @@ function buildSeedStore(): PromotionStoreModel {
   return { promotions: [], nextId: 1 };
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(buildSeedStore(), null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<PromotionStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(buildSeedStore(), null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<PromotionStoreModel>;
     return {
@@ -67,7 +57,7 @@ async function readStore(): Promise<PromotionStoreModel> {
 }
 
 async function writeStore(store: PromotionStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 function normalizePromotionWindow(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
-import { confirmDeposit, registerPendingDeposit } from '@/lib/walletStore';
+import { registerPendingDeposit } from '@/lib/walletStore';
 import { createStripeCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 import { encodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { WalletCurrency } from '@/lib/walletExchange';
@@ -34,42 +34,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (isStripeConfigured()) {
-      const reference = `WALLET-CARD-${Date.now()}`;
-      const walletPayload = encodeWalletDepositPayload({
-        identity,
-        reference,
-        method: 'card',
-        currency,
-        amount: parsedAmount,
-      });
-
-      const session = await createStripeCheckoutSession({
-        amount: parsedAmount,
-        currency,
-        productSummary: 'Recharge porte-monnaie MonChantier',
-        successUrl: `${successUrl}?wallet_reference=${encodeURIComponent(reference)}`,
-        cancelUrl,
-        customerEmail: identity,
-        invoicePayload: walletPayload,
-      });
-
-      await registerPendingDeposit({
-        identity,
-        reference,
-        method: 'card',
-        currency,
-        amount: parsedAmount,
-      });
-
-      return NextResponse.json({ success: true, checkoutUrl: session.url, reference });
+    if (!isStripeConfigured()) {
+      return NextResponse.json(
+        { message: 'Recharge carte indisponible: STRIPE_SECRET_KEY manquant.' },
+        { status: 503 }
+      );
     }
 
-    // Pas de clé Stripe: mode démo, confirmation immédiate locale.
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const reference = `WALLET-CARD-${Date.now()}`;
+    const walletPayload = encodeWalletDepositPayload({
+      identity,
+      reference,
+      method: 'card',
+      currency,
+      amount: parsedAmount,
+    });
 
-    const reference = `WALLET-CARD-DEMO-${Date.now()}`;
-    const { wallet } = await confirmDeposit({
+    const session = await createStripeCheckoutSession({
+      amount: parsedAmount,
+      currency,
+      productSummary: 'Recharge porte-monnaie MonChantier',
+      successUrl: `${successUrl}?wallet_reference=${encodeURIComponent(reference)}`,
+      cancelUrl,
+      customerEmail: identity,
+      invoicePayload: walletPayload,
+    });
+
+    await registerPendingDeposit({
       identity,
       reference,
       method: 'card',
@@ -79,9 +70,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      checkoutUrl: `${successUrl}?wallet_reference=${encodeURIComponent(reference)}`,
+      checkoutUrl: session.url,
       reference,
-      wallet,
     });
   } catch (error) {
     console.error('Erreur recharge carte:', error);

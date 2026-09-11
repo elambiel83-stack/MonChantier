@@ -1,12 +1,11 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { readStorePayload, writeStorePayload } from "./serverStateStore";
 import { AppRole, isAppRole } from "@/lib/roles";
 
 export type RoleAssignment = { role: AppRole; active: boolean; assignedAt: string; assignedBy?: string; expiresAt?: string };
 export type RoleAuditEvent = { at: string; actor: string; identity: string; action: 'assigned' | 'activated' | 'deactivated'; role?: AppRole };
 type RoleStoreModel = { assignments: Record<string, RoleAssignment>; audit: RoleAuditEvent[] };
 
-const STORE_PATH = path.join(process.cwd(), "data", "role-store.json");
+const STORE_KEY = 'role-store.json';
 const INITIAL_STORE: RoleStoreModel = { assignments: {}, audit: [] };
 const MAX_AUDIT_EVENTS = 5_000;
 let storeMutex: Promise<void> = Promise.resolve();
@@ -15,10 +14,6 @@ function withLock<T>(task: () => Promise<T>): Promise<T> {
   const run = storeMutex.then(task, task);
   storeMutex = run.then(() => undefined, () => undefined);
   return run;
-}
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try { await fs.access(STORE_PATH); } catch { await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), "utf8"); }
 }
 export function normalizeIdentity(identity: string): string { return identity.trim().toLowerCase(); }
 function parseStore(raw: string): RoleStoreModel {
@@ -35,8 +30,8 @@ function parseStore(raw: string): RoleStoreModel {
     return { assignments, audit: Array.isArray(parsed.audit) ? parsed.audit.slice(0, MAX_AUDIT_EVENTS) : [] };
   } catch { return { assignments: {}, audit: [] }; }
 }
-async function readStore(): Promise<RoleStoreModel> { await ensureStoreFile(); return parseStore(await fs.readFile(STORE_PATH, "utf8")); }
-async function writeStore(store: RoleStoreModel) { await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8"); }
+async function readStore(): Promise<RoleStoreModel> { return parseStore(await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY })); }
+async function writeStore(store: RoleStoreModel) { await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2)); }
 function appendAudit(store: RoleStoreModel, event: RoleAuditEvent) { store.audit.unshift(event); store.audit.length = Math.min(store.audit.length, MAX_AUDIT_EVENTS); }
 
 export function isAssignmentActive(assignment: RoleAssignment | null | undefined): boolean {

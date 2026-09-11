@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 import { listAllDeliveries } from '@/lib/deliveryStore';
 import { listPaymentStatuses } from '@/lib/paymentStore';
 
@@ -73,7 +72,7 @@ export type Site = {
 
 type SiteStoreModel = { sites: Site[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'site-store.json');
+const STORE_KEY = 'site-store.json';
 const INITIAL_STORE: SiteStoreModel = { sites: [] };
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -187,18 +186,9 @@ function backfillSiteReferences(
   return changed;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<SiteStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<SiteStoreModel>;
     return {
@@ -238,7 +228,7 @@ async function readStore(): Promise<SiteStoreModel> {
 }
 
 async function writeStore(store: SiteStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listAllSites(): Promise<Site[]> {

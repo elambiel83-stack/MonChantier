@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type StoredExpense = {
   id: number;
@@ -15,7 +14,7 @@ export type StoredExpense = {
 
 type ExpenseStoreModel = { expenses: StoredExpense[]; nextId: number };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'expense-store.json');
+const STORE_KEY = 'expense-store.json';
 const INITIAL_STORE: ExpenseStoreModel = { expenses: [], nextId: 1 };
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -29,18 +28,9 @@ function withLock<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<ExpenseStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<ExpenseStoreModel>;
     return {
@@ -53,7 +43,7 @@ async function readStore(): Promise<ExpenseStoreModel> {
 }
 
 async function writeStore(store: ExpenseStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listExpenses(): Promise<StoredExpense[]> {

@@ -15,16 +15,20 @@ async function read(relativePath) {
 
 async function importPhoneSecurityModules() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'monchantier-phone-security-'));
-  const [rateLimitSource, securityStoreSource, phoneAuthSource] = await Promise.all([
+  const [rateLimitSource, securityStoreSource, phoneAuthSource, serverStateStoreSource] = await Promise.all([
     read('lib/rateLimit.ts'),
     read('lib/securityStore.ts'),
     read('lib/phoneAuth.ts'),
+    read('lib/serverStateStore.ts'),
   ]);
 
   const rateLimitOutput = ts.transpileModule(rateLimitSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const securityStoreOutput = ts.transpileModule(securityStoreSource, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const serverStateStoreOutput = ts.transpileModule(serverStateStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const phoneAuthOutput = ts
@@ -38,6 +42,7 @@ async function importPhoneSecurityModules() {
   await Promise.all([
     fs.writeFile(path.join(tempDir, 'rateLimit.mjs'), rateLimitOutput, 'utf8'),
     fs.writeFile(path.join(tempDir, 'securityStore.mjs'), securityStoreOutput, 'utf8'),
+    fs.writeFile(path.join(tempDir, 'serverStateStore.mjs'), serverStateStoreOutput, 'utf8'),
     fs.writeFile(path.join(tempDir, 'phoneAuth.mjs'), phoneAuthOutput, 'utf8'),
   ]);
 
@@ -250,6 +255,9 @@ test('authentication flows record security telemetry for the admin dashboard', a
   assert.match(authSource, /admin_login_failed/);
   assert.match(phoneAuthSource, /otp_verify_rate_limited/);
   assert.match(phoneAuthSource, /otp_verify_failed/);
+  assert.match(phoneAuthSource, /revokePhoneOtp/);
   assert.match(phoneRequestRouteSource, /otp_request_rate_limited/);
   assert.match(phoneRequestRouteSource, /otp_requested/);
+  assert.match(phoneRequestRouteSource, /ALLOW_OTP_DEBUG_CODE/);
+  assert.match(phoneRequestRouteSource, /Service OTP indisponible: configuration SMS requise/);
 });

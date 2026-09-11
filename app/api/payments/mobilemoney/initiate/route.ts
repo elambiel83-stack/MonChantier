@@ -80,51 +80,46 @@ export async function POST(request: NextRequest) {
       location: metadata?.location,
     };
 
-    if (isMobileMoneyConfigured()) {
-      const providerResponse = await initiateMobileMoneyPayment({
-        amount: parsedAmount,
-        currency: parsedCurrency,
-        phone: normalizedPhone,
-        network: parsedNetwork,
-        reference,
-        customerName: resolvedCustomerName,
-        customerEmail: resolvedCustomerEmail,
-        productSummary,
-        invoicePayload: encodeInvoicePayload(paymentPayload),
-      });
+    if (!isMobileMoneyConfigured()) {
+      return NextResponse.json(
+        { message: 'Paiement Mobile Money indisponible: configuration prestataire manquante.' },
+        { status: 503 }
+      );
+    }
 
-      await registerPendingPayment(reference, 'mobilemoney');
+    const providerResponse = await initiateMobileMoneyPayment({
+      amount: parsedAmount,
+      currency: parsedCurrency,
+      phone: normalizedPhone,
+      network: parsedNetwork,
+      reference,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
+      productSummary,
+      invoicePayload: encodeInvoicePayload(paymentPayload),
+    });
 
-      if (providerResponse.status === 'confirmed') {
-        const confirmation = await confirmPayment(paymentPayload);
-        return NextResponse.json({
-          success: true,
-          transaction_id: providerResponse.transactionId,
-          status: 'confirmed',
-          message: providerResponse.message,
-          reference,
-          invoice: confirmation.invoice,
-        });
-      }
+    await registerPendingPayment(reference, 'mobilemoney');
 
+    if (providerResponse.status === 'confirmed') {
+      const confirmation = await confirmPayment(paymentPayload);
       return NextResponse.json({
         success: true,
         transaction_id: providerResponse.transactionId,
-        status: 'pending',
-        message:
-          providerResponse.message ||
-          `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
+        status: 'confirmed',
+        message: providerResponse.message,
         reference,
-        invoice: null,
+        invoice: confirmation.invoice,
       });
     }
 
-    await registerPendingPayment(reference, 'mobilemoney');
     return NextResponse.json({
       success: true,
-      transaction_id: `TXN-DEMO-${Date.now()}`,
+      transaction_id: providerResponse.transactionId,
       status: 'pending',
-      message: 'Paiement Mobile Money simulé initié. Confirmez la demande sur le téléphone pour finaliser la commande.',
+      message:
+        providerResponse.message ||
+        `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
       reference,
       invoice: null,
     });

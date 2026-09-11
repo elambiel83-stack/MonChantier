@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
-import { confirmDeposit, registerPendingDeposit } from '@/lib/walletStore';
+import { registerPendingDeposit } from '@/lib/walletStore';
 import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
 import { encodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { WalletCurrency } from '@/lib/walletExchange';
@@ -34,48 +34,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (isPayPalConfigured()) {
-      if (currency !== 'USD') {
-        return NextResponse.json(
-          { message: 'PayPal ne prend en charge que le USD pour la recharge du porte-monnaie.' },
-          { status: 400 }
-        );
-      }
-
-      const reference = `WALLET-PAYPAL-${Date.now()}`;
-      const walletPayload = encodeWalletDepositPayload({
-        identity,
-        reference,
-        method: 'paypal',
-        currency,
-        amount: parsedAmount,
-      });
-
-      const order = await createPayPalOrder({
-        amount: parsedAmount,
-        currency,
-        productSummary: 'Recharge porte-monnaie MonChantier',
-        returnUrl: `${returnUrl}?wallet_reference=${encodeURIComponent(reference)}`,
-        cancelUrl,
-        customId: walletPayload,
-      });
-
-      await registerPendingDeposit({
-        identity,
-        reference,
-        method: 'paypal',
-        currency,
-        amount: parsedAmount,
-      });
-
-      return NextResponse.json({ success: true, approveUrl: order.approveUrl, reference });
+    if (!isPayPalConfigured()) {
+      return NextResponse.json(
+        { message: 'Recharge PayPal indisponible: credentials serveur manquants.' },
+        { status: 503 }
+      );
     }
 
-    // Pas de credentials PayPal: mode démo, confirmation immédiate locale.
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (currency !== 'USD') {
+      return NextResponse.json(
+        { message: 'PayPal ne prend en charge que le USD pour la recharge du porte-monnaie.' },
+        { status: 400 }
+      );
+    }
 
-    const reference = `WALLET-PAYPAL-DEMO-${Date.now()}`;
-    const { wallet } = await confirmDeposit({
+    const reference = `WALLET-PAYPAL-${Date.now()}`;
+    const walletPayload = encodeWalletDepositPayload({
+      identity,
+      reference,
+      method: 'paypal',
+      currency,
+      amount: parsedAmount,
+    });
+
+    const order = await createPayPalOrder({
+      amount: parsedAmount,
+      currency,
+      productSummary: 'Recharge porte-monnaie MonChantier',
+      returnUrl: `${returnUrl}?wallet_reference=${encodeURIComponent(reference)}`,
+      cancelUrl,
+      customId: walletPayload,
+    });
+
+    await registerPendingDeposit({
       identity,
       reference,
       method: 'paypal',
@@ -85,9 +76,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      approveUrl: `${returnUrl}?wallet_reference=${encodeURIComponent(reference)}`,
+      approveUrl: order.approveUrl,
       reference,
-      wallet,
     });
   } catch (error) {
     console.error('Erreur recharge PayPal:', error);

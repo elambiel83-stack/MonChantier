@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type SecuritySeverity = 'info' | 'warning' | 'critical';
 
@@ -27,7 +26,7 @@ type SecurityStoreModel = {
   events: SecurityEvent[];
 };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'security-store.json');
+const STORE_KEY = 'security-store.json';
 const MAX_EVENTS = 500;
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -45,18 +44,9 @@ function buildSeedStore(): SecurityStoreModel {
   return { events: [] };
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(buildSeedStore(), null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<SecurityStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(buildSeedStore(), null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<SecurityStoreModel>;
     return { events: Array.isArray(parsed.events) ? parsed.events : [] };
@@ -66,7 +56,7 @@ async function readStore(): Promise<SecurityStoreModel> {
 }
 
 async function writeStore(store: SecurityStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 function normalizeOptionalIdentity(value?: string) {

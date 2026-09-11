@@ -10,6 +10,41 @@ async function read(relativePath) {
   return fs.readFile(path.join(repoRoot, relativePath), 'utf8');
 }
 
+test('server-side stores use the shared SQLite-backed state store instead of writing data json files directly', async () => {
+  const files = [
+    'lib/addressStore.ts',
+    'lib/deliveryStore.ts',
+    'lib/driverStore.ts',
+    'lib/expenseStore.ts',
+    'lib/favoriteStore.ts',
+    'lib/loanStore.ts',
+    'lib/paymentStore.ts',
+    'lib/phoneAuth.ts',
+    'lib/productStore.ts',
+    'lib/projectStore.ts',
+    'lib/promotionStore.ts',
+    'lib/quoteStore.ts',
+    'lib/roleStore.ts',
+    'lib/securityStore.ts',
+    'lib/serviceStore.ts',
+    'lib/siteStore.ts',
+    'lib/supportStore.ts',
+    'lib/technicianStore.ts',
+    'lib/walletStore.ts',
+  ];
+  const [helperSource, ...sources] = await Promise.all([
+    read('lib/serverStateStore.ts'),
+    ...files.map((file) => read(file)),
+  ]);
+
+  assert.match(helperSource, /new DatabaseSync/);
+  assert.match(helperSource, /CREATE TABLE IF NOT EXISTS json_state/);
+  for (const source of sources) {
+    assert.match(source, /readStorePayload|writeStorePayload/);
+    assert.doesNotMatch(source, /data\/.+\.json/);
+  }
+});
+
 test('driver profile model covers vehicle, documents and earnings', async () => {
   const source = await read('lib/driverStore.ts');
 

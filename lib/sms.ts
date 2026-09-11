@@ -1,5 +1,9 @@
 export function isSmsConfigured() {
-  return Boolean(process.env.AFRICASTALKING_USERNAME && process.env.AFRICASTALKING_API_KEY);
+  const username = process.env.AFRICASTALKING_USERNAME;
+  const apiKey = process.env.AFRICASTALKING_API_KEY;
+  if (!username || !apiKey) return false;
+  if (username === 'sandbox' && process.env.ALLOW_SMS_SANDBOX !== 'true') return false;
+  return true;
 }
 
 function getBaseUrl() {
@@ -16,6 +20,9 @@ export async function sendSms(args: { to: string; message: string }) {
 
   if (!username || !apiKey) {
     throw new Error('AFRICASTALKING_USERNAME/AFRICASTALKING_API_KEY manquants');
+  }
+  if (username === 'sandbox' && process.env.ALLOW_SMS_SANDBOX !== 'true') {
+    throw new Error("Africa's Talking sandbox désactivé sur cet environnement");
   }
 
   const params = new URLSearchParams({

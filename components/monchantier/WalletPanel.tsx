@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type WalletCurrency = "USD" | "CDF";
+type MobileNetwork = "vodacom" | "airtel" | "orange" | "mpesa";
 
 type WalletDepositTransaction = {
   id: string;
@@ -60,6 +61,7 @@ export default function WalletPanel() {
   const [depositCurrency, setDepositCurrency] = useState<WalletCurrency>("USD");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositPhone, setDepositPhone] = useState("+243");
+  const [depositNetwork, setDepositNetwork] = useState<MobileNetwork>("vodacom");
   const [depositing, setDepositing] = useState(false);
   const [depositError, setDepositError] = useState("");
 
@@ -164,13 +166,24 @@ export default function WalletPanel() {
         const res = await fetch("/api/wallet/deposit/mobilemoney", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount, currency: depositCurrency, phone: depositPhone }),
+          body: JSON.stringify({
+            amount,
+            currency: depositCurrency,
+            phone: depositPhone,
+            network: depositNetwork,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "Erreur recharge");
-        setBanner(`Recharge confirmée : ${formatAmount(amount, depositCurrency)} créditée.`);
+        setBanner(
+          data?.status === "confirmed"
+            ? `Recharge confirmée : ${formatAmount(amount, depositCurrency)} créditée.`
+            : data?.message || "Demande envoyée. Validation du dépôt en cours."
+        );
         setDepositAmount("");
-        await loadWallet();
+        if (data?.status === "confirmed") {
+          await loadWallet();
+        }
         return;
       }
 
@@ -185,14 +198,7 @@ export default function WalletPanel() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "Erreur recharge carte");
-        if (data.wallet) {
-          // Mode démo: déjà confirmé localement.
-          setBanner(`Recharge confirmée : ${formatAmount(amount, depositCurrency)} créditée.`);
-          setDepositAmount("");
-          await loadWallet();
-        } else {
-          window.location.href = data.checkoutUrl;
-        }
+        window.location.href = data.checkoutUrl;
         return;
       }
 
@@ -204,13 +210,7 @@ export default function WalletPanel() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "Erreur recharge PayPal");
-        if (data.wallet) {
-          setBanner(`Recharge confirmée : ${formatAmount(amount, depositCurrency)} créditée.`);
-          setDepositAmount("");
-          await loadWallet();
-        } else {
-          window.location.href = data.approveUrl;
-        }
+        window.location.href = data.approveUrl;
       }
     } catch (err) {
       setDepositError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -332,14 +332,32 @@ export default function WalletPanel() {
             </div>
 
             {depositMethod === "mobilemoney" && (
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Numéro de téléphone</label>
-                <input
-                  value={depositPhone}
-                  onChange={(e) => setDepositPhone(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  placeholder="+243..."
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Numéro de téléphone</label>
+                  <input
+                    value={depositPhone}
+                    onChange={(e) => setDepositPhone(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="+243..."
+                  />
+                </div>
+                <div>
+                  <label htmlFor="deposit-network" className="text-xs font-semibold text-slate-700">
+                    Réseau
+                  </label>
+                  <select
+                    id="deposit-network"
+                    value={depositNetwork}
+                    onChange={(e) => setDepositNetwork(e.target.value as MobileNetwork)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="vodacom">Vodacom</option>
+                    <option value="airtel">Airtel</option>
+                    <option value="orange">Orange</option>
+                    <option value="mpesa">M-Pesa</option>
+                  </select>
+                </div>
               </div>
             )}
 

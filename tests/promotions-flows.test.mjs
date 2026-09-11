@@ -18,8 +18,12 @@ async function importPromotionModules() {
     read('lib/promotionStore.ts'),
     read('lib/catalogPromotions.ts'),
   ]);
+  const serverStateStoreSource = await read('lib/serverStateStore.ts');
 
   const promotionStoreOutput = ts.transpileModule(promotionStoreSource, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const serverStateStoreOutput = ts.transpileModule(serverStateStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const catalogPromotionsOutput = ts
@@ -30,6 +34,7 @@ async function importPromotionModules() {
 
   await Promise.all([
     fs.writeFile(path.join(tempDir, 'promotionStore.mjs'), promotionStoreOutput, 'utf8'),
+    fs.writeFile(path.join(tempDir, 'serverStateStore.mjs'), serverStateStoreOutput, 'utf8'),
     fs.writeFile(path.join(tempDir, 'catalogPromotions.mjs'), catalogPromotionsOutput, 'utf8'),
   ]);
 

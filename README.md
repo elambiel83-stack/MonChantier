@@ -50,14 +50,18 @@ Pour activer l'envoi email réel des demandes de devis (`POST /api/contact`), aj
 - `SMTP_FROM` (optionnel, défaut: `SMTP_USER`)
 - `SMTP_SECURE` (optionnel: `true`/`false`, auto selon le port sinon)
 
+### Persistance transactionnelle
+
+L'état serveur n'est plus écrit dans `data/*.json`. Les stores applicatifs utilisent désormais une base SQLite locale (`data/monchantier.sqlite` par défaut, surchargeable via `MONCHANTIER_STATE_DB_PATH`) avec migration automatique des anciens fichiers JSON au premier accès.
+
 ### Facturation automatique normalisée RDC (paiements)
 
 Les commandes émettent maintenant une facture normalisée RDC après validation du paiement.
 
 Flux actuel:
 
-- Mobile Money: validation simulée immédiate dans `POST /api/payments/mobilemoney/initiate`.
-- Carte/PayPal: création du checkout via les endpoints ci-dessous, puis émission de la facture via webhook provider (Stripe/PayPal). La page succès consulte l'état sur `GET /api/payments/status`.
+- Mobile Money: initiation réelle via provider puis confirmation par webhook ou retour provider confirmé.
+- Carte/PayPal: création du checkout via les endpoints ci-dessous, puis émission de la facture via webhook provider. La page succès consulte l'état sur `GET /api/payments/status`.
 
 Endpoints concernés:
 
@@ -66,6 +70,7 @@ Endpoints concernés:
 - `POST /api/payments/paypal/create-order`
 - `POST /api/payments/confirm`
 - `GET /api/payments/status?reference=<paymentReference>`
+- `POST /api/webhooks/mobilemoney`
 - `POST /api/webhooks/stripe`
 - `POST /api/webhooks/paypal`
 
@@ -79,7 +84,7 @@ Les réponses de validation incluent un objet `invoice` avec:
 
 Chaque facture envoyée par email est jointe en PDF (`<numero_facture>.pdf`).
 
-### Webhooks provider-side (validation 100% Stripe/PayPal)
+### Webhooks provider-side (validation provider obligatoire)
 
 Variables Stripe (`.env.local`):
 
@@ -93,12 +98,20 @@ Variables PayPal (`.env.local`):
 - `PAYPAL_WEBHOOK_ID`
 - `PAYPAL_API_BASE` (optionnel, défaut sandbox: `https://api-m.sandbox.paypal.com`)
 
+Variables Mobile Money (`.env.local`):
+
+- `MOBILE_MONEY_PROVIDER`
+- `MOBILE_MONEY_API_KEY`
+- `MOBILE_MONEY_API_URL` (si requis par le provider)
+- `MOBILE_MONEY_WEBHOOK_SECRET`
+
 Notes d'intégration:
 
 - Stripe: envoyer `invoice_payload` dans `metadata` de la session checkout.
 - PayPal: envoyer `invoice_payload` dans `custom_id` (idéalement `purchase_units[0].custom_id`).
-- Le serveur valide la signature webhook, puis confirme le paiement et émet la facture normalisée.
-- Si les clés provider sont absentes, les routes checkout/order restent en mode démo (fallback local).
+- Mobile Money: transmettre `invoicePayload` (provider générique) ou `meta.invoice_payload` (Flutterwave-like) pour les confirmations serveur.
+- Le serveur valide les webhooks/signatures partagées, puis confirme le paiement et émet la facture normalisée.
+- Si les secrets provider sont absents, les routes de paiement répondent désormais `503` au lieu d'utiliser un fallback local.
 
 Commandes de test Stripe CLI (local):
 
@@ -125,7 +138,7 @@ Test PayPal Sandbox (local):
 
 Anti-replay webhook:
 
-- Le serveur persiste les `event_id` Stripe/PayPal déjà traités dans `data/payment-webhook-store.json`.
+- Le serveur persiste les `event_id` Stripe/PayPal/Mobile Money déjà traités dans la base SQLite applicative.
 - Un même événement webhook ne déclenche pas deux fois la confirmation/facture, même après redémarrage serveur.
 
 Checklist go-live (paiements + factures):
@@ -179,23 +192,26 @@ L'envoi de facture utilise la même configuration SMTP que les emails de devis.
 
 Note: le bouton Google n'apparaît que si `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET` sont définis. Une erreur Google `400` indique généralement que l'URI de redirection déclarée dans Google Cloud ne correspond pas à `NEXTAUTH_URL`.
 
-### OTP téléphone (mode dev)
+### OTP téléphone
 
-En développement, l'API OTP retourne le code dans le message pour test rapide.
 Route: `POST /api/auth/phone/request-code` avec `{ "phone": "+243..." }`.
 
-Les OTP sont persistés côté serveur dans `data/phone-otp-store.json` (codes expirés nettoyés automatiquement).
+- Sur les environnements exposés, le code OTP n'est jamais renvoyé dans la réponse API.
+- Le retour du code n'est autorisé qu'en développement local explicite avec `ALLOW_OTP_DEBUG_CODE=true`.
+- Sans transport SMS valide, la route OTP échoue désormais au lieu de laisser un mode dégradé silencieux.
+- Les OTP sont persistés côté serveur dans la base SQLite applicative (codes expirés nettoyés automatiquement).
 
 ### Envoi SMS du code OTP (Africa's Talking)
 
-Sans configuration, le code OTP n'est jamais envoyé par SMS en production (seul le mode dev l'affiche). Pour activer l'envoi réel:
+Pour activer l'envoi réel:
 
-1. Créer un compte sur https://africastalking.com puis une application (Sandbox pour tester, Live pour la prod).
-2. Récupérer le nom d'utilisateur (`sandbox` en mode test) et la clé API.
+1. Créer un compte sur https://africastalking.com puis une application.
+2. Récupérer le nom d'utilisateur et la clé API.
 3. Renseigner dans `.env.local`:
    - `AFRICASTALKING_USERNAME`
    - `AFRICASTALKING_API_KEY`
    - `AFRICASTALKING_SENDER_ID` (optionnel: expéditeur/shortcode approuvé)
+   - `ALLOW_SMS_SANDBOX=true` uniquement pour un environnement de test local contrôlé
 4. En mode `sandbox`, seuls les numéros de test enregistrés dans le simulateur Africa's Talking reçoivent réellement le SMS.
 
 ### Dashboards par rôle (RBAC)

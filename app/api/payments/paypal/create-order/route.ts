@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  confirmPayment,
   generatePaymentReference,
   registerPendingPayment,
 } from '@/lib/paymentConfirmation';
@@ -76,53 +75,28 @@ export async function POST(request: NextRequest) {
       baseOrigin
     );
 
-    if (isPayPalConfigured()) {
-      const order = await createPayPalOrder({
-        amount: parsedAmount,
-        currency: parsedCurrency,
-        productSummary,
-        returnUrl: returnUrlWithReference,
-        cancelUrl: safeCancelUrl.url,
-        customId: invoicePayload,
-      });
-      await registerPendingPayment(paymentReference, 'paypal');
-
-      return NextResponse.json({
-        success: true,
-        approveUrl: order.approveUrl,
-        orderId: order.orderId,
-        reference: paymentReference,
-      });
+    if (!isPayPalConfigured()) {
+      return NextResponse.json(
+        { message: 'Paiement PayPal indisponible: credentials serveur manquants.' },
+        { status: 503 }
+      );
     }
 
-    const confirmation = await confirmPayment({
-      reference: paymentReference,
-      method: 'paypal',
+    const order = await createPayPalOrder({
       amount: parsedAmount,
       currency: parsedCurrency,
-      customerName: resolvedCustomerName,
-      customerEmail: resolvedCustomerEmail,
-      items: normalizedItems,
-      deliveryAddress,
-      location,
+      productSummary,
+      returnUrl: returnUrlWithReference,
+      cancelUrl: safeCancelUrl.url,
+      customId: invoicePayload,
     });
+    await registerPendingPayment(paymentReference, 'paypal');
 
     return NextResponse.json({
       success: true,
-      approveUrl: withSearchParam(
-        withSearchParam(
-          withSearchParam(returnUrlWithReference, 'paypal_order_id', `demo_${Date.now()}`, baseOrigin),
-          'amount',
-          String(parsedAmount),
-          baseOrigin
-        ),
-        'items',
-        productSummary,
-        baseOrigin
-      ),
-      orderId: paymentReference,
+      approveUrl: order.approveUrl,
+      orderId: order.orderId,
       reference: paymentReference,
-      invoice: confirmation.invoice,
     });
   } catch (error) {
     console.error('Erreur création commande PayPal:', error);

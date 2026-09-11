@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 import { products as seedProducts } from '@/components/monchantier/constants';
 
 export type StoredProduct = {
@@ -22,7 +21,7 @@ export type StoredProduct = {
 
 type ProductStoreModel = { products: StoredProduct[]; nextId: number };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'product-store.json');
+const STORE_KEY = 'product-store.json';
 
 let storeMutex: Promise<void> = Promise.resolve();
 
@@ -55,18 +54,9 @@ function buildSeedStore(): ProductStoreModel {
   return { products: seeded, nextId };
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(buildSeedStore(), null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<ProductStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(buildSeedStore(), null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<ProductStoreModel>;
     return {
@@ -79,7 +69,7 @@ async function readStore(): Promise<ProductStoreModel> {
 }
 
 async function writeStore(store: ProductStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listProducts(options?: { activeOnly?: boolean }): Promise<StoredProduct[]> {

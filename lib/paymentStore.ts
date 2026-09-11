@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 import { InvoiceData, InvoicePaymentMethod } from '@/lib/invoice';
 
 export type StoredInvoice = {
@@ -35,17 +34,18 @@ export type StoredPaymentStatus = {
   cancelReason?: string;
 };
 
-type WebhookProvider = 'stripe' | 'paypal';
+type WebhookProvider = 'stripe' | 'paypal' | 'mobilemoney';
 
 type PaymentStoreModel = {
   paymentStatuses: Record<string, StoredPaymentStatus>;
   processedWebhookEvents: {
     stripe: string[];
     paypal: string[];
+    mobilemoney: string[];
   };
 };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'payment-webhook-store.json');
+const STORE_KEY = 'payment-webhook-store.json';
 const MAX_WEBHOOK_EVENT_IDS = 5000;
 
 const INITIAL_STORE: PaymentStoreModel = {
@@ -53,23 +53,15 @@ const INITIAL_STORE: PaymentStoreModel = {
   processedWebhookEvents: {
     stripe: [],
     paypal: [],
+    mobilemoney: [],
   },
 };
 
 let storeMutex: Promise<void> = Promise.resolve();
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<PaymentStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
 
   try {
     const parsed = JSON.parse(raw) as Partial<PaymentStoreModel>;
@@ -78,6 +70,7 @@ async function readStore(): Promise<PaymentStoreModel> {
       processedWebhookEvents: {
         stripe: parsed.processedWebhookEvents?.stripe || [],
         paypal: parsed.processedWebhookEvents?.paypal || [],
+        mobilemoney: parsed.processedWebhookEvents?.mobilemoney || [],
       },
     };
   } catch {
@@ -86,7 +79,7 @@ async function readStore(): Promise<PaymentStoreModel> {
 }
 
 async function writeStore(store: PaymentStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 function withLock<T>(task: () => Promise<T>): Promise<T> {

@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStorePayload, writeStorePayload } from './serverStateStore';
 
 export type SavedAddress = {
   id: string;
@@ -11,7 +10,7 @@ export type SavedAddress = {
 
 type AddressStoreModel = { addresses: Record<string, SavedAddress[]> };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'address-store.json');
+const STORE_KEY = 'address-store.json';
 const INITIAL_STORE: AddressStoreModel = { addresses: {} };
 
 let storeMutex: Promise<void> = Promise.resolve();
@@ -33,18 +32,9 @@ function generateId() {
   return `ADDR-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
 
 async function readStore(): Promise<AddressStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
+  const raw = await readStorePayload(STORE_KEY, () => JSON.stringify(INITIAL_STORE, null, 2), { legacyFileName: STORE_KEY });
   try {
     const parsed = JSON.parse(raw) as Partial<AddressStoreModel>;
     return { addresses: parsed.addresses && typeof parsed.addresses === 'object' ? parsed.addresses : {} };
@@ -54,7 +44,7 @@ async function readStore(): Promise<AddressStoreModel> {
 }
 
 async function writeStore(store: AddressStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
+  await writeStorePayload(STORE_KEY, JSON.stringify(store, null, 2));
 }
 
 export function listAddresses(identity: string): Promise<SavedAddress[]> {
