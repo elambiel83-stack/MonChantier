@@ -247,6 +247,7 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
         status: payment.orderStatus || 'processing',
       })),
     planning: matchedConfirmed
+      .filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
       .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
       .slice(0, 8)
       .map((payment) => ({

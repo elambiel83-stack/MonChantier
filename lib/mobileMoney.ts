@@ -36,9 +36,6 @@ function readString(record: Record<string, unknown> | null, key: string) {
 function normalizeStatus(value: unknown): MobileMoneyStatus {
   const status = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (
-    status === 'successful' ||
-    status === 'success' ||
-    status === 'succeeded' ||
     status === 'completed' ||
     status === 'confirmed'
   ) {
@@ -54,6 +51,15 @@ function extractMessage(payload: Record<string, unknown> | null) {
     readString(payload, 'processor_response') ||
     readString(payload, 'display_text') ||
     readString(asRecord(payload?.meta), 'message')
+  );
+}
+
+function extractSettlementStatus(payload: Record<string, unknown> | null, data: Record<string, unknown> | null) {
+  return (
+    readString(data, 'payment_status') ||
+    readString(data, 'charge_status') ||
+    readString(payload, 'payment_status') ||
+    readString(payload, 'charge_status')
   );
 }
 
@@ -139,7 +145,7 @@ export async function initiateMobileMoneyPayment(args: {
   }
 
   return {
-    status: normalizeStatus(readString(data, 'status') || readString(payload, 'status')),
+    status: normalizeStatus(extractSettlementStatus(payload, data)),
     transactionId:
       readString(data, 'id') ||
       readString(data, 'flw_ref') ||

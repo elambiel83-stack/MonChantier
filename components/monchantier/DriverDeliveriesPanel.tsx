@@ -257,9 +257,11 @@ export default function DriverDeliveriesPanel() {
                         {isTracking ? "Partage de position actif ●" : "Partager ma position"}
                       </button>
                     )}
-                    <button type="button" onClick={() => sendPosition(delivery.id)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold">
-                      Ping GPS
-                    </button>
+                    {(delivery.status === "picked_up" || delivery.status === "in_transit") && (
+                      <button type="button" onClick={() => sendPosition(delivery.id)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold">
+                        Ping GPS
+                      </button>
+                    )}
                   </div>
                 </div>
               );

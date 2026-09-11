@@ -337,7 +337,7 @@ export default function SupplierProductsPanel() {
         <p className="mt-1 text-sm text-slate-500">Aucune promotion dédiée n&apos;est encore stockée ; la vue suit donc la couverture tarifaire.</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-100 p-4">
-            <p className="text-sm font-medium text-slate-900">Produits sans tarification</p>
+            <p className="text-sm font-medium text-slate-900">Produits sans aucun prix</p>
             <div className="mt-3 space-y-2">
               {unpricedProducts.length ? unpricedProducts.map((product) => (
                 <p key={product.id} className="text-sm text-slate-600">{product.fr}</p>
