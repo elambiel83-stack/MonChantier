@@ -260,14 +260,21 @@ export function updateDeliveryStatus(args: {
       note: args.note,
     });
 
-    await writeStore(store);
     if (args.status === 'delivered' && delivery.driverIdentity) {
-      await registerDriverDeliveryEarning({
-        identity: delivery.driverIdentity,
-        deliveryId: delivery.id,
-        reference: delivery.reference,
-      });
+      try {
+        await registerDriverDeliveryEarning({
+          identity: delivery.driverIdentity,
+          deliveryId: delivery.id,
+          reference: delivery.reference,
+        });
+      } catch (error) {
+        delivery.status = delivery.statusHistory.at(-2)?.status || 'pending';
+        delivery.statusHistory.pop();
+        throw error;
+      }
     }
+
+    await writeStore(store);
     return { success: true as const, delivery };
   });
 }

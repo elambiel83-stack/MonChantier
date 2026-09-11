@@ -26,6 +26,8 @@ test('delivery completion records driver earnings', async () => {
 
   assert.match(source, /registerDriverDeliveryEarning/);
   assert.match(source, /if \(args\.status === 'delivered' && delivery\.driverIdentity\)/);
+  assert.match(source, /try \{[\s\S]*registerDriverDeliveryEarning/);
+  assert.match(source, /delivery\.status = delivery\.statusHistory\.at\(-2\)\?\.status \|\| 'pending'/);
 });
 
 test('driver dashboard and api use the new driver profile model', async () => {
