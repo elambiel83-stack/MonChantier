@@ -130,7 +130,6 @@ export function PaymentModal({
             email: trimmedEmail,
             customerName: trimmedName,
             customerEmail: trimmedEmail,
-            tx_ref: `MC-${Date.now()}`,
             metadata: {
               items: cartItems.map(item => ({
                 productId: item.product.id,

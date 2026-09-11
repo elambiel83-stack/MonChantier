@@ -2,6 +2,7 @@ export type MobileMoneyNetwork = 'vodacom' | 'airtel' | 'orange' | 'mpesa';
 
 type MobileMoneyProvider = 'generic' | 'flutterwave';
 type MobileMoneyStatus = 'pending' | 'confirmed';
+const MOBILE_MONEY_TIMEOUT_MS = 15000;
 
 function getProvider(): MobileMoneyProvider {
   return process.env.MOBILE_MONEY_PROVIDER === 'generic' ? 'generic' : 'flutterwave';
@@ -33,6 +34,25 @@ function readString(record: Record<string, unknown> | null, key: string) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function readIdentifier(record: Record<string, unknown> | null, key: string) {
+  const value = record?.[key];
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+export function normalizeMobileMoneyPhone(value: unknown) {
+  const raw = typeof value === 'string' ? value.trim() : String(value || '').trim();
+  if (!raw) return null;
+
+  const normalized = raw.startsWith('+')
+    ? `+${raw.slice(1).replace(/\D+/g, '')}`
+    : raw.replace(/\D+/g, '');
+
+  if (!/^\+?\d{8,15}$/.test(normalized)) return null;
+  return normalized;
+}
+
 function normalizeStatus(value: unknown): MobileMoneyStatus {
   const status = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (
@@ -61,6 +81,22 @@ function extractSettlementStatus(payload: Record<string, unknown> | null, data: 
     readString(payload, 'payment_status') ||
     readString(payload, 'charge_status')
   );
+}
+
+function resolveProviderStatus(
+  provider: MobileMoneyProvider,
+  payload: Record<string, unknown> | null,
+  data: Record<string, unknown> | null
+) {
+  if (provider === 'generic') {
+    return normalizeStatus(
+      extractSettlementStatus(payload, data) ||
+        readString(data, 'status') ||
+        readString(payload, 'status')
+    );
+  }
+
+  return normalizeStatus(extractSettlementStatus(payload, data));
 }
 
 export function isMobileMoneyConfigured() {
@@ -122,6 +158,12 @@ export async function initiateMobileMoneyPayment(args: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(requestBody),
+    signal: AbortSignal.timeout(MOBILE_MONEY_TIMEOUT_MS),
+  }).catch((error: unknown) => {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error('Le prestataire Mobile Money ne répond pas à temps');
+    }
+    throw error;
   });
 
   const responseText = await response.text();
@@ -145,12 +187,12 @@ export async function initiateMobileMoneyPayment(args: {
   }
 
   return {
-    status: normalizeStatus(extractSettlementStatus(payload, data)),
+    status: resolveProviderStatus(provider, payload, data),
     transactionId:
-      readString(data, 'id') ||
+      readIdentifier(data, 'id') ||
       readString(data, 'flw_ref') ||
       readString(data, 'tx_ref') ||
-      readString(payload, 'id') ||
+      readIdentifier(payload, 'id') ||
       args.reference,
     message:
       extractMessage(data) ||

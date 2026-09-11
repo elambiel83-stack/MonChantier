@@ -10,6 +10,7 @@ import {
   initiateMobileMoneyPayment,
   isMobileMoneyConfigured,
   MobileMoneyNetwork,
+  normalizeMobileMoneyPhone,
 } from '@/lib/mobileMoney';
 
 function parsePositiveAmount(value: unknown) {
@@ -32,7 +33,7 @@ function sanitizeNetwork(value: unknown): MobileMoneyNetwork | null {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { amount, currency, phone, network, fullname, email, customerName, customerEmail, tx_ref, metadata } = body;
+    const { amount, currency, phone, network, fullname, email, customerName, customerEmail, metadata } = body;
 
     const items = Array.isArray(metadata?.items) ? metadata.items : [];
     const productSummary = items
@@ -52,8 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Normaliser le numéro de téléphone
-    const normalizedPhone = String(phone).replace(/\s+/g, '');
-    if (normalizedPhone.length < 8) {
+    const normalizedPhone = normalizeMobileMoneyPhone(phone);
+    if (!normalizedPhone) {
       return NextResponse.json(
         { message: 'Numéro de téléphone invalide' },
         { status: 400 }
@@ -62,9 +63,7 @@ export async function POST(request: NextRequest) {
 
     const resolvedCustomerName = (customerName || fullname || 'Client MonChantier').trim();
     const resolvedCustomerEmail = (customerEmail || email || '').trim();
-    const reference = typeof tx_ref === 'string' && tx_ref.trim()
-      ? tx_ref.trim()
-      : generatePaymentReference('MM');
+    const reference = generatePaymentReference('MM');
     const paymentPayload: ConfirmPaymentPayload = {
       reference,
       customerName: resolvedCustomerName,

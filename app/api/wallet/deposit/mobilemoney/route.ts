@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
+import { normalizeMobileMoneyPhone } from '@/lib/mobileMoney';
 import { confirmDeposit } from '@/lib/walletStore';
 import { WalletCurrency } from '@/lib/walletExchange';
 
@@ -22,9 +23,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsedAmount = parsePositiveAmount(body?.amount);
     const currency = sanitizeCurrency(body?.currency);
-    const phone = String(body?.phone || '').trim();
+    const phone = normalizeMobileMoneyPhone(body?.phone);
 
-    if (!parsedAmount || phone.length < 8) {
+    if (!parsedAmount || !phone) {
       return NextResponse.json(
         { message: 'Montant et numéro de téléphone valides requis' },
         { status: 400 }
