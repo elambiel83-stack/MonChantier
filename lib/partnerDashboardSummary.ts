@@ -247,7 +247,7 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
       ),
     },
     interventions: interventions.sort((left, right) => right.confirmedJobs - left.confirmedJobs),
-    missions: matchedConfirmed
+    missions: matchedConfirmedDetails.map(({ payment }) => payment)
       .filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
       .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
       .slice(0, 8)
@@ -257,7 +257,7 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
         updatedAt: payment.updatedAt,
         status: payment.orderStatus || 'processing',
       })),
-    planning: matchedConfirmed
+    planning: matchedConfirmedDetails.map(({ payment }) => payment)
       .filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
       .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
       .slice(0, 8)

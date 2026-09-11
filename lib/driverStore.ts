@@ -189,7 +189,7 @@ export function registerDriverDeliveryEarning(args: {
     const store = await readStore();
     const profile = store.profiles[normalized] || emptyProfile(normalized);
     const alreadyExists = profile.earnings.some((entry) => entry.deliveryId === args.deliveryId);
-    if (!alreadyExists && profile.defaultEarningAmount && profile.defaultEarningAmount > 0) {
+    if (!alreadyExists && profile.defaultEarningAmount !== null && profile.defaultEarningAmount > 0) {
       profile.earnings.unshift({
         id: makeId('DRV-EARN'),
         deliveryId: args.deliveryId,

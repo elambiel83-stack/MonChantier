@@ -18,6 +18,7 @@ test('driver profile model covers vehicle, documents and earnings', async () => 
   assert.match(source, /export type DriverEarning/);
   assert.match(source, /defaultEarningAmount: number \| null/);
   assert.match(source, /registerDriverDeliveryEarning/);
+  assert.match(source, /defaultEarningAmount !== null/);
 });
 
 test('delivery completion records driver earnings', async () => {
