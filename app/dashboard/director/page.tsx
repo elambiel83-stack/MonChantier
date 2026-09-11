@@ -184,7 +184,7 @@ export default async function DirectorDashboardPage() {
             <div className="mt-3 space-y-3">
               {dashboard.commerce.topItems.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                  Les factures détaillées ne remontent pas encore assez de lignes.
+                Aucune ligne d&apos;article exploitable n&apos;a été détectée dans les commandes confirmées.
                 </p>
               ) : (
                 dashboard.commerce.topItems.map((item) => (

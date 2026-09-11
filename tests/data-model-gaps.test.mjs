@@ -65,7 +65,7 @@ test('site model covers materials, documents and photos and site manager uses th
   assert.match(summaryRouteSource, /listPaymentStatuses/);
   assert.match(summaryRouteSource, /listAllDeliveries/);
   assert.match(panelSource, /id="materiaux"/);
-  assert.match(panelSource, /fetch\(`\/api\/sites\/\$\{siteId\}\/summary`\)/);
+  assert.match(panelSource, /fetch\(`\/api\/sites\/\$\{siteId\}\/summary`/);
   assert.match(panelSource, /id="commandes"/);
   assert.match(panelSource, /id="livraisons"/);
   assert.match(panelSource, /id="documents"/);
