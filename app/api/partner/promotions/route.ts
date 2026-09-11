@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { listProductsByOwner } from '@/lib/productStore';
 import { listPromotions } from '@/lib/promotionStore';
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
   if (actor.role !== 'supplier') {
