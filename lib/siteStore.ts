@@ -38,6 +38,16 @@ export type SitePhoto = {
   createdAt: string;
 };
 
+export type SiteOrderReference = {
+  reference: string;
+  addedAt: string;
+};
+
+export type SiteDeliveryReference = {
+  reference: string;
+  addedAt: string;
+};
+
 export type Site = {
   id: string;
   name: string;
@@ -53,6 +63,8 @@ export type Site = {
   materials: SiteMaterial[];
   documents: SiteDocument[];
   photos: SitePhoto[];
+  orderReferences: SiteOrderReference[];
+  deliveryReferences: SiteDeliveryReference[];
   createdAt: string;
   updatedAt: string;
 };
@@ -101,6 +113,24 @@ async function readStore(): Promise<SiteStoreModel> {
             materials: Array.isArray(site.materials) ? site.materials : [],
             documents: Array.isArray(site.documents) ? site.documents : [],
             photos: Array.isArray(site.photos) ? site.photos : [],
+            orderReferences: Array.isArray(site.orderReferences)
+              ? site.orderReferences
+                  .filter((entry) => entry && typeof entry === 'object')
+                  .map((entry) => ({
+                    reference: String(entry.reference || '').trim(),
+                    addedAt: String(entry.addedAt || '').trim() || new Date().toISOString(),
+                  }))
+                  .filter((entry) => entry.reference)
+              : [],
+            deliveryReferences: Array.isArray(site.deliveryReferences)
+              ? site.deliveryReferences
+                  .filter((entry) => entry && typeof entry === 'object')
+                  .map((entry) => ({
+                    reference: String(entry.reference || '').trim(),
+                    addedAt: String(entry.addedAt || '').trim() || new Date().toISOString(),
+                  }))
+                  .filter((entry) => entry.reference)
+              : [],
           }))
         : [],
     };
@@ -152,6 +182,8 @@ export function createSite(input: {
       materials: [],
       documents: [],
       photos: [],
+      orderReferences: [],
+      deliveryReferences: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -162,7 +194,20 @@ export function createSite(input: {
 }
 
 export type UpdateSitePatch = Partial<
-  Pick<Site, 'name' | 'address' | 'status' | 'budget' | 'currency' | 'team' | 'materials' | 'documents' | 'photos'>
+  Pick<
+    Site,
+    | 'name'
+    | 'address'
+    | 'status'
+    | 'budget'
+    | 'currency'
+    | 'team'
+    | 'materials'
+    | 'documents'
+    | 'photos'
+    | 'orderReferences'
+    | 'deliveryReferences'
+  >
 >;
 
 export function updateSite(id: string, patch: UpdateSitePatch): Promise<Site | null> {

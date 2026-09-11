@@ -11,6 +11,26 @@ type SiteIncident = { id: string; label: string; severity: IncidentSeverity; res
 type SiteMaterial = { id: string; name: string; unit: string; quantity: number; note?: string; updatedAt?: string };
 type SiteDocument = { id: string; name: string; url: string; category: string; createdAt?: string };
 type SitePhoto = { id: string; name: string; url: string; createdAt?: string };
+type SiteOrderReference = { reference: string; addedAt?: string };
+type SiteDeliveryReference = { reference: string; addedAt?: string };
+type SiteLinkedOrder = {
+  reference: string;
+  found: boolean;
+  paymentState: string | null;
+  orderStatus: string | null;
+  amount: number | null;
+  currency: string | null;
+  customerName: string | null;
+  updatedAt: string | null;
+};
+type SiteLinkedDelivery = {
+  reference: string;
+  found: boolean;
+  status: string | null;
+  deliveryAddress: string | null;
+  driverIdentity: string | null;
+  updatedAt: string | null;
+};
 
 type Site = {
   id: string;
@@ -27,6 +47,8 @@ type Site = {
   materials: SiteMaterial[];
   documents: SiteDocument[];
   photos: SitePhoto[];
+  orderReferences: SiteOrderReference[];
+  deliveryReferences: SiteDeliveryReference[];
 };
 
 const STATUS_LABELS: Record<SiteStatus, string> = {
@@ -53,6 +75,8 @@ export default function SiteManagerPanel() {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [banner, setBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [linkedOrders, setLinkedOrders] = useState<SiteLinkedOrder[]>([]);
+  const [linkedDeliveries, setLinkedDeliveries] = useState<SiteLinkedDelivery[]>([]);
 
   const [newSite, setNewSite] = useState({ name: "", address: "" });
   const [newTask, setNewTask] = useState("");
@@ -61,6 +85,26 @@ export default function SiteManagerPanel() {
   const [newMaterial, setNewMaterial] = useState({ name: "", unit: "unité", quantity: "", note: "" });
   const [newDocument, setNewDocument] = useState({ name: "", url: "", category: "plan" });
   const [newPhoto, setNewPhoto] = useState({ name: "", url: "" });
+  const [newOrderReference, setNewOrderReference] = useState("");
+  const [newDeliveryReference, setNewDeliveryReference] = useState("");
+
+  const loadLinkedData = async (siteId: string | null) => {
+    if (!siteId) {
+      setLinkedOrders([]);
+      setLinkedDeliveries([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/sites/${siteId}/summary`, { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error();
+      setLinkedOrders(data?.orders || []);
+      setLinkedDeliveries(data?.deliveries || []);
+    } catch {
+      setLinkedOrders([]);
+      setLinkedDeliveries([]);
+    }
+  };
 
   const load = async () => {
     try {
@@ -68,10 +112,15 @@ export default function SiteManagerPanel() {
       const res = await fetch("/api/sites", { cache: "no-store" });
       const data = await res.json();
       const list: Site[] = res.ok ? data.sites || [] : [];
+      const nextSelectedId =
+        (selectedSiteId && list.some((site) => site.id === selectedSiteId) ? selectedSiteId : list[0]?.id) || null;
       setSites(list);
-      setSelectedSiteId((current) => (current && list.some((s) => s.id === current) ? current : list[0]?.id || null));
+      setSelectedSiteId(nextSelectedId);
+      await loadLinkedData(nextSelectedId);
     } catch {
       setSites([]);
+      setLinkedOrders([]);
+      setLinkedDeliveries([]);
     } finally {
       setLoading(false);
     }
@@ -80,6 +129,10 @@ export default function SiteManagerPanel() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    void loadLinkedData(selectedSiteId);
+  }, [selectedSiteId]);
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId) || null;
 
@@ -316,6 +369,58 @@ export default function SiteManagerPanel() {
     }
   };
 
+  const addOrderReference = async () => {
+    if (!selectedSite || !newOrderReference.trim()) return;
+    const reference = newOrderReference.trim();
+    if (selectedSite.orderReferences.some((entry) => entry.reference === reference)) {
+      setBanner({ type: "error", message: "Cette commande est déjà liée au chantier." });
+      return;
+    }
+    try {
+      setBusy(true);
+      const orderReferences = [...selectedSite.orderReferences, { reference, addedAt: new Date().toISOString() }];
+      const res = await fetch(`/api/sites/${selectedSite.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderReferences }),
+      });
+      if (!res.ok) throw new Error("Erreur liaison commande");
+      setNewOrderReference("");
+      setBanner({ type: "success", message: "Commande liée au chantier." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addDeliveryReference = async () => {
+    if (!selectedSite || !newDeliveryReference.trim()) return;
+    const reference = newDeliveryReference.trim();
+    if (selectedSite.deliveryReferences.some((entry) => entry.reference === reference)) {
+      setBanner({ type: "error", message: "Cette livraison est déjà liée au chantier." });
+      return;
+    }
+    try {
+      setBusy(true);
+      const deliveryReferences = [...selectedSite.deliveryReferences, { reference, addedAt: new Date().toISOString() }];
+      const res = await fetch(`/api/sites/${selectedSite.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliveryReferences }),
+      });
+      if (!res.ok) throw new Error("Erreur liaison livraison");
+      setNewDeliveryReference("");
+      setBanner({ type: "success", message: "Livraison liée au chantier." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const stats = useMemo(() => {
     const activeSites = sites.filter((site) => site.status === "active").length;
     const taskCount = sites.reduce((sum, site) => sum + site.tasks.length, 0);
@@ -526,12 +631,51 @@ export default function SiteManagerPanel() {
 
           <div id="commandes" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Commandes</h2>
-            <p className="mt-3 text-sm text-slate-500">Les commandes fournisseurs ne sont pas encore rattachées directement aux chantiers.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <input value={newOrderReference} onChange={(e) => setNewOrderReference(e.target.value)} placeholder="Référence commande" className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addOrderReference} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+                Lier
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {linkedOrders.length ? linkedOrders.map((order) => (
+                <div key={order.reference} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-slate-900">{order.reference}</span>
+                    <span className={order.found ? "text-slate-600" : "text-amber-600"}>{order.found ? (order.orderStatus || order.paymentState || "confirmée") : "introuvable"}</span>
+                  </div>
+                  <p className="mt-1 text-slate-600">
+                    {order.amount !== null && order.currency ? `${order.amount.toLocaleString("fr-FR")} ${order.currency}` : "Montant non disponible"}
+                    {order.customerName ? ` · ${order.customerName}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">{formatDate(order.updatedAt || undefined)}</p>
+                </div>
+              )) : <p className="mt-3 text-sm text-slate-500">Aucune commande liée à ce chantier.</p>}
+            </div>
           </div>
 
           <div id="livraisons" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Livraisons</h2>
-            <p className="mt-3 text-sm text-slate-500">Le store de livraison actuel n&apos;associe pas encore les tournées à un chantier précis.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <input value={newDeliveryReference} onChange={(e) => setNewDeliveryReference(e.target.value)} placeholder="Référence livraison" className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addDeliveryReference} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+                Lier
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {linkedDeliveries.length ? linkedDeliveries.map((delivery) => (
+                <div key={delivery.reference} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-slate-900">{delivery.reference}</span>
+                    <span className={delivery.found ? "text-slate-600" : "text-amber-600"}>{delivery.found ? (delivery.status || "en attente") : "introuvable"}</span>
+                  </div>
+                  <p className="mt-1 text-slate-600">{delivery.deliveryAddress || "Adresse non disponible"}</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {delivery.driverIdentity ? `${delivery.driverIdentity} · ` : ""}{formatDate(delivery.updatedAt || undefined)}
+                  </p>
+                </div>
+              )) : <p className="mt-3 text-sm text-slate-500">Aucune livraison liée à ce chantier.</p>}
+            </div>
           </div>
 
           <div id="rapports" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

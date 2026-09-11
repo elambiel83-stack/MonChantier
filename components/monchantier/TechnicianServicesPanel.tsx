@@ -66,6 +66,12 @@ type TechnicianSummary = {
   };
 };
 
+type TechnicianProfile = {
+  equipment: Array<{ id: string; name: string; quantity: number; condition: string; note?: string; updatedAt: string }>;
+  photos: Array<{ id: string; name: string; url: string; category: string; createdAt: string }>;
+  reviews: Array<{ id: string; authorName: string; rating: number; comment?: string; createdAt: string }>;
+};
+
 const METHOD_LABELS: Record<string, string> = {
   mobilemoney: "Mobile Money",
   card: "Carte bancaire",
@@ -86,6 +92,7 @@ function formatDate(value: string) {
 export default function TechnicianServicesPanel() {
   const [services, setServices] = useState<StoredService[]>([]);
   const [summary, setSummary] = useState<TechnicianSummary | null>(null);
+  const [profile, setProfile] = useState<TechnicianProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -101,21 +108,28 @@ export default function TechnicianServicesPanel() {
     priceCDF: "",
   });
   const [saving, setSaving] = useState(false);
+  const [equipmentForm, setEquipmentForm] = useState({ name: "", quantity: "1", condition: "bon état", note: "" });
+  const [photoForm, setPhotoForm] = useState({ name: "", url: "", category: "intervention" });
+  const [reviewForm, setReviewForm] = useState({ authorName: "", rating: "5", comment: "" });
 
   const load = async () => {
     try {
       setLoading(true);
-      const [servicesRes, summaryRes] = await Promise.all([
+      const [servicesRes, summaryRes, profileRes] = await Promise.all([
         fetch("/api/partner/services", { cache: "no-store" }),
         fetch("/api/partner/services/summary", { cache: "no-store" }),
+        fetch("/api/technician/profile", { cache: "no-store" }),
       ]);
       const servicesData = servicesRes.ok ? await servicesRes.json() : { services: [] };
       const summaryData = summaryRes.ok ? await summaryRes.json() : null;
+      const profileData = profileRes.ok ? await profileRes.json() : null;
       setServices(servicesRes.ok ? servicesData.services || [] : []);
       setSummary(summaryData);
+      setProfile(profileData?.profile || null);
     } catch {
       setServices([]);
       setSummary(null);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -212,6 +226,66 @@ export default function TechnicianServicesPanel() {
     () => services.filter((service) => service.priceUSD !== null || service.priceCDF !== null).length,
     [services]
   );
+  const averageRating = useMemo(() => {
+    if (!profile?.reviews.length) return null;
+    const total = profile.reviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / profile.reviews.length;
+  }, [profile?.reviews]);
+
+  const addTechnicianResource = async (payload: Record<string, unknown>, successMessage: string, reset: () => void) => {
+    try {
+      setSaving(true);
+      const res = await fetch("/api/technician/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Erreur mise à jour profil");
+      reset();
+      setBanner({ type: "success", message: successMessage });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addEquipment = async () => {
+    const quantity = Number(equipmentForm.quantity);
+    if (!equipmentForm.name.trim() || !equipmentForm.condition.trim() || !Number.isFinite(quantity) || quantity < 0) {
+      setBanner({ type: "error", message: "Équipement invalide." });
+      return;
+    }
+    await addTechnicianResource(
+      { kind: "equipment", name: equipmentForm.name, quantity, condition: equipmentForm.condition, note: equipmentForm.note },
+      "Matériel ajouté.",
+      () => setEquipmentForm({ name: "", quantity: "1", condition: "bon état", note: "" })
+    );
+  };
+
+  const addPhoto = async () => {
+    if (!photoForm.name.trim() || !photoForm.url.trim()) return;
+    await addTechnicianResource(
+      { kind: "photo", name: photoForm.name, url: photoForm.url, category: photoForm.category },
+      "Photo ajoutée.",
+      () => setPhotoForm({ name: "", url: "", category: "intervention" })
+    );
+  };
+
+  const addReview = async () => {
+    const rating = Number(reviewForm.rating);
+    if (!reviewForm.authorName.trim() || !Number.isFinite(rating) || rating < 1 || rating > 5) {
+      setBanner({ type: "error", message: "Évaluation invalide." });
+      return;
+    }
+    await addTechnicianResource(
+      { kind: "review", authorName: reviewForm.authorName, rating, comment: reviewForm.comment },
+      "Évaluation ajoutée.",
+      () => setReviewForm({ authorName: "", rating: "5", comment: "" })
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -348,13 +422,49 @@ export default function TechnicianServicesPanel() {
 
       <div id="photos" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Photos</h2>
-        <p className="mt-3 text-sm text-slate-500">Aucune bibliothèque photo n&apos;est encore stockée pour les interventions.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input value={photoForm.name} onChange={(e) => setPhotoForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom de la photo" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={photoForm.url} onChange={(e) => setPhotoForm((prev) => ({ ...prev, url: e.target.value }))} placeholder="URL / chemin" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={photoForm.category} onChange={(e) => setPhotoForm((prev) => ({ ...prev, category: e.target.value }))} placeholder="Catégorie" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="button" onClick={addPhoto} disabled={saving} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Ajouter
+          </button>
+        </div>
+        <div className="mt-4 space-y-3">
+          {profile?.photos.length ? profile.photos.map((photo) => (
+            <div key={photo.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+              <p className="font-medium text-slate-900">{photo.name}</p>
+              <p className="mt-1 text-slate-600">{photo.category}</p>
+              <p className="mt-1 text-xs text-slate-400">{photo.url}</p>
+            </div>
+          )) : <p className="text-sm text-slate-500">Aucune photo enregistrée.</p>}
+        </div>
       </div>
 
       <div id="materiel" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Matériel</h2>
-        <p className="mt-3 text-sm text-slate-500">Le suivi du matériel n&apos;est pas encore modélisé ; utilisez cette vue pour contrôler la couverture de services actifs.</p>
-        <p className="mt-2 text-sm text-slate-700">{summary?.totals.activeCount ?? 0} service(s) actif(s) sur {summary?.totals.serviceCount ?? 0}.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input value={equipmentForm.name} onChange={(e) => setEquipmentForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Équipement" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input type="number" value={equipmentForm.quantity} onChange={(e) => setEquipmentForm((prev) => ({ ...prev, quantity: e.target.value }))} placeholder="Quantité" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={equipmentForm.condition} onChange={(e) => setEquipmentForm((prev) => ({ ...prev, condition: e.target.value }))} placeholder="État" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="button" onClick={addEquipment} disabled={saving} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Ajouter
+          </button>
+        </div>
+        <input value={equipmentForm.note} onChange={(e) => setEquipmentForm((prev) => ({ ...prev, note: e.target.value }))} placeholder="Note optionnelle" className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <p className="mt-3 text-sm text-slate-700">{summary?.totals.activeCount ?? 0} service(s) actif(s) sur {summary?.totals.serviceCount ?? 0}.</p>
+        <div className="mt-4 space-y-3">
+          {profile?.equipment.length ? profile.equipment.map((item) => (
+            <div key={item.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-900">{item.name}</span>
+                <span className="text-slate-500">{item.quantity}</span>
+              </div>
+              <p className="mt-1 text-slate-600">{item.condition}</p>
+              {item.note && <p className="mt-1 text-xs text-slate-400">{item.note}</p>}
+            </div>
+          )) : <p className="text-sm text-slate-500">Aucun matériel enregistré.</p>}
+        </div>
       </div>
 
       <div id="paiements" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -374,7 +484,35 @@ export default function TechnicianServicesPanel() {
 
       <div id="evaluations" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Évaluations</h2>
-        <p className="mt-3 text-sm text-slate-500">Aucun module d&apos;avis n&apos;est encore alimenté dans le store actuel.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input value={reviewForm.authorName} onChange={(e) => setReviewForm((prev) => ({ ...prev, authorName: e.target.value }))} placeholder="Client / auteur" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <select value={reviewForm.rating} onChange={(e) => setReviewForm((prev) => ({ ...prev, rating: e.target.value }))} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <option value="5">5/5</option>
+            <option value="4">4/5</option>
+            <option value="3">3/5</option>
+            <option value="2">2/5</option>
+            <option value="1">1/5</option>
+          </select>
+          <input value={reviewForm.comment} onChange={(e) => setReviewForm((prev) => ({ ...prev, comment: e.target.value }))} placeholder="Commentaire" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="button" onClick={addReview} disabled={saving} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Ajouter
+          </button>
+        </div>
+        <p className="mt-3 text-sm text-slate-700">
+          Note moyenne: <span className="font-semibold text-slate-900">{averageRating === null ? "Aucune note" : `${averageRating.toFixed(1)}/5`}</span>
+        </p>
+        <div className="mt-4 space-y-3">
+          {profile?.reviews.length ? profile.reviews.map((review) => (
+            <div key={review.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-900">{review.authorName}</span>
+                <span className="text-amber-600">{review.rating}/5</span>
+              </div>
+              {review.comment && <p className="mt-1 text-slate-600">{review.comment}</p>}
+              <p className="mt-1 text-xs text-slate-400">{formatDate(review.createdAt)}</p>
+            </div>
+          )) : <p className="text-sm text-slate-500">Aucune évaluation enregistrée.</p>}
+        </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -87,6 +87,24 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         }))
         .filter((p: { id: string; name: string; url: string }) => p.id && p.name && p.url);
     }
+    if (Array.isArray(body?.orderReferences)) {
+      patch.orderReferences = body.orderReferences
+        .filter((entry: unknown) => entry && typeof entry === 'object')
+        .map((entry: { reference?: string; addedAt?: string }) => ({
+          reference: String(entry.reference || '').trim(),
+          addedAt: String(entry.addedAt || '').trim() || new Date().toISOString(),
+        }))
+        .filter((entry: { reference: string }) => entry.reference);
+    }
+    if (Array.isArray(body?.deliveryReferences)) {
+      patch.deliveryReferences = body.deliveryReferences
+        .filter((entry: unknown) => entry && typeof entry === 'object')
+        .map((entry: { reference?: string; addedAt?: string }) => ({
+          reference: String(entry.reference || '').trim(),
+          addedAt: String(entry.addedAt || '').trim() || new Date().toISOString(),
+        }))
+        .filter((entry: { reference: string }) => entry.reference);
+    }
 
     const site = await updateSite(params.id, patch);
     if (!site) return NextResponse.json({ message: 'Chantier introuvable' }, { status: 404 });

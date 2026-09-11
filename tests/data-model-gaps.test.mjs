@@ -42,9 +42,10 @@ test('driver dashboard and api use the new driver profile model', async () => {
 });
 
 test('site model covers materials, documents and photos and site manager uses them', async () => {
-  const [storeSource, routeSource, panelSource] = await Promise.all([
+  const [storeSource, routeSource, summaryRouteSource, panelSource] = await Promise.all([
     read('lib/siteStore.ts'),
     read('app/api/sites/[id]/route.ts'),
+    read('app/api/sites/[id]/summary/route.ts'),
     read('components/monchantier/SiteManagerPanel.tsx'),
   ]);
 
@@ -54,10 +55,43 @@ test('site model covers materials, documents and photos and site manager uses th
   assert.match(storeSource, /materials: SiteMaterial\[\]/);
   assert.match(storeSource, /documents: SiteDocument\[\]/);
   assert.match(storeSource, /photos: SitePhoto\[\]/);
+  assert.match(storeSource, /orderReferences: SiteOrderReference\[\]/);
+  assert.match(storeSource, /deliveryReferences: SiteDeliveryReference\[\]/);
   assert.match(routeSource, /if \(Array\.isArray\(body\?\.materials\)\)/);
   assert.match(routeSource, /if \(Array\.isArray\(body\?\.documents\)\)/);
   assert.match(routeSource, /if \(Array\.isArray\(body\?\.photos\)\)/);
+  assert.match(routeSource, /if \(Array\.isArray\(body\?\.orderReferences\)\)/);
+  assert.match(routeSource, /if \(Array\.isArray\(body\?\.deliveryReferences\)\)/);
+  assert.match(summaryRouteSource, /listPaymentStatuses/);
+  assert.match(summaryRouteSource, /listAllDeliveries/);
   assert.match(panelSource, /id="materiaux"/);
+  assert.match(panelSource, /fetch\(`\/api\/sites\/\$\{siteId\}\/summary`\)/);
+  assert.match(panelSource, /id="commandes"/);
+  assert.match(panelSource, /id="livraisons"/);
   assert.match(panelSource, /id="documents"/);
   assert.match(panelSource, /id="photos"/);
+});
+
+test('technician dashboard uses a persisted profile for photos, equipment and evaluations', async () => {
+  const [storeSource, routeSource, panelSource] = await Promise.all([
+    read('lib/technicianStore.ts'),
+    read('app/api/technician/profile/route.ts'),
+    read('components/monchantier/TechnicianServicesPanel.tsx'),
+  ]);
+
+  assert.match(storeSource, /export type TechnicianEquipment/);
+  assert.match(storeSource, /export type TechnicianPhoto/);
+  assert.match(storeSource, /export type TechnicianReview/);
+  assert.match(storeSource, /addTechnicianEquipment/);
+  assert.match(storeSource, /addTechnicianPhoto/);
+  assert.match(storeSource, /addTechnicianReview/);
+  assert.match(routeSource, /export async function GET/);
+  assert.match(routeSource, /export async function POST/);
+  assert.match(routeSource, /kind === 'equipment'/);
+  assert.match(routeSource, /kind === 'photo'/);
+  assert.match(routeSource, /kind === 'review'/);
+  assert.match(panelSource, /fetch\("\/api\/technician\/profile"/);
+  assert.match(panelSource, /id="photos"/);
+  assert.match(panelSource, /id="materiel"/);
+  assert.match(panelSource, /id="evaluations"/);
 });
