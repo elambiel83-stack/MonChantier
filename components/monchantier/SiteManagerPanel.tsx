@@ -116,7 +116,9 @@ export default function SiteManagerPanel() {
         (selectedSiteId && list.some((site) => site.id === selectedSiteId) ? selectedSiteId : list[0]?.id) || null;
       setSites(list);
       setSelectedSiteId(nextSelectedId);
-      await loadLinkedData(nextSelectedId);
+      if (nextSelectedId === selectedSiteId) {
+        await loadLinkedData(nextSelectedId);
+      }
     } catch {
       setSites([]);
       setLinkedOrders([]);

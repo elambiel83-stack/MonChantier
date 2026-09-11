@@ -162,16 +162,15 @@ function backfillSiteReferences(
   payments: Awaited<ReturnType<typeof listPaymentStatuses>>,
   deliveries: Awaited<ReturnType<typeof listAllDeliveries>>
 ) {
+  const siteClientIdentity = normalizeIdentity(site.clientIdentity);
+  if (!siteClientIdentity) return false;
+
   let changed = false;
 
   for (const payment of payments) {
     if (!payment.reference) continue;
     if (!addressesLikelyMatch(site.address, payment.fullInvoice?.deliveryAddress)) continue;
-    if (
-      site.clientIdentity &&
-      payment.fullInvoice?.customerEmail &&
-      normalizeIdentity(site.clientIdentity) !== normalizeIdentity(payment.fullInvoice.customerEmail)
-    ) {
+    if (siteClientIdentity !== normalizeIdentity(payment.fullInvoice?.customerEmail)) {
       continue;
     }
     changed =
@@ -184,7 +183,7 @@ function backfillSiteReferences(
   for (const delivery of deliveries) {
     if (!delivery.reference) continue;
     if (!addressesLikelyMatch(site.address, delivery.deliveryAddress)) continue;
-    if (site.clientIdentity && normalizeIdentity(site.clientIdentity) !== normalizeIdentity(delivery.clientIdentity)) {
+    if (siteClientIdentity !== normalizeIdentity(delivery.clientIdentity)) {
       continue;
     }
     changed =

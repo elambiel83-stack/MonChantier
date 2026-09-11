@@ -10,14 +10,86 @@ async function read(relativePath) {
   return fs.readFile(path.join(repoRoot, relativePath), 'utf8');
 }
 
-test('site store provides automatic order and delivery linkage helpers', async () => {
-  const source = await read('lib/siteStore.ts');
+function createSiteLinkingHarness(source) {
+  const start = source.indexOf('function normalizeIdentity');
+  const end = source.indexOf('async function ensureStoreFile');
+  assert.notEqual(start, -1, 'Site linking helpers should exist');
+  assert.notEqual(end, -1, 'Site linking helper block should be bounded');
 
-  assert.match(source, /function addressesLikelyMatch/);
-  assert.match(source, /function backfillSiteReferences/);
-  assert.match(source, /export function autoLinkOrderReferenceToSite/);
-  assert.match(source, /export function autoLinkDeliveryReferenceToSite/);
-  assert.match(source, /backfillSiteReferences\(site, payments, deliveries\)/);
+  const helperSource = source
+    .slice(start, end)
+    .replace('function normalizeIdentity(value?: string)', 'function normalizeIdentity(value)')
+    .replace('function normalizeAddress(value?: string)', 'function normalizeAddress(value)')
+    .replace('function addressesLikelyMatch(left?: string, right?: string)', 'function addressesLikelyMatch(left, right)')
+    .replace(
+      /function addUniqueReference<T extends \{ reference: string; addedAt: string \}>\(\s*list: T\[\],\s*factory: \(\) => T\s*\)/,
+      'function addUniqueReference(list, factory)'
+    )
+    .replace(
+      /function findBestMatchingSiteIndex\(\s*sites: Site\[\],\s*input: \{ clientIdentity\?: string; address\?: string \}\s*\)/,
+      'function findBestMatchingSiteIndex(sites, input)'
+    )
+    .replace(
+      /function backfillSiteReferences\(\s*site: Site,\s*payments: Awaited<ReturnType<typeof listPaymentStatuses>>,\s*deliveries: Awaited<ReturnType<typeof listAllDeliveries>>\s*\)/,
+      'function backfillSiteReferences(site, payments, deliveries)'
+    );
+
+  return new Function(`${helperSource}; return { addressesLikelyMatch, findBestMatchingSiteIndex, backfillSiteReferences };`)();
+}
+
+test('site store helpers normalize and match likely addresses', async () => {
+  const source = await read('lib/siteStore.ts');
+  const { addressesLikelyMatch, findBestMatchingSiteIndex } = createSiteLinkingHarness(source);
+
+  assert.equal(addressesLikelyMatch('Avenue de la Libération, Kinshasa', 'avenue de la liberation kinshasa'), true);
+  assert.equal(addressesLikelyMatch('Commune de Gombe', 'Limete'), false);
+  assert.equal(
+    findBestMatchingSiteIndex(
+      [
+        { address: 'Avenue Kasavubu 10', clientIdentity: 'other@example.com' },
+        { address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' },
+      ],
+      { address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' }
+    ),
+    1
+  );
+});
+
+test('site store backfill only links historical references for the same client', async () => {
+  const source = await read('lib/siteStore.ts');
+  const { backfillSiteReferences } = createSiteLinkingHarness(source);
+
+  const siteWithoutClient = { address: 'Avenue Kasavubu 10', clientIdentity: '', orderReferences: [], deliveryReferences: [] };
+  const payments = [
+    {
+      reference: 'CMD-1',
+      updatedAt: '2026-09-11T00:00:00.000Z',
+      fullInvoice: { deliveryAddress: 'Avenue Kasavubu 10', customerEmail: 'client@example.com' },
+    },
+  ];
+  const deliveries = [
+    {
+      reference: 'LIV-1',
+      createdAt: '2026-09-11T00:00:00.000Z',
+      deliveryAddress: 'Avenue Kasavubu 10',
+      clientIdentity: 'client@example.com',
+    },
+  ];
+
+  assert.equal(backfillSiteReferences(siteWithoutClient, payments, deliveries), false);
+  assert.deepEqual(siteWithoutClient.orderReferences, []);
+  assert.deepEqual(siteWithoutClient.deliveryReferences, []);
+
+  const siteWithClient = {
+    address: 'Avenue Kasavubu 10',
+    clientIdentity: 'client@example.com',
+    orderReferences: [],
+    deliveryReferences: [],
+  };
+
+  assert.equal(backfillSiteReferences(siteWithClient, payments, deliveries), true);
+  assert.deepEqual(siteWithClient.orderReferences.map((entry) => entry.reference), ['CMD-1']);
+  assert.deepEqual(siteWithClient.deliveryReferences.map((entry) => entry.reference), ['LIV-1']);
 });
 
 test('payment confirmation auto-links matching sites for orders and deliveries', async () => {
