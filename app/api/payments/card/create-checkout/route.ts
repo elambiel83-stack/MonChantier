@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordPayment } from '@/lib/adminStore';
-import { buildInvoiceText, createInvoice } from '@/lib/invoice';
-import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
+import {
+  confirmPayment,
+  generatePaymentReference,
+  registerPendingPayment,
+} from '@/lib/paymentConfirmation';
+import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { createStripeCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -20,10 +24,6 @@ export async function POST(request: NextRequest) {
     const { amount, currency, items, deliveryAddress, location, successUrl, cancelUrl, customerName, customerEmail } = body;
 
     const normalizedItems = Array.isArray(items) ? items : [];
-    const totalQty = normalizedItems.reduce(
-      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
-      0
-    );
     const productSummary = normalizedItems
       .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
       .join(', ');
@@ -39,37 +39,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // En production: utiliser Stripe, Paystack ou autre
-    console.log('=== CRÉATION CHECKOUT CARTE BANCAIRE ===');
-    console.log('Montant:', parsedAmount, parsedCurrency);
-    console.log('Résumé:', productSummary);
-    console.log('Quantité totale:', totalQty);
-    console.log('Success URL:', successUrl);
-    console.log('Cancel URL:', cancelUrl);
-    console.log('Email fourni:', Boolean(customerEmail));
-    console.log('========================================');
-
-    // Simuler la création d'une session Stripe
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const paymentReference = `cs_demo_${Date.now()}`;
-
-    recordPayment({
-      method: 'card',
-      amount: parsedAmount,
-      currency: parsedCurrency,
-      reference: paymentReference,
-    });
-
+    const paymentReference = generatePaymentReference('CARD');
     const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
     const resolvedCustomerEmail = (customerEmail || '').trim();
-    const invoice = createInvoice({
+    const invoicePayload = encodeInvoicePayload({
       reference: paymentReference,
-      customerName: resolvedCustomerName,
-      customerEmail: resolvedCustomerEmail,
       method: 'card',
       amount: parsedAmount,
       currency: parsedCurrency,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
       items: normalizedItems.map((item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
         productName: item.productName || 'Produit',
         quantity: Number(item.quantity || 1),
@@ -79,32 +58,47 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    let invoiceSent = false;
-    if (resolvedCustomerEmail && isMailerConfigured()) {
-      try {
-        await sendInvoiceEmail({
-          to: resolvedCustomerEmail,
-          invoiceNumber: invoice.invoiceNumber,
-          customerName: invoice.customerName,
-          text: buildInvoiceText(invoice),
-        });
-        invoiceSent = true;
-      } catch (mailError) {
-        console.error('Erreur envoi facture carte:', mailError);
-      }
+    const joiner = successUrl.includes('?') ? '&' : '?';
+    const successUrlWithReference = `${successUrl}${joiner}reference=${encodeURIComponent(paymentReference)}`;
+
+    if (isStripeConfigured()) {
+      await registerPendingPayment(paymentReference, 'card');
+      const session = await createStripeCheckoutSession({
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        productSummary,
+        successUrl: successUrlWithReference,
+        cancelUrl,
+        customerEmail: resolvedCustomerEmail || undefined,
+        invoicePayload,
+      });
+
+      return NextResponse.json({
+        success: true,
+        checkoutUrl: session.url,
+        sessionId: session.sessionId,
+        reference: paymentReference,
+      });
     }
 
-    // En production: retourner l'URL de checkout Stripe réel
-    // Pour la démo, on simule avec une page locale
-    return NextResponse.json({ 
+    const confirmation = await confirmPayment({
+      reference: paymentReference,
+      method: 'card',
+      amount: parsedAmount,
+      currency: parsedCurrency,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
+      items: normalizedItems,
+      deliveryAddress,
+      location,
+    });
+
+    return NextResponse.json({
       success: true,
-      checkoutUrl: `${successUrl}?session_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
+      checkoutUrl: `${successUrlWithReference}&session_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
       sessionId: paymentReference,
-      invoice: {
-        number: invoice.invoiceNumber,
-        sent: invoiceSent,
-        email: resolvedCustomerEmail || null,
-      },
+      reference: paymentReference,
+      invoice: confirmation.invoice,
     });
   } catch (error) {
     console.error('Erreur création checkout:', error);

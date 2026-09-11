@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordPayment } from '@/lib/adminStore';
-import { buildInvoiceText, createInvoice } from '@/lib/invoice';
-import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
+import {
+  confirmPayment,
+  generatePaymentReference,
+  registerPendingPayment,
+} from '@/lib/paymentConfirmation';
+import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
+import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -20,10 +24,6 @@ export async function POST(request: NextRequest) {
     const { amount, currency, items, deliveryAddress, location, returnUrl, cancelUrl, customerName, customerEmail } = body;
 
     const normalizedItems = Array.isArray(items) ? items : [];
-    const totalQty = normalizedItems.reduce(
-      (sum: number, item: { quantity?: number }) => sum + Number(item?.quantity || 0),
-      0
-    );
     const productSummary = normalizedItems
       .map((item: { productName?: string; quantity?: number }) => `${item.productName || 'Produit'} x${item.quantity || 1}`)
       .join(', ');
@@ -39,37 +39,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // En production: utiliser PayPal SDK
-    console.log('=== CRÉATION COMMANDE PAYPAL ===');
-    console.log('Montant:', parsedAmount, parsedCurrency);
-    console.log('Résumé:', productSummary);
-    console.log('Quantité totale:', totalQty);
-    console.log('Return URL:', returnUrl);
-    console.log('Cancel URL:', cancelUrl);
-    console.log('Email fourni:', Boolean(customerEmail));
-    console.log('================================');
-
-    // Simuler la création d'une commande PayPal
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const paymentReference = `PAYPAL-${Date.now()}`;
-
-    recordPayment({
-      method: 'paypal',
-      amount: parsedAmount,
-      currency: parsedCurrency,
-      reference: paymentReference,
-    });
-
+    const paymentReference = generatePaymentReference('PAYPAL');
     const resolvedCustomerName = (customerName || 'Client MonChantier').trim();
     const resolvedCustomerEmail = (customerEmail || '').trim();
-    const invoice = createInvoice({
+    const invoicePayload = encodeInvoicePayload({
       reference: paymentReference,
-      customerName: resolvedCustomerName,
-      customerEmail: resolvedCustomerEmail,
       method: 'paypal',
       amount: parsedAmount,
       currency: parsedCurrency,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
       items: normalizedItems.map((item: { productName?: string; quantity?: number; unitPrice?: number }) => ({
         productName: item.productName || 'Produit',
         quantity: Number(item.quantity || 1),
@@ -79,32 +58,46 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    let invoiceSent = false;
-    if (resolvedCustomerEmail && isMailerConfigured()) {
-      try {
-        await sendInvoiceEmail({
-          to: resolvedCustomerEmail,
-          invoiceNumber: invoice.invoiceNumber,
-          customerName: invoice.customerName,
-          text: buildInvoiceText(invoice),
-        });
-        invoiceSent = true;
-      } catch (mailError) {
-        console.error('Erreur envoi facture PayPal:', mailError);
-      }
+    const joiner = returnUrl.includes('?') ? '&' : '?';
+    const returnUrlWithReference = `${returnUrl}${joiner}reference=${encodeURIComponent(paymentReference)}`;
+
+    if (isPayPalConfigured()) {
+      await registerPendingPayment(paymentReference, 'paypal');
+      const order = await createPayPalOrder({
+        amount: parsedAmount,
+        currency: parsedCurrency,
+        productSummary,
+        returnUrl: returnUrlWithReference,
+        cancelUrl,
+        customId: invoicePayload,
+      });
+
+      return NextResponse.json({
+        success: true,
+        approveUrl: order.approveUrl,
+        orderId: order.orderId,
+        reference: paymentReference,
+      });
     }
 
-    // En production: retourner l'URL d'approbation PayPal réelle
-    // Pour la démo, on simule avec une page locale
-    return NextResponse.json({ 
+    const confirmation = await confirmPayment({
+      reference: paymentReference,
+      method: 'paypal',
+      amount: parsedAmount,
+      currency: parsedCurrency,
+      customerName: resolvedCustomerName,
+      customerEmail: resolvedCustomerEmail,
+      items: normalizedItems,
+      deliveryAddress,
+      location,
+    });
+
+    return NextResponse.json({
       success: true,
-      approveUrl: `${returnUrl}?paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
+      approveUrl: `${returnUrlWithReference}&paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
       orderId: paymentReference,
-      invoice: {
-        number: invoice.invoiceNumber,
-        sent: invoiceSent,
-        email: resolvedCustomerEmail || null,
-      },
+      reference: paymentReference,
+      invoice: confirmation.invoice,
     });
   } catch (error) {
     console.error('Erreur création commande PayPal:', error);

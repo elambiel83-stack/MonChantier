@@ -44,33 +44,19 @@ function formatAmount(status: StoredPaymentStatus) {
 export default async function ClientDashboardPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email || null;
+  const hasEmail = Boolean(email);
+  const identityLabel = session?.user?.identity || session?.user?.name || 'ce compte';
 
-  if (!email) {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Client</h1>
-        <p className="mt-1 text-slate-600">Acheter, suivre et gérer ses projets.</p>
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-6">
-          <p className="text-sm text-slate-700">
-            Votre compte est connecté par numéro de téléphone, sans email associé. Les commandes,
-            factures et devis sont rattachés à l&apos;email renseigné lors du paiement ou de la
-            demande de devis — connectez-vous avec cet email (Google/Facebook) ou renseignez-le à
-            chaque commande pour les retrouver ici.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const [allPayments, quotes] = hasEmail
+    ? await Promise.all([listPaymentStatuses(), listQuoteRequestsByEmail(email)])
+    : [[], []];
 
-  const [allPayments, quotes] = await Promise.all([
-    listPaymentStatuses(),
-    listQuoteRequestsByEmail(email),
-  ]);
-
-  const normalizedEmail = email.toLowerCase();
-  const orders = allPayments
-    .filter((status) => (status.fullInvoice?.customerEmail || status.invoice?.email || "").toLowerCase() === normalizedEmail)
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const normalizedEmail = email?.toLowerCase() || '';
+  const orders = hasEmail
+    ? allPayments
+        .filter((status) => (status.fullInvoice?.customerEmail || status.invoice?.email || "").toLowerCase() === normalizedEmail)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    : [];
 
   const confirmedOrders = orders.filter((order) => order.state === "confirmed");
   const pendingOrders = orders.filter((order) => order.state === "pending");
@@ -93,6 +79,19 @@ export default async function ClientDashboardPage() {
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Client</h1>
       <p className="mt-1 text-slate-600">Acheter, suivre et gérer ses projets.</p>
+      {!hasEmail && (
+        <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
+          <p className="text-sm text-slate-700">
+            Ce compte ({identityLabel}) peut déjà utiliser le porte-monnaie, le crédit, les favoris,
+            les adresses, les projets et le support. En revanche, les commandes, factures et devis
+            restent rattachés à un email client.
+          </p>
+          <p className="mt-2 text-sm text-slate-700">
+            Connectez-vous avec cet email ou renseignez-le lors du paiement pour retrouver ensuite
+            l&apos;historique ici.
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
