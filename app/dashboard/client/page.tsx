@@ -45,7 +45,6 @@ export default async function ClientDashboardPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email || null;
   const hasEmail = Boolean(email);
-  const identityLabel = session?.user?.identity || session?.user?.name || 'ce compte';
 
   const [allPayments, quotes] = hasEmail
     ? await Promise.all([listPaymentStatuses(), listQuoteRequestsByEmail(email as string)])
@@ -82,9 +81,9 @@ export default async function ClientDashboardPage() {
       {!hasEmail && (
         <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-6">
           <p className="text-sm text-slate-700">
-            Ce compte ({identityLabel}) peut déjà utiliser le porte-monnaie, le crédit, les favoris,
-            les adresses, les projets et le support. En revanche, les commandes, factures et devis
-            restent rattachés à un email client.
+            Ce compte peut déjà utiliser le porte-monnaie, le crédit, les favoris, les adresses,
+            les projets et le support. En revanche, les commandes, factures et devis restent
+            rattachés à un email client.
           </p>
           <p className="mt-2 text-sm text-slate-700">
             Connectez-vous avec cet email ou renseignez-le lors du paiement pour retrouver ensuite

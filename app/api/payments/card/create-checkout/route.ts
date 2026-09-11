@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (isStripeConfigured()) {
-      await registerPendingPayment(paymentReference, 'card');
       const session = await createStripeCheckoutSession({
         amount: parsedAmount,
         currency: parsedCurrency,
@@ -83,6 +82,7 @@ export async function POST(request: NextRequest) {
         customerEmail: resolvedCustomerEmail || undefined,
         invoicePayload,
       });
+      await registerPendingPayment(paymentReference, 'card');
 
       return NextResponse.json({
         success: true,

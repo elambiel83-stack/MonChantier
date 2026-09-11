@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (isPayPalConfigured()) {
-      await registerPendingPayment(paymentReference, 'paypal');
       const order = await createPayPalOrder({
         amount: parsedAmount,
         currency: parsedCurrency,
@@ -82,6 +81,7 @@ export async function POST(request: NextRequest) {
         cancelUrl,
         customId: invoicePayload,
       });
+      await registerPendingPayment(paymentReference, 'paypal');
 
       return NextResponse.json({
         success: true,
