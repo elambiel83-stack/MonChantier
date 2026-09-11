@@ -21,6 +21,10 @@ type CatalogService = {
   img: string;
   priceUSD: number | null;
   priceCDF: number | null;
+  promotionLabel?: string | null;
+  promotionDiscountPercent?: number | null;
+  originalPriceUSD?: number | null;
+  originalPriceCDF?: number | null;
 };
 
 // Services and products come from independent auto-increment id counters, so a
@@ -143,10 +147,27 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
                 <div className="relative rounded-xl overflow-hidden ring-1 ring-slate-200 h-36">
                   <Image src={s.img} alt={t(s.fr, s.en)} fill sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover object-center" />
                 </div>
+                {s.promotionDiscountPercent ? (
+                  <span className="mt-3 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+                    {s.promotionLabel || `-${s.promotionDiscountPercent}%`}
+                  </span>
+                ) : null}
                 <div className="text-3xl">{s.icon}</div>
                 <h3 className="mt-3 font-semibold text-lg">{t(s.fr, s.en)}</h3>
                 <p className="mt-1 text-slate-600 text-sm">{t(s.frDesc, s.enDesc)}</p>
-                {priceLabel && <p className="mt-2 text-sm font-bold text-slate-900">{priceLabel}</p>}
+                {priceLabel && (
+                  <div className="mt-2">
+                    <p className="text-sm font-bold text-slate-900">{priceLabel}</p>
+                    {(s.originalPriceUSD !== null && s.originalPriceUSD !== undefined) ||
+                    (s.originalPriceCDF !== null && s.originalPriceCDF !== undefined) ? (
+                      <p className="text-xs text-slate-400 line-through">
+                        {s.originalPriceUSD !== null && s.originalPriceUSD !== undefined
+                          ? `$${s.originalPriceUSD}`
+                          : `${s.originalPriceCDF?.toLocaleString("fr-FR")} FC`}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
                 {isDeliveryService && (
                   <a
                     href={deliveryMapsUrl}

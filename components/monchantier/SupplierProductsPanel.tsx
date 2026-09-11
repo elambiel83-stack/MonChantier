@@ -14,6 +14,17 @@ type StoredProduct = {
   active: boolean;
 };
 
+type StoredPromotion = {
+  id: number;
+  itemType: "product";
+  itemId: number;
+  label: string;
+  discountPercent: number;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
 type SupplierSummary = {
   totals: {
     productCount: number;
@@ -105,6 +116,7 @@ function formatDate(value: string) {
 export default function SupplierProductsPanel() {
   const [products, setProducts] = useState<StoredProduct[]>([]);
   const [summary, setSummary] = useState<SupplierSummary | null>(null);
+  const [promotions, setPromotions] = useState<StoredPromotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -123,17 +135,21 @@ export default function SupplierProductsPanel() {
   const load = async () => {
     try {
       setLoading(true);
-      const [productsRes, summaryRes] = await Promise.all([
+      const [productsRes, summaryRes, promotionsRes] = await Promise.all([
         fetch("/api/partner/products", { cache: "no-store" }),
         fetch("/api/partner/products/summary", { cache: "no-store" }),
+        fetch("/api/partner/promotions", { cache: "no-store" }),
       ]);
       const productsData = productsRes.ok ? await productsRes.json() : { products: [] };
       const summaryData = summaryRes.ok ? await summaryRes.json() : null;
+      const promotionsData = promotionsRes.ok ? await promotionsRes.json() : { promotions: [] };
       setProducts(productsRes.ok ? productsData.products || [] : []);
       setSummary(summaryData);
+      setPromotions(promotionsRes.ok ? promotionsData.promotions || [] : []);
     } catch {
       setProducts([]);
       setSummary(null);
+      setPromotions([]);
     } finally {
       setLoading(false);
     }
@@ -229,6 +245,16 @@ export default function SupplierProductsPanel() {
     () => products.filter((product) => product.priceUSD === null && product.priceCDF === null),
     [products]
   );
+  const isPromotionLive = (promotion: StoredPromotion) => {
+    if (!promotion.active) return false;
+    const now = Date.now();
+    const startsAt = promotion.startsAt ? new Date(promotion.startsAt).getTime() : null;
+    const endsAt = promotion.endsAt ? new Date(promotion.endsAt).getTime() : null;
+    if (startsAt !== null && !Number.isNaN(startsAt) && startsAt > now) return false;
+    if (endsAt !== null && !Number.isNaN(endsAt) && endsAt < now) return false;
+    return true;
+  };
+  const livePromotions = promotions.filter(isPromotionLive);
 
   return (
     <div className="space-y-6">
@@ -334,7 +360,7 @@ export default function SupplierProductsPanel() {
 
       <div id="prix-promotions" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Prix & promotions</h2>
-        <p className="mt-1 text-sm text-slate-500">Aucune promotion dédiée n&apos;est encore stockée ; la vue suit donc la couverture tarifaire.</p>
+        <p className="mt-1 text-sm text-slate-500">Les promotions admin actives sur vos produits publics apparaissent ici avec leur fenêtre d&apos;activation.</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-100 p-4">
             <p className="text-sm font-medium text-slate-900">Produits sans aucun prix</p>
@@ -345,10 +371,17 @@ export default function SupplierProductsPanel() {
             </div>
           </div>
           <div className="rounded-lg border border-slate-100 p-4">
-            <p className="text-sm font-medium text-slate-900">Double affichage USD/CDF</p>
-            <p className="mt-3 text-sm text-slate-600">
-              {summary?.pricingRows.filter((row) => row.hasDualPricing).length ?? 0} produit(s) ont les deux devises renseignées.
-            </p>
+            <p className="text-sm font-medium text-slate-900">Promotions en cours</p>
+            <div className="mt-3 space-y-2">
+              {livePromotions.length ? livePromotions.map((promotion) => {
+                const product = products.find((entry) => entry.id === promotion.itemId);
+                return (
+                  <div key={promotion.id} className="text-sm text-slate-600">
+                    <span className="font-medium text-slate-900">{product?.fr || `Produit #${promotion.itemId}`}</span> · {promotion.label} · -{promotion.discountPercent}%
+                  </div>
+                );
+              }) : <p className="text-sm text-slate-500">Aucune promotion active sur vos produits.</p>}
+            </div>
           </div>
         </div>
       </div>

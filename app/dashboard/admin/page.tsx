@@ -33,6 +33,21 @@ type StoredService = {
   active: boolean;
 };
 
+type PromotionTargetType = 'product' | 'service';
+
+type StoredPromotion = {
+  id: number;
+  itemType: PromotionTargetType;
+  itemId: number;
+  label: string;
+  discountPercent: number;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 type StoredOrder = {
@@ -265,6 +280,17 @@ export default function AdminPage() {
     priceCDF: '',
   });
   const [savingService, setSavingService] = useState(false);
+  const [promotions, setPromotions] = useState<StoredPromotion[]>([]);
+  const [busyPromotionId, setBusyPromotionId] = useState<number | null>(null);
+  const [savingPromotion, setSavingPromotion] = useState(false);
+  const [newPromotion, setNewPromotion] = useState({
+    itemType: 'product' as PromotionTargetType,
+    itemId: '',
+    label: '',
+    discountPercent: '',
+    startsAt: '',
+    endsAt: '',
+  });
 
   const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
 
@@ -543,6 +569,77 @@ export default function AdminPage() {
     }
   };
 
+  const loadPromotions = async () => {
+    try {
+      const response = await fetch('/api/admin/promotions', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les promotions');
+      const data = (await response.json()) as { promotions?: StoredPromotion[] };
+      setPromotions(Array.isArray(data.promotions) ? data.promotions : []);
+    } catch {
+      setPromotions([]);
+    }
+  };
+
+  const createPromotion = async () => {
+    if (!newPromotion.itemId || !newPromotion.label.trim() || !newPromotion.discountPercent) return;
+    try {
+      setSavingPromotion(true);
+      const response = await fetch('/api/admin/promotions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemType: newPromotion.itemType,
+          itemId: Number(newPromotion.itemId),
+          label: newPromotion.label.trim(),
+          discountPercent: Number(newPromotion.discountPercent),
+          startsAt: newPromotion.startsAt || null,
+          endsAt: newPromotion.endsAt || null,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Erreur création promotion');
+      }
+      setNewPromotion({
+        itemType: 'product',
+        itemId: '',
+        label: '',
+        discountPercent: '',
+        startsAt: '',
+        endsAt: '',
+      });
+      await loadPromotions();
+    } finally {
+      setSavingPromotion(false);
+    }
+  };
+
+  const togglePromotionActive = async (promotion: StoredPromotion) => {
+    try {
+      setBusyPromotionId(promotion.id);
+      const response = await fetch(`/api/admin/promotions/${promotion.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !promotion.active }),
+      });
+      if (!response.ok) throw new Error('Erreur mise à jour promotion');
+      await loadPromotions();
+    } finally {
+      setBusyPromotionId(null);
+    }
+  };
+
+  const removePromotion = async (id: number) => {
+    try {
+      setBusyPromotionId(id);
+      const response = await fetch(`/api/admin/promotions/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Erreur suppression promotion');
+      await loadPromotions();
+    } finally {
+      setBusyPromotionId(null);
+    }
+  };
+
   const loadOrders = async () => {
     try {
       const response = await fetch('/api/admin/orders', { cache: 'no-store' });
@@ -650,6 +747,7 @@ export default function AdminPage() {
         loadSites(),
         loadProducts(),
         loadServices(),
+        loadPromotions(),
         loadTaxes(),
         loadOrders(),
       ]);
@@ -703,6 +801,36 @@ export default function AdminPage() {
   const activeSites = sites.filter((site) => site.status === 'active');
   const configuredProductCount = products.filter((product) => product.priceUSD !== null || product.priceCDF !== null).length;
   const configuredServiceCount = services.filter((service) => service.priceUSD !== null || service.priceCDF !== null).length;
+  const isPromotionLive = (promotion: StoredPromotion) => {
+    if (!promotion.active) return false;
+    const now = Date.now();
+    const startsAt = promotion.startsAt ? new Date(promotion.startsAt).getTime() : null;
+    const endsAt = promotion.endsAt ? new Date(promotion.endsAt).getTime() : null;
+    if (startsAt !== null && !Number.isNaN(startsAt) && startsAt > now) return false;
+    if (endsAt !== null && !Number.isNaN(endsAt) && endsAt < now) return false;
+    return true;
+  };
+  const livePromotions = promotions.filter(isPromotionLive);
+  const promotedProductCount = new Set(
+    livePromotions
+      .filter((promotion) => promotion.itemType === 'product')
+      .map((promotion) => promotion.itemId)
+  ).size;
+  const promotedServiceCount = new Set(
+    livePromotions
+      .filter((promotion) => promotion.itemType === 'service')
+      .map((promotion) => promotion.itemId)
+  ).size;
+  const promotionTargets =
+    newPromotion.itemType === 'product'
+      ? products.map((product) => ({ id: product.id, label: product.fr }))
+      : services.map((service) => ({ id: service.id, label: service.fr }));
+  const getPromotionTargetLabel = (promotion: StoredPromotion) => {
+    if (promotion.itemType === 'product') {
+      return products.find((product) => product.id === promotion.itemId)?.fr || `Produit #${promotion.itemId}`;
+    }
+    return services.find((service) => service.id === promotion.itemId)?.fr || `Service #${promotion.itemId}`;
+  };
   const deliveryStatusCounts = Object.entries(
     deliveries.reduce<Record<string, number>>((acc, delivery) => {
       acc[delivery.status] = (acc[delivery.status] || 0) + 1;
@@ -1982,19 +2110,152 @@ export default function AdminPage() {
           <h2 className="text-lg font-semibold">{t('Promotions', 'Promotions')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
-              'Aucun moteur de promotions dédié n’est encore stocké ; ce suivi affiche la couverture tarifaire du catalogue.',
-              'No dedicated promotions engine is stored yet; this view tracks catalog pricing coverage.'
+              'Créez des remises planifiées sur les produits et services du catalogue public.',
+              'Create scheduled discounts on products and services in the public catalog.'
             )}
           </p>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">{t('Produits tarifés', 'Priced products')}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{configuredProductCount}/{products.length}</p>
+              <p className="text-sm text-slate-500">{t('Promotions actives', 'Live promotions')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{livePromotions.length}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">{t('Services tarifés', 'Priced services')}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{configuredServiceCount}/{services.length}</p>
+              <p className="text-sm text-slate-500">{t('Produits promus', 'Promoted products')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{promotedProductCount}/{configuredProductCount}</p>
             </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Services promus', 'Promoted services')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{promotedServiceCount}/{configuredServiceCount}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Campagnes planifiées', 'Scheduled campaigns')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{promotions.length - livePromotions.length}</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-6">
+            <select
+              value={newPromotion.itemType}
+              onChange={(e) => setNewPromotion((prev) => ({ ...prev, itemType: e.target.value as PromotionTargetType, itemId: '' }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="product">{t('Produit', 'Product')}</option>
+              <option value="service">{t('Service', 'Service')}</option>
+            </select>
+            <select
+              value={newPromotion.itemId}
+              onChange={(e) => setNewPromotion((prev) => ({ ...prev, itemId: e.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">{t('Sélectionner une cible', 'Select a target')}</option>
+              {promotionTargets.map((target) => (
+                <option key={`${newPromotion.itemType}-${target.id}`} value={target.id}>
+                  {target.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={newPromotion.label}
+              onChange={(e) => setNewPromotion((prev) => ({ ...prev, label: e.target.value }))}
+              placeholder={t('Libellé campagne', 'Campaign label')}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              min="1"
+              max="99"
+              value={newPromotion.discountPercent}
+              onChange={(e) => setNewPromotion((prev) => ({ ...prev, discountPercent: e.target.value }))}
+              placeholder={t('Remise %', 'Discount %')}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <input
+              type="datetime-local"
+              value={newPromotion.startsAt}
+              onChange={(e) => setNewPromotion((prev) => ({ ...prev, startsAt: e.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <div className="flex gap-2">
+              <input
+                type="datetime-local"
+                value={newPromotion.endsAt}
+                onChange={(e) => setNewPromotion((prev) => ({ ...prev, endsAt: e.target.value }))}
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={createPromotion}
+                disabled={savingPromotion}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {savingPromotion ? t('Enregistrement…', 'Saving...') : t('Créer', 'Create')}
+              </button>
+            </div>
+          </div>
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-slate-500">
+                <tr>
+                  <th className="pb-2 pr-4">{t('Cible', 'Target')}</th>
+                  <th className="pb-2 pr-4">{t('Campagne', 'Campaign')}</th>
+                  <th className="pb-2 pr-4">{t('Remise', 'Discount')}</th>
+                  <th className="pb-2 pr-4">{t('Période', 'Window')}</th>
+                  <th className="pb-2 pr-4">{t('Statut', 'Status')}</th>
+                  <th className="pb-2">{t('Actions', 'Actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {promotions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-4 text-slate-500">
+                      {t('Aucune promotion configurée.', 'No promotion configured yet.')}
+                    </td>
+                  </tr>
+                ) : (
+                  promotions
+                    .slice()
+                    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+                    .map((promotion) => (
+                      <tr key={promotion.id} className="border-t border-slate-100">
+                        <td className="py-3 pr-4">
+                          <div className="font-medium text-slate-900">{getPromotionTargetLabel(promotion)}</div>
+                          <div className="text-xs uppercase tracking-wide text-slate-400">{promotion.itemType}</div>
+                        </td>
+                        <td className="py-3 pr-4 text-slate-700">{promotion.label}</td>
+                        <td className="py-3 pr-4 font-semibold text-slate-900">-{promotion.discountPercent}%</td>
+                        <td className="py-3 pr-4 text-slate-600">
+                          {[promotion.startsAt ? formatDate(promotion.startsAt) : t('Immédiat', 'Immediate'), promotion.endsAt ? formatDate(promotion.endsAt) : t('Sans fin', 'No end')].join(' → ')}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                            {isPromotionLive(promotion) ? t('Active', 'Live') : promotion.active ? t('Planifiée / expirée', 'Scheduled / expired') : t('Désactivée', 'Disabled')}
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => togglePromotionActive(promotion)}
+                              disabled={busyPromotionId === promotion.id}
+                              className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-60"
+                            >
+                              {promotion.active ? t('Désactiver', 'Disable') : t('Activer', 'Enable')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removePromotion(promotion.id)}
+                              disabled={busyPromotionId === promotion.id}
+                              className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-60"
+                            >
+                              {t('Supprimer', 'Delete')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 

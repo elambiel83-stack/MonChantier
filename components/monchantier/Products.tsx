@@ -22,6 +22,10 @@ type CatalogProduct = {
   priceCDF: number | null;
   img: string;
   fallback: string;
+  promotionLabel?: string | null;
+  promotionDiscountPercent?: number | null;
+  originalPriceUSD?: number | null;
+  originalPriceCDF?: number | null;
 };
 
 function toProduct(p: CatalogProduct, lang: Language): Product {
@@ -56,8 +60,8 @@ function normalize(value: string): string {
 
 type SortOption = "default" | "price-asc" | "price-desc";
 
-function productPriceValue(p: Product): number | null {
-  return p.prices?.USD ?? p.prices?.CDF ?? null;
+function productPriceValue(p: CatalogProduct): number | null {
+  return p.priceUSD ?? p.priceCDF ?? null;
 }
 
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
@@ -73,9 +77,8 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
       .catch(() => setCatalog([]));
   }, []);
 
-  const allProducts = catalog.map((p) => toProduct(p, lang));
   const normalizedQuery = normalize(query.trim());
-  const products = allProducts
+  const products = catalog
     .filter((p) => !normalizedQuery || normalize(t(p.fr, p.en)).includes(normalizedQuery))
     .sort((a, b) => {
       if (sort === "default") return 0;
@@ -145,8 +148,15 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
       )}
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((p) => {
+        {products.map((rawProduct) => {
+          const p = toProduct(rawProduct, lang);
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
+          const originalPriceLabel =
+            rawProduct.originalPriceUSD !== null && rawProduct.originalPriceUSD !== undefined
+              ? `$${rawProduct.originalPriceUSD} / ${lang === "fr" ? rawProduct.unitFr : rawProduct.unitEn}`
+              : rawProduct.originalPriceCDF !== null && rawProduct.originalPriceCDF !== undefined
+                ? `${rawProduct.originalPriceCDF.toLocaleString("fr-FR")} FC / ${lang === "fr" ? rawProduct.unitFr : rawProduct.unitEn}`
+                : null;
           return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
@@ -161,13 +171,21 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
             </div>
 
             <div className="p-4 flex flex-col flex-1">
+              {rawProduct.promotionDiscountPercent ? (
+                <span className="mb-2 inline-flex w-fit rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+                  {rawProduct.promotionLabel || `-${rawProduct.promotionDiscountPercent}%`}
+                </span>
+              ) : null}
               <h3 className="font-semibold text-lg leading-snug">{t(p.fr, p.en)}</h3>
               <p className="text-slate-600 text-sm mt-1">
                 {t("Qualité contrôlée. Livraison rapide.", "Quality controlled. Fast delivery.")}
               </p>
 
               <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-                <span className="text-slate-900 font-bold whitespace-nowrap">{p.price}</span>
+                <div className="flex flex-col">
+                  <span className="text-slate-900 font-bold whitespace-nowrap">{p.price}</span>
+                  {originalPriceLabel ? <span className="text-xs text-slate-400 line-through">{originalPriceLabel}</span> : null}
+                </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
                   <a
                     href={`https://wa.me/243999972466?text=${encodeURIComponent(`Bonjour MonChantier, je souhaite un devis pour: ${lang === 'fr' ? p.fr : p.en}`)}`}

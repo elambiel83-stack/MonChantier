@@ -59,6 +59,7 @@ test('admin dashboard loads expected admin data sources', async () => {
     '/api/admin/orders',
     '/api/admin/products',
     '/api/admin/services',
+    '/api/admin/promotions',
     '/api/admin/taxes',
     '/api/deliveries',
     '/api/sites',
@@ -80,6 +81,8 @@ test('mutable admin API routes are protected by requireAdmin', async () => {
     'app/api/admin/orders/[reference]/route.ts',
     'app/api/admin/products/route.ts',
     'app/api/admin/products/[id]/route.ts',
+    'app/api/admin/promotions/route.ts',
+    'app/api/admin/promotions/[id]/route.ts',
     'app/api/admin/roles/route.ts',
     'app/api/admin/services/route.ts',
     'app/api/admin/services/[id]/route.ts',
@@ -93,4 +96,18 @@ test('mutable admin API routes are protected by requireAdmin', async () => {
     assert.match(source, /import\s+\{\s*requireAdmin\s*\}\s+from\s+'@\/lib\/requireAdmin'/);
     assert.match(source, /const denied = await requireAdmin\(request\)/);
   }
+});
+
+test('admin promotions section is backed by stored promotions', async () => {
+  const [adminPageSource, productsRouteSource, servicesRouteSource] = await Promise.all([
+    read('app/dashboard/admin/page.tsx'),
+    read('app/api/catalog/products/route.ts'),
+    read('app/api/catalog/services/route.ts'),
+  ]);
+
+  assert.doesNotMatch(adminPageSource, /Aucun moteur de promotions dédié n’est encore stocké/);
+  assert.match(adminPageSource, /fetch\('\/api\/admin\/promotions'/);
+  assert.match(adminPageSource, /type="datetime-local"/);
+  assert.match(productsRouteSource, /applyCatalogPromotions/);
+  assert.match(servicesRouteSource, /applyCatalogPromotions/);
 });
