@@ -219,7 +219,7 @@ export function addTechnicianReview(
         (review) =>
           review.authorIdentity &&
           review.orderReference &&
-          review.serviceId &&
+          review.serviceId !== undefined &&
           buildTechnicianReviewKey({
             technicianIdentity: normalized,
             authorIdentity: review.authorIdentity,
@@ -268,7 +268,7 @@ export function hasTechnicianReview(
       (review) =>
         review.authorIdentity &&
         review.orderReference &&
-        review.serviceId &&
+        review.serviceId !== undefined &&
         buildTechnicianReviewKey({
           technicianIdentity: normalized,
           authorIdentity: review.authorIdentity,
@@ -285,7 +285,7 @@ export function listTechnicianReviewKeysByAuthor(authorIdentity: string): Promis
     const store = await readStore();
     return Object.entries(store.profiles).flatMap(([technicianIdentity, profile]) =>
       (profile.reviews || [])
-        .filter((review) => review.authorIdentity && review.orderReference && review.serviceId)
+        .filter((review) => review.authorIdentity && review.orderReference && review.serviceId !== undefined)
         .filter((review) => normalizeIdentity(review.authorIdentity as string) === normalized)
         .map((review) =>
           buildTechnicianReviewKey({
