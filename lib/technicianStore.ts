@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { buildTechnicianReviewKey } from '@/lib/technicianReviewWorkflow';
 
 export type TechnicianEquipment = {
   id: string;
@@ -20,9 +21,14 @@ export type TechnicianPhoto = {
 
 export type TechnicianReview = {
   id: string;
+  authorIdentity?: string;
   authorName: string;
   rating: number;
   comment?: string;
+  orderReference?: string;
+  serviceId?: number;
+  serviceName?: string;
+  verified?: boolean;
   createdAt: string;
 };
 
@@ -84,7 +90,40 @@ async function readStore(): Promise<TechnicianStoreModel> {
   try {
     const parsed = JSON.parse(raw) as Partial<TechnicianStoreModel>;
     return {
-      profiles: parsed.profiles && typeof parsed.profiles === 'object' ? parsed.profiles : {},
+      profiles:
+        parsed.profiles && typeof parsed.profiles === 'object'
+          ? Object.fromEntries(
+              Object.entries(parsed.profiles).map(([identity, profile]) => [
+                identity,
+                {
+                  identity,
+                  equipment: Array.isArray(profile?.equipment) ? profile.equipment : [],
+                  photos: Array.isArray(profile?.photos) ? profile.photos : [],
+                  reviews: Array.isArray(profile?.reviews)
+                    ? profile.reviews
+                        .filter((review) => review && typeof review === 'object')
+                        .map((review) => ({
+                          id: String(review.id || makeId('TECH-REVIEW')),
+                          authorIdentity: String(review.authorIdentity || '').trim() || undefined,
+                          authorName: String(review.authorName || 'Client').trim() || 'Client',
+                          rating: Number(review.rating) || 0,
+                          comment: String(review.comment || '').trim() || undefined,
+                          orderReference: String(review.orderReference || '').trim() || undefined,
+                          serviceId:
+                            typeof review.serviceId === 'number' && Number.isFinite(review.serviceId)
+                              ? review.serviceId
+                              : undefined,
+                          serviceName: String(review.serviceName || '').trim() || undefined,
+                          verified: Boolean(review.verified),
+                          createdAt: String(review.createdAt || new Date().toISOString()),
+                        }))
+                        .filter((review) => review.rating >= 1 && review.rating <= 5)
+                    : [],
+                  updatedAt: String(profile?.updatedAt || new Date().toISOString()),
+                },
+              ])
+            )
+          : {},
     };
   } catch {
     return INITIAL_STORE;
@@ -150,22 +189,112 @@ export function addTechnicianPhoto(
 
 export function addTechnicianReview(
   identity: string,
-  input: { authorName: string; rating: number; comment?: string }
+  input: {
+    authorIdentity?: string;
+    authorName: string;
+    rating: number;
+    comment?: string;
+    orderReference?: string;
+    serviceId?: number;
+    serviceName?: string;
+    verified?: boolean;
+  }
 ): Promise<TechnicianProfile> {
   const normalized = normalizeIdentity(identity);
   return withLock(async () => {
     const store = await readStore();
     const profile = store.profiles[normalized] || emptyProfile(normalized);
+    const nextReviewKey =
+      input.authorIdentity && input.orderReference && input.serviceId
+        ? buildTechnicianReviewKey({
+            technicianIdentity: normalized,
+            authorIdentity: input.authorIdentity,
+            orderReference: input.orderReference,
+            serviceId: input.serviceId,
+          })
+        : null;
+    if (
+      nextReviewKey &&
+      profile.reviews.some(
+        (review) =>
+          review.authorIdentity &&
+          review.orderReference &&
+          review.serviceId &&
+          buildTechnicianReviewKey({
+            technicianIdentity: normalized,
+            authorIdentity: review.authorIdentity,
+            orderReference: review.orderReference,
+            serviceId: review.serviceId,
+          }) === nextReviewKey
+      )
+    ) {
+      return profile;
+    }
     profile.reviews.unshift({
       id: makeId('TECH-REVIEW'),
+      authorIdentity: input.authorIdentity ? normalizeIdentity(input.authorIdentity) : undefined,
       authorName: input.authorName,
       rating: input.rating,
       comment: input.comment,
+      orderReference: input.orderReference,
+      serviceId: input.serviceId,
+      serviceName: input.serviceName,
+      verified: Boolean(input.verified),
       createdAt: new Date().toISOString(),
     });
     profile.updatedAt = new Date().toISOString();
     store.profiles[normalized] = profile;
     await writeStore(store);
     return profile;
+  });
+}
+
+export function hasTechnicianReview(
+  identity: string,
+  input: { authorIdentity: string; orderReference: string; serviceId: number }
+): Promise<boolean> {
+  const normalized = normalizeIdentity(identity);
+  const key = buildTechnicianReviewKey({
+    technicianIdentity: normalized,
+    authorIdentity: input.authorIdentity,
+    orderReference: input.orderReference,
+    serviceId: input.serviceId,
+  });
+  return withLock(async () => {
+    const store = await readStore();
+    const profile = store.profiles[normalized];
+    if (!profile) return false;
+    return profile.reviews.some(
+      (review) =>
+        review.authorIdentity &&
+        review.orderReference &&
+        review.serviceId &&
+        buildTechnicianReviewKey({
+          technicianIdentity: normalized,
+          authorIdentity: review.authorIdentity,
+          orderReference: review.orderReference,
+          serviceId: review.serviceId,
+        }) === key
+    );
+  });
+}
+
+export function listTechnicianReviewKeysByAuthor(authorIdentity: string): Promise<string[]> {
+  const normalized = normalizeIdentity(authorIdentity);
+  return withLock(async () => {
+    const store = await readStore();
+    return Object.entries(store.profiles).flatMap(([technicianIdentity, profile]) =>
+      (profile.reviews || [])
+        .filter((review) => review.authorIdentity && review.orderReference && review.serviceId)
+        .filter((review) => normalizeIdentity(review.authorIdentity as string) === normalized)
+        .map((review) =>
+          buildTechnicianReviewKey({
+            technicianIdentity,
+            authorIdentity: review.authorIdentity as string,
+            orderReference: review.orderReference as string,
+            serviceId: review.serviceId as number,
+          })
+        )
+    );
   });
 }

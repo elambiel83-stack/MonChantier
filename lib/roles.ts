@@ -90,6 +90,7 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
     { fr: "Mes factures", en: "My invoices", anchor: "factures" },
     { fr: "Mes paiements", en: "My payments", anchor: "paiements" },
     { fr: "Mes livraisons", en: "My deliveries", anchor: "livraisons" },
+    { fr: "Avis techniciens", en: "Technician reviews", anchor: "avis-techniciens" },
     { fr: "Mon porte-monnaie", en: "My wallet", anchor: "porte-monnaie" },
     { fr: "Mon crédit", en: "My loan", anchor: "credit" },
     { fr: "Favoris", en: "Favorites", anchor: "favoris" },

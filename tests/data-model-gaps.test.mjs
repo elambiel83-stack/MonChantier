@@ -73,11 +73,14 @@ test('site model covers materials, documents and photos and site manager uses th
   assert.match(panelSource, /id="photos"/);
 });
 
-test('technician dashboard uses a persisted profile for photos, equipment and evaluations', async () => {
-  const [storeSource, routeSource, panelSource] = await Promise.all([
+test('technician dashboard uses a persisted profile for photos, equipment and client evaluations', async () => {
+  const [storeSource, routeSource, clientRouteSource, panelSource, clientPageSource, rolesSource] = await Promise.all([
     read('lib/technicianStore.ts'),
     read('app/api/technician/profile/route.ts'),
+    read('app/api/client/technician-reviews/route.ts'),
     read('components/monchantier/TechnicianServicesPanel.tsx'),
+    read('app/dashboard/client/page.tsx'),
+    read('lib/roles.ts'),
   ]);
 
   assert.match(storeSource, /export type TechnicianEquipment/);
@@ -86,13 +89,24 @@ test('technician dashboard uses a persisted profile for photos, equipment and ev
   assert.match(storeSource, /addTechnicianEquipment/);
   assert.match(storeSource, /addTechnicianPhoto/);
   assert.match(storeSource, /addTechnicianReview/);
+  assert.match(storeSource, /verified\?: boolean/);
+  assert.match(storeSource, /orderReference\?: string/);
+  assert.match(storeSource, /serviceId\?: number/);
   assert.match(routeSource, /export async function GET/);
   assert.match(routeSource, /export async function POST/);
   assert.match(routeSource, /kind === 'equipment'/);
   assert.match(routeSource, /kind === 'photo'/);
-  assert.match(routeSource, /kind === 'review'/);
+  assert.doesNotMatch(routeSource, /kind === 'review'/);
+  assert.match(clientRouteSource, /export async function GET/);
+  assert.match(clientRouteSource, /export async function POST/);
+  assert.match(clientRouteSource, /orderStatus !== 'delivered'/);
+  assert.match(clientRouteSource, /addTechnicianReview/);
   assert.match(panelSource, /fetch\("\/api\/technician\/profile"/);
   assert.match(panelSource, /id="photos"/);
   assert.match(panelSource, /id="materiel"/);
   assert.match(panelSource, /id="evaluations"/);
+  assert.match(panelSource, /Avis client vérifié/);
+  assert.match(panelSource, /Les avis proviennent désormais des clients/);
+  assert.match(clientPageSource, /ClientTechnicianReviewsPanel/);
+  assert.match(rolesSource, /anchor: "avis-techniciens"/);
 });

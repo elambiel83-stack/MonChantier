@@ -10,6 +10,7 @@ import FavoritesPanel from "@/components/monchantier/FavoritesPanel";
 import AddressesPanel from "@/components/monchantier/AddressesPanel";
 import SupportPanel from "@/components/monchantier/SupportPanel";
 import ProjectsPanel from "@/components/monchantier/ProjectsPanel";
+import ClientTechnicianReviewsPanel from "@/components/monchantier/ClientTechnicianReviewsPanel";
 
 const METHOD_LABELS: Record<string, string> = {
   mobilemoney: "Mobile Money",
@@ -114,6 +115,7 @@ export default async function ClientDashboardPage() {
       <WalletPanel />
       <LoanPanel />
       <DeliveryTrackingPanel />
+      <ClientTechnicianReviewsPanel />
 
       <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Mes commandes</h2>

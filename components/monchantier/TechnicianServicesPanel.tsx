@@ -69,7 +69,16 @@ type TechnicianSummary = {
 type TechnicianProfile = {
   equipment: Array<{ id: string; name: string; quantity: number; condition: string; note?: string; updatedAt: string }>;
   photos: Array<{ id: string; name: string; url: string; category: string; createdAt: string }>;
-  reviews: Array<{ id: string; authorName: string; rating: number; comment?: string; createdAt: string }>;
+  reviews: Array<{
+    id: string;
+    authorName: string;
+    rating: number;
+    comment?: string;
+    createdAt: string;
+    orderReference?: string;
+    serviceName?: string;
+    verified?: boolean;
+  }>;
 };
 
 const METHOD_LABELS: Record<string, string> = {
@@ -110,7 +119,6 @@ export default function TechnicianServicesPanel() {
   const [saving, setSaving] = useState(false);
   const [equipmentForm, setEquipmentForm] = useState({ name: "", quantity: "1", condition: "bon état", note: "" });
   const [photoForm, setPhotoForm] = useState({ name: "", url: "", category: "intervention" });
-  const [reviewForm, setReviewForm] = useState({ authorName: "", rating: "5", comment: "" });
 
   const load = async () => {
     try {
@@ -227,9 +235,10 @@ export default function TechnicianServicesPanel() {
     [services]
   );
   const averageRating = useMemo(() => {
-    if (!profile?.reviews.length) return null;
-    const total = profile.reviews.reduce((sum, review) => sum + review.rating, 0);
-    return total / profile.reviews.length;
+    const verifiedReviews = (profile?.reviews || []).filter((review) => review.verified);
+    if (!verifiedReviews.length) return null;
+    const total = verifiedReviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / verifiedReviews.length;
   }, [profile?.reviews]);
 
   const addTechnicianResource = async (payload: Record<string, unknown>, successMessage: string, reset: () => void) => {
@@ -271,19 +280,6 @@ export default function TechnicianServicesPanel() {
       { kind: "photo", name: photoForm.name, url: photoForm.url, category: photoForm.category },
       "Photo ajoutée.",
       () => setPhotoForm({ name: "", url: "", category: "intervention" })
-    );
-  };
-
-  const addReview = async () => {
-    const rating = Number(reviewForm.rating);
-    if (!reviewForm.authorName.trim() || !Number.isFinite(rating) || rating < 1 || rating > 5) {
-      setBanner({ type: "error", message: "Évaluation invalide." });
-      return;
-    }
-    await addTechnicianResource(
-      { kind: "review", authorName: reviewForm.authorName, rating, comment: reviewForm.comment },
-      "Évaluation ajoutée.",
-      () => setReviewForm({ authorName: "", rating: "5", comment: "" })
     );
   };
 
@@ -484,22 +480,11 @@ export default function TechnicianServicesPanel() {
 
       <div id="evaluations" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Évaluations</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <input value={reviewForm.authorName} onChange={(e) => setReviewForm((prev) => ({ ...prev, authorName: e.target.value }))} placeholder="Client / auteur" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <select value={reviewForm.rating} onChange={(e) => setReviewForm((prev) => ({ ...prev, rating: e.target.value }))} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="5">5/5</option>
-            <option value="4">4/5</option>
-            <option value="3">3/5</option>
-            <option value="2">2/5</option>
-            <option value="1">1/5</option>
-          </select>
-          <input value={reviewForm.comment} onChange={(e) => setReviewForm((prev) => ({ ...prev, comment: e.target.value }))} placeholder="Commentaire" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <button type="button" onClick={addReview} disabled={saving} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
-            Ajouter
-          </button>
-        </div>
+        <p className="mt-3 text-sm text-slate-600">
+          Les avis proviennent désormais des clients après livraison d&apos;une commande contenant vos services.
+        </p>
         <p className="mt-3 text-sm text-slate-700">
-          Note moyenne: <span className="font-semibold text-slate-900">{averageRating === null ? "Aucune note" : `${averageRating.toFixed(1)}/5`}</span>
+          Note moyenne client vérifiée: <span className="font-semibold text-slate-900">{averageRating === null ? "Aucune note" : `${averageRating.toFixed(1)}/5`}</span>
         </p>
         <div className="mt-4 space-y-3">
           {profile?.reviews.length ? profile.reviews.map((review) => (
@@ -508,6 +493,9 @@ export default function TechnicianServicesPanel() {
                 <span className="font-medium text-slate-900">{review.authorName}</span>
                 <span className="text-amber-600">{review.rating}/5</span>
               </div>
+              <p className="mt-1 text-xs text-slate-400">
+                {review.verified ? "Avis client vérifié" : "Évaluation historique"}{review.serviceName ? ` · ${review.serviceName}` : ""}{review.orderReference ? ` · ${review.orderReference}` : ""}
+              </p>
               {review.comment && <p className="mt-1 text-slate-600">{review.comment}</p>}
               <p className="mt-1 text-xs text-slate-400">{formatDate(review.createdAt)}</p>
             </div>

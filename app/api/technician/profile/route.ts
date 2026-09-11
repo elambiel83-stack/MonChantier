@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   addTechnicianEquipment,
   addTechnicianPhoto,
-  addTechnicianReview,
   getTechnicianProfile,
 } from '@/lib/technicianStore';
 import { getSessionActor } from '@/lib/sessionIdentity';
@@ -47,17 +46,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Photo invalide' }, { status: 400 });
       }
       const profile = await addTechnicianPhoto(actor.identity, { name, url, category });
-      return NextResponse.json({ success: true, profile });
-    }
-
-    if (kind === 'review') {
-      const authorName = String(body?.authorName || '').trim();
-      const rating = Number(body?.rating);
-      const comment = String(body?.comment || '').trim() || undefined;
-      if (!authorName || !Number.isFinite(rating) || rating < 1 || rating > 5) {
-        return NextResponse.json({ message: 'Évaluation invalide' }, { status: 400 });
-      }
-      const profile = await addTechnicianReview(actor.identity, { authorName, rating, comment });
       return NextResponse.json({ success: true, profile });
     }
 
