@@ -86,7 +86,43 @@ async function readStore(): Promise<DriverStoreModel> {
   try {
     const parsed = JSON.parse(raw) as Partial<DriverStoreModel>;
     return {
-      profiles: parsed.profiles && typeof parsed.profiles === 'object' ? parsed.profiles : {},
+      profiles:
+        parsed.profiles && typeof parsed.profiles === 'object'
+          ? Object.fromEntries(
+              Object.entries(parsed.profiles).map(([identity, profile]) => {
+                const dedupedEarnings = new Map<string, DriverEarning>();
+                for (const earning of Array.isArray(profile?.earnings) ? profile.earnings : []) {
+                  if (!earning || typeof earning !== 'object') continue;
+                  const deliveryId = String(earning.deliveryId || '').trim();
+                  if (!deliveryId || dedupedEarnings.has(deliveryId)) continue;
+                  dedupedEarnings.set(deliveryId, {
+                    id: String(earning.id || makeId('DRV-EARN')),
+                    deliveryId,
+                    reference: String(earning.reference || '').trim(),
+                    amount: Number(earning.amount) || 0,
+                    currency: earning.currency === 'CDF' ? 'CDF' : 'USD',
+                    createdAt: String(earning.createdAt || new Date().toISOString()),
+                  });
+                }
+
+                return [
+                  identity,
+                  {
+                    identity,
+                    vehicle: profile?.vehicle || null,
+                    documents: Array.isArray(profile?.documents) ? profile.documents : [],
+                    earnings: Array.from(dedupedEarnings.values()),
+                    defaultEarningAmount:
+                      typeof profile?.defaultEarningAmount === 'number' && Number.isFinite(profile.defaultEarningAmount)
+                        ? profile.defaultEarningAmount
+                        : null,
+                    defaultEarningCurrency: profile?.defaultEarningCurrency === 'CDF' ? 'CDF' : 'USD',
+                    updatedAt: String(profile?.updatedAt || new Date().toISOString()),
+                  },
+                ];
+              })
+            )
+          : {},
     };
   } catch {
     return INITIAL_STORE;

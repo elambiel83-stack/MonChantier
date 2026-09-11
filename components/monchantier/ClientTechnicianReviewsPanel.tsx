@@ -27,7 +27,14 @@ export default function ClientTechnicianReviewsPanel() {
       setLoading(true);
       const res = await fetch("/api/client/technician-reviews", { cache: "no-store" });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.message || "Erreur chargement avis");
+      if (!res.ok) {
+        setOpportunities([]);
+        if (res.status === 401 || res.status === 403) {
+          setBanner(null);
+          return;
+        }
+        throw new Error(data?.message || "Erreur chargement avis");
+      }
       setOpportunities(data?.opportunities || []);
     } catch (err) {
       setOpportunities([]);

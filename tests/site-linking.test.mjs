@@ -112,6 +112,19 @@ test('site store helpers normalize and match likely addresses', async () => {
     ),
     -1
   );
+  assert.equal(
+    findBestMatchingSiteIndex([{ address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' }], {
+      address: 'Avenue Kasavubu 10',
+      clientIdentity: 'other@example.com',
+    }),
+    -1
+  );
+  assert.equal(
+    findBestMatchingSiteIndex([{ address: 'Avenue Kasavubu 10', clientIdentity: 'client@example.com' }], {
+      address: 'Avenue Kasavubu 10',
+    }),
+    -1
+  );
 });
 
 test('site store backfill only links historical references for the same client', async () => {
@@ -205,6 +218,42 @@ test('payment confirmation auto-links matching sites for orders and deliveries',
 
   assert.deepEqual(linkedSite.orderReferences, ['PAY-1']);
   assert.deepEqual(linkedSite.deliveryReferences, ['DEL-PAY-1']);
+});
+
+test('payment confirmation does not auto-link orders without matching client identity', async () => {
+  const source = await read('lib/paymentConfirmation.ts');
+  const linkedReferences = [];
+  const { confirmPayment } = createPaymentConfirmationHarness(source, {
+    createInvoice: (payload) => ({
+      standard: 'OHADA',
+      legalReference: 'SYSCOHADA',
+      invoiceNumber: 'INV-2',
+      customerName: payload.customerName,
+      customerEmail: payload.customerEmail,
+      taxRate: 16,
+      totalHT: 100,
+      totalTVA: 16,
+      totalTTC: 116,
+      currency: 'CDF',
+      deliveryAddress: payload.deliveryAddress,
+      location: payload.location,
+    }),
+    autoLinkOrderReferenceToSite: async ({ reference }) => {
+      linkedReferences.push(reference);
+      return null;
+    },
+  });
+
+  await confirmPayment({
+    reference: 'PAY-2',
+    method: 'mobilemoney',
+    amount: 116,
+    currency: 'CDF',
+    customerName: 'Client MonChantier',
+    deliveryAddress: 'Avenue Kasavubu 10',
+  });
+
+  assert.deepEqual(linkedReferences, []);
 });
 
 test('site manager dashboard explains automatic linkage with manual fallback', async () => {

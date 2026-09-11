@@ -133,23 +133,17 @@ function findBestMatchingSiteIndex(
 ) {
   const clientIdentity = normalizeIdentity(input.clientIdentity);
   const address = input.address;
-  const scored = sites
+  if (!clientIdentity || !address) return -1;
+
+  const clientAddressMatches = sites
     .map((site, index) => {
       const sameAddress = addressesLikelyMatch(site.address, address);
       const sameClient = clientIdentity && normalizeIdentity(site.clientIdentity) === clientIdentity;
       return { index, sameAddress, sameClient };
     })
-    .filter((entry) => entry.sameAddress || entry.sameClient);
+    .filter((entry) => entry.sameClient && entry.sameAddress);
 
-  const addressAndClient = scored.find((entry) => entry.sameAddress && entry.sameClient);
-  if (addressAndClient) return addressAndClient.index;
-
-  const addressMatches = scored.filter((entry) => entry.sameAddress);
-  if (addressMatches.length === 1) return addressMatches[0].index;
-  if (addressMatches.length > 1) {
-    const clientAware = addressMatches.find((entry) => entry.sameClient);
-    if (clientAware) return clientAware.index;
-  }
+  if (clientAddressMatches.length === 1) return clientAddressMatches[0].index;
 
   return -1;
 }

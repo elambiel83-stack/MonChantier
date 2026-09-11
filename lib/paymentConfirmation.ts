@@ -153,7 +153,7 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     orderStatus: 'processing',
   });
 
-  if (invoice.deliveryAddress) {
+  if (invoice.deliveryAddress && invoice.customerEmail) {
     await autoLinkOrderReferenceToSite({
       reference: payload.reference,
       clientIdentity: invoice.customerEmail,
