@@ -203,8 +203,8 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
   ],
   "credit-agent": [
     { fr: "Dossiers assignés", en: "Assigned files", anchor: "dossiers-assignes" },
-    { fr: "Analyse", en: "Analysis", anchor: "dossiers-assignes" },
-    { fr: "Recouvrement", en: "Collections", anchor: "dossiers-assignes" },
+    { fr: "Analyse", en: "Analysis", anchor: "analyse" },
+    { fr: "Recouvrement", en: "Collections", anchor: "recouvrement" },
   ],
   "credit-committee": [
     { fr: "Dossiers à décider", en: "Files to decide", anchor: "dossiers-a-decider" },
