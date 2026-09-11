@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { quoteExchange, WalletCurrency } from '@/lib/walletExchange';
 
+export const dynamic = 'force-dynamic';
+
 function isCurrency(value: unknown): value is WalletCurrency {
   return value === 'USD' || value === 'CDF';
 }

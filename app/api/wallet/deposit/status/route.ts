@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { getWallet } from '@/lib/walletStore';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const identity = await getWalletIdentity();

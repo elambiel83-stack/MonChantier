@@ -8,6 +8,8 @@ import {
 } from '@/lib/loanCalculator';
 import { WalletCurrency } from '@/lib/walletExchange';
 
+export const dynamic = 'force-dynamic';
+
 function isCurrency(value: unknown): value is WalletCurrency {
   return value === 'USD' || value === 'CDF';
 }

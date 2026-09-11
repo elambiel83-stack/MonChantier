@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentStatus } from '@/lib/paymentConfirmation';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const reference = request.nextUrl.searchParams.get('reference');
 
