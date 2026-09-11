@@ -212,7 +212,7 @@ export default function DriverDeliveriesPanel() {
         </div>
       </div>
 
-      <div id="gps" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="carte-gps" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">GPS</h2>
         {activeMission ? (
           <div className="mt-4 space-y-2 text-sm">

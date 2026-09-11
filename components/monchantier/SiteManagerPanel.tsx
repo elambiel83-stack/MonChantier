@@ -304,8 +304,8 @@ export default function SiteManagerPanel() {
             </div>
           </div>
 
-          <div id="budget" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Budget</h2>
+          <div id="depenses" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">Dépenses & budget</h2>
             {typeof selectedSite.budget === "number" ? (
               <p className="mt-3 text-sm text-slate-700">{selectedSite.budget.toLocaleString("fr-FR")} {selectedSite.currency || "USD"}</p>
             ) : (
