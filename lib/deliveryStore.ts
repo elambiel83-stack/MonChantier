@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getCity } from '@/lib/drcCities';
+import { registerDriverDeliveryEarning } from '@/lib/driverStore';
 
 export type DeliveryStatus =
   | 'pending'
@@ -260,6 +261,13 @@ export function updateDeliveryStatus(args: {
     });
 
     await writeStore(store);
+    if (args.status === 'delivered' && delivery.driverIdentity) {
+      await registerDriverDeliveryEarning({
+        identity: delivery.driverIdentity,
+        deliveryId: delivery.id,
+        reference: delivery.reference,
+      });
+    }
     return { success: true as const, delivery };
   });
 }

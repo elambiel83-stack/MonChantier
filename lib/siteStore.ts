@@ -14,6 +14,30 @@ export type SiteIncident = {
   createdAt: string;
 };
 
+export type SiteMaterial = {
+  id: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  note?: string;
+  updatedAt: string;
+};
+
+export type SiteDocument = {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+  createdAt: string;
+};
+
+export type SitePhoto = {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string;
+};
+
 export type Site = {
   id: string;
   name: string;
@@ -26,6 +50,9 @@ export type Site = {
   team: SiteTeamMember[];
   tasks: SiteTask[];
   incidents: SiteIncident[];
+  materials: SiteMaterial[];
+  documents: SiteDocument[];
+  photos: SitePhoto[];
   createdAt: string;
   updatedAt: string;
 };
@@ -64,7 +91,19 @@ async function readStore(): Promise<SiteStoreModel> {
   const raw = await fs.readFile(STORE_PATH, 'utf8');
   try {
     const parsed = JSON.parse(raw) as Partial<SiteStoreModel>;
-    return { sites: Array.isArray(parsed.sites) ? parsed.sites : [] };
+    return {
+      sites: Array.isArray(parsed.sites)
+        ? parsed.sites.map((site) => ({
+            ...site,
+            team: Array.isArray(site.team) ? site.team : [],
+            tasks: Array.isArray(site.tasks) ? site.tasks : [],
+            incidents: Array.isArray(site.incidents) ? site.incidents : [],
+            materials: Array.isArray(site.materials) ? site.materials : [],
+            documents: Array.isArray(site.documents) ? site.documents : [],
+            photos: Array.isArray(site.photos) ? site.photos : [],
+          }))
+        : [],
+    };
   } catch {
     return { ...INITIAL_STORE };
   }
@@ -110,6 +149,9 @@ export function createSite(input: {
       team: [],
       tasks: [],
       incidents: [],
+      materials: [],
+      documents: [],
+      photos: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -119,7 +161,9 @@ export function createSite(input: {
   });
 }
 
-export type UpdateSitePatch = Partial<Pick<Site, 'name' | 'address' | 'status' | 'budget' | 'currency' | 'team'>>;
+export type UpdateSitePatch = Partial<
+  Pick<Site, 'name' | 'address' | 'status' | 'budget' | 'currency' | 'team' | 'materials' | 'documents' | 'photos'>
+>;
 
 export function updateSite(id: string, patch: UpdateSitePatch): Promise<Site | null> {
   return withLock(async () => {

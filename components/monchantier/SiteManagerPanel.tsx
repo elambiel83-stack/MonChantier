@@ -8,6 +8,9 @@ type IncidentSeverity = "low" | "medium" | "high";
 type SiteTeamMember = { identity: string; name: string; role: string };
 type SiteTask = { id: string; label: string; done: boolean; dueDate?: string; createdAt?: string };
 type SiteIncident = { id: string; label: string; severity: IncidentSeverity; resolved: boolean; createdAt?: string };
+type SiteMaterial = { id: string; name: string; unit: string; quantity: number; note?: string; updatedAt?: string };
+type SiteDocument = { id: string; name: string; url: string; category: string; createdAt?: string };
+type SitePhoto = { id: string; name: string; url: string; createdAt?: string };
 
 type Site = {
   id: string;
@@ -21,6 +24,9 @@ type Site = {
   team: SiteTeamMember[];
   tasks: SiteTask[];
   incidents: SiteIncident[];
+  materials: SiteMaterial[];
+  documents: SiteDocument[];
+  photos: SitePhoto[];
 };
 
 const STATUS_LABELS: Record<SiteStatus, string> = {
@@ -52,6 +58,9 @@ export default function SiteManagerPanel() {
   const [newTask, setNewTask] = useState("");
   const [newIncident, setNewIncident] = useState({ label: "", severity: "medium" as IncidentSeverity });
   const [newTeamMember, setNewTeamMember] = useState({ identity: "", name: "", role: "" });
+  const [newMaterial, setNewMaterial] = useState({ name: "", unit: "unité", quantity: "", note: "" });
+  const [newDocument, setNewDocument] = useState({ name: "", url: "", category: "plan" });
+  const [newPhoto, setNewPhoto] = useState({ name: "", url: "" });
 
   const load = async () => {
     try {
@@ -204,6 +213,101 @@ export default function SiteManagerPanel() {
       });
       if (!res.ok) throw new Error("Erreur résolution incident");
       setBanner({ type: "success", message: "Incident résolu." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addMaterial = async () => {
+    if (!selectedSite || !newMaterial.name.trim()) return;
+    const quantity = Number(newMaterial.quantity);
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      setBanner({ type: "error", message: "Quantité invalide." });
+      return;
+    }
+    try {
+      setBusy(true);
+      const materials = [
+        ...(selectedSite.materials || []),
+        {
+          id: `MAT-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: newMaterial.name.trim(),
+          unit: newMaterial.unit.trim() || "unité",
+          quantity,
+          note: newMaterial.note.trim() || undefined,
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+      const res = await fetch(`/api/sites/${selectedSite.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materials }),
+      });
+      if (!res.ok) throw new Error("Erreur ajout matériau");
+      setNewMaterial({ name: "", unit: "unité", quantity: "", note: "" });
+      setBanner({ type: "success", message: "Matériau ajouté." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addDocument = async () => {
+    if (!selectedSite || !newDocument.name.trim() || !newDocument.url.trim()) return;
+    try {
+      setBusy(true);
+      const documents = [
+        ...(selectedSite.documents || []),
+        {
+          id: `DOC-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: newDocument.name.trim(),
+          url: newDocument.url.trim(),
+          category: newDocument.category.trim() || "document",
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      const res = await fetch(`/api/sites/${selectedSite.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documents }),
+      });
+      if (!res.ok) throw new Error("Erreur ajout document");
+      setNewDocument({ name: "", url: "", category: "plan" });
+      setBanner({ type: "success", message: "Document ajouté." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addPhoto = async () => {
+    if (!selectedSite || !newPhoto.name.trim() || !newPhoto.url.trim()) return;
+    try {
+      setBusy(true);
+      const photos = [
+        ...(selectedSite.photos || []),
+        {
+          id: `PHT-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: newPhoto.name.trim(),
+          url: newPhoto.url.trim(),
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      const res = await fetch(`/api/sites/${selectedSite.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos }),
+      });
+      if (!res.ok) throw new Error("Erreur ajout photo");
+      setNewPhoto({ name: "", url: "" });
+      setBanner({ type: "success", message: "Photo ajoutée." });
       await load();
     } catch (err) {
       setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
@@ -400,7 +504,24 @@ export default function SiteManagerPanel() {
 
           <div id="materiaux" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Matériaux</h2>
-            <p className="mt-3 text-sm text-slate-500">Aucun stock matière n&apos;est encore relié aux chantiers dans le modèle actuel.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <input value={newMaterial.name} onChange={(e) => setNewMaterial((prev) => ({ ...prev, name: e.target.value }))} placeholder="Matériau" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newMaterial.unit} onChange={(e) => setNewMaterial((prev) => ({ ...prev, unit: e.target.value }))} placeholder="Unité" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input type="number" value={newMaterial.quantity} onChange={(e) => setNewMaterial((prev) => ({ ...prev, quantity: e.target.value }))} placeholder="Quantité" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addMaterial} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+                Ajouter
+              </button>
+            </div>
+            <input value={newMaterial.note} onChange={(e) => setNewMaterial((prev) => ({ ...prev, note: e.target.value }))} placeholder="Note optionnelle" className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <div className="mt-4 space-y-3">
+              {selectedSite.materials.length ? selectedSite.materials.map((material) => (
+                <div key={material.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <p className="font-medium text-slate-900">{material.name}</p>
+                  <p className="mt-1 text-slate-600">{material.quantity} {material.unit}</p>
+                  {material.note && <p className="mt-1 text-xs text-slate-400">{material.note}</p>}
+                </div>
+              )) : <p className="mt-3 text-sm text-slate-500">Aucun matériau enregistré.</p>}
+            </div>
           </div>
 
           <div id="commandes" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -424,12 +545,42 @@ export default function SiteManagerPanel() {
 
           <div id="documents" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Documents</h2>
-            <p className="mt-3 text-sm text-slate-500">Aucune GED de chantier n&apos;est encore branchée sur ce tableau de bord.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <input value={newDocument.name} onChange={(e) => setNewDocument((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom du document" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newDocument.url} onChange={(e) => setNewDocument((prev) => ({ ...prev, url: e.target.value }))} placeholder="URL / chemin" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newDocument.category} onChange={(e) => setNewDocument((prev) => ({ ...prev, category: e.target.value }))} placeholder="Catégorie" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addDocument} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+                Ajouter
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {selectedSite.documents.length ? selectedSite.documents.map((document) => (
+                <div key={document.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <p className="font-medium text-slate-900">{document.name}</p>
+                  <p className="mt-1 text-slate-600">{document.category}</p>
+                  <p className="mt-1 text-xs text-slate-400">{document.url}</p>
+                </div>
+              )) : <p className="mt-3 text-sm text-slate-500">Aucun document enregistré.</p>}
+            </div>
           </div>
 
           <div id="photos" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Photos</h2>
-            <p className="mt-3 text-sm text-slate-500">Le suivi photo terrain n&apos;est pas encore stocké dans les données de chantier.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <input value={newPhoto.name} onChange={(e) => setNewPhoto((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom de la photo" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input value={newPhoto.url} onChange={(e) => setNewPhoto((prev) => ({ ...prev, url: e.target.value }))} placeholder="URL / chemin" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button type="button" onClick={addPhoto} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+                Ajouter
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {selectedSite.photos.length ? selectedSite.photos.map((photo) => (
+                <div key={photo.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <p className="font-medium text-slate-900">{photo.name}</p>
+                  <p className="mt-1 text-xs text-slate-400">{photo.url}</p>
+                </div>
+              )) : <p className="mt-3 text-sm text-slate-500">Aucune photo enregistrée.</p>}
+            </div>
           </div>
         </>
       )}

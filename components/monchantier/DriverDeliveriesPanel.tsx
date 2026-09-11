@@ -16,6 +16,14 @@ type Delivery = {
   statusHistory?: Array<{ id: string; at: string; by: string; status: DeliveryStatus; note?: string }>;
 };
 
+type DriverProfile = {
+  vehicle: { label: string; plateNumber: string; capacity?: string } | null;
+  documents: Array<{ id: string; name: string; url: string; category: string; createdAt: string }>;
+  earnings: Array<{ id: string; deliveryId: string; reference: string; amount: number; currency: "USD" | "CDF"; createdAt: string }>;
+  defaultEarningAmount: number | null;
+  defaultEarningCurrency: "USD" | "CDF";
+};
+
 const STATUS_LABELS: Record<DeliveryStatus, { label: string; className: string }> = {
   pending: { label: "En attente", className: "bg-amber-100 text-amber-700" },
   assigned: { label: "Assignée", className: "bg-sky-100 text-sky-700" },
@@ -39,24 +47,45 @@ function formatDate(value?: string) {
 export default function DriverDeliveriesPanel() {
   const [myDeliveries, setMyDeliveries] = useState<Delivery[]>([]);
   const [available, setAvailable] = useState<Delivery[]>([]);
+  const [profile, setProfile] = useState<DriverProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [banner, setBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [autoSendId, setAutoSendId] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState({ label: "", plateNumber: "", capacity: "" });
+  const [earningForm, setEarningForm] = useState({ amount: "", currency: "USD" as "USD" | "CDF" });
+  const [documentForm, setDocumentForm] = useState({ name: "", url: "", category: "permis" });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/deliveries", { cache: "no-store" });
-      const data = await res.json();
-      if (res.ok) {
-        setMyDeliveries(data.deliveries || []);
-        setAvailable(data.available || []);
+      const [deliveriesRes, profileRes] = await Promise.all([
+        fetch("/api/deliveries", { cache: "no-store" }),
+        fetch("/api/driver/profile", { cache: "no-store" }),
+      ]);
+      const deliveriesData = await deliveriesRes.json().catch(() => null);
+      const profileData = await profileRes.json().catch(() => null);
+      if (deliveriesRes.ok) {
+        setMyDeliveries(deliveriesData?.deliveries || []);
+        setAvailable(deliveriesData?.available || []);
       }
+      const nextProfile = profileRes.ok ? profileData?.profile || null : null;
+      setProfile(nextProfile);
+      setVehicleForm({
+        label: nextProfile?.vehicle?.label || "",
+        plateNumber: nextProfile?.vehicle?.plateNumber || "",
+        capacity: nextProfile?.vehicle?.capacity || "",
+      });
+      setEarningForm({
+        amount: nextProfile?.defaultEarningAmount?.toString() || "",
+        currency: nextProfile?.defaultEarningCurrency || "USD",
+      });
     } catch {
       setMyDeliveries([]);
       setAvailable([]);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -159,6 +188,69 @@ export default function DriverDeliveriesPanel() {
       ? "border-red-200 bg-red-50 text-red-800"
       : "border-emerald-200 bg-emerald-50 text-emerald-800";
 
+  const saveVehicle = async () => {
+    if (!vehicleForm.label.trim() || !vehicleForm.plateNumber.trim()) return;
+    try {
+      setSavingProfile(true);
+      const res = await fetch("/api/driver/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicle: vehicleForm }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Erreur mise à jour véhicule");
+      setBanner({ type: "success", message: "Véhicule enregistré." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const saveEarningConfig = async () => {
+    try {
+      setSavingProfile(true);
+      const res = await fetch("/api/driver/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          defaultEarningAmount: earningForm.amount === "" ? null : Number(earningForm.amount),
+          defaultEarningCurrency: earningForm.currency,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Erreur mise à jour rémunération");
+      setBanner({ type: "success", message: "Barème de rémunération enregistré." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const addDocument = async () => {
+    if (!documentForm.name.trim() || !documentForm.url.trim()) return;
+    try {
+      setSavingProfile(true);
+      const res = await fetch("/api/driver/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(documentForm),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Erreur ajout document");
+      setDocumentForm({ name: "", url: "", category: "permis" });
+      setBanner({ type: "success", message: "Document ajouté." });
+      await load();
+    } catch (err) {
+      setBanner({ type: "error", message: err instanceof Error ? err.message : "Erreur inconnue" });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const stats = useMemo(() => {
     const active = myDeliveries.filter((delivery) => delivery.status !== "delivered" && delivery.status !== "cancelled");
     const delivered = myDeliveries.filter((delivery) => delivery.status === "delivered");
@@ -173,6 +265,13 @@ export default function DriverDeliveriesPanel() {
   }, [available.length, myDeliveries]);
 
   const activeMission = myDeliveries.find((delivery) => autoSendId === delivery.id) || myDeliveries[0] || null;
+  const earningSummary = useMemo(() => {
+    const totals = (profile?.earnings || []).reduce<Record<string, number>>((acc, earning) => {
+      acc[earning.currency] = (acc[earning.currency] || 0) + earning.amount;
+      return acc;
+    }, {});
+    return Object.entries(totals);
+  }, [profile?.earnings]);
   const historyRows = useMemo(
     () =>
       myDeliveries
@@ -288,18 +387,71 @@ export default function DriverDeliveriesPanel() {
 
       <div id="revenus" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Revenus</h2>
-        <p className="mt-3 text-sm text-slate-500">Le modèle actuel suit les missions et leurs statuts, mais ne stocke pas encore de rémunération par livraison.</p>
-        <p className="mt-2 text-sm text-slate-700">{stats.delivered} mission(s) livrée(s) peuvent servir de base à un futur calcul.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-slate-100 p-4">
+            <p className="text-sm font-medium text-slate-900">Barème par livraison</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <input type="number" value={earningForm.amount} onChange={(e) => setEarningForm((prev) => ({ ...prev, amount: e.target.value }))} placeholder="Montant" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <select value={earningForm.currency} onChange={(e) => setEarningForm((prev) => ({ ...prev, currency: e.target.value as "USD" | "CDF" }))} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                <option value="USD">USD</option>
+                <option value="CDF">CDF</option>
+              </select>
+              <button type="button" onClick={saveEarningConfig} disabled={savingProfile} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">
+                Enregistrer
+              </button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-100 p-4">
+            <p className="text-sm font-medium text-slate-900">Revenus enregistrés</p>
+            <p className="mt-3 text-sm text-slate-600">
+              {earningSummary.length
+                ? earningSummary.map(([currency, amount]) => `${amount.toLocaleString("fr-FR")} ${currency}`).join(" / ")
+                : "Aucun revenu enregistré pour le moment."}
+            </p>
+            <p className="mt-2 text-xs text-slate-400">
+              Les revenus sont créés automatiquement quand une mission passe à l&apos;état livrée.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div id="vehicule" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Véhicule</h2>
-        <p className="mt-3 text-sm text-slate-500">Aucune fiche véhicule n&apos;est encore modélisée dans le store.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input value={vehicleForm.label} onChange={(e) => setVehicleForm((prev) => ({ ...prev, label: e.target.value }))} placeholder="Type de véhicule" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={vehicleForm.plateNumber} onChange={(e) => setVehicleForm((prev) => ({ ...prev, plateNumber: e.target.value }))} placeholder="Plaque" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={vehicleForm.capacity} onChange={(e) => setVehicleForm((prev) => ({ ...prev, capacity: e.target.value }))} placeholder="Capacité" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="button" onClick={saveVehicle} disabled={savingProfile} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Enregistrer
+          </button>
+        </div>
+        {profile?.vehicle && (
+          <p className="mt-3 text-sm text-slate-600">
+            {profile.vehicle.label} · {profile.vehicle.plateNumber}
+            {profile.vehicle.capacity ? ` · ${profile.vehicle.capacity}` : ""}
+          </p>
+        )}
       </div>
 
       <div id="documents" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Documents</h2>
-        <p className="mt-3 text-sm text-slate-500">Les preuves de livraison et documents du chauffeur ne sont pas encore stockés.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input value={documentForm.name} onChange={(e) => setDocumentForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom du document" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={documentForm.url} onChange={(e) => setDocumentForm((prev) => ({ ...prev, url: e.target.value }))} placeholder="URL / chemin" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input value={documentForm.category} onChange={(e) => setDocumentForm((prev) => ({ ...prev, category: e.target.value }))} placeholder="Catégorie" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="button" onClick={addDocument} disabled={savingProfile} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Ajouter
+          </button>
+        </div>
+        <div className="mt-4 space-y-3">
+          {profile?.documents.length ? profile.documents.map((document) => (
+            <div key={document.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+              <p className="font-medium text-slate-900">{document.name}</p>
+              <p className="mt-1 text-slate-600">{document.category}</p>
+              <p className="mt-1 text-xs text-slate-400">{document.url}</p>
+            </div>
+          )) : <p className="text-sm text-slate-500">Aucun document enregistré.</p>}
+        </div>
       </div>
 
       <div id="support" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
