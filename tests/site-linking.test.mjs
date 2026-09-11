@@ -12,7 +12,7 @@ async function read(relativePath) {
 
 function createSiteLinkingHarness(source) {
   const start = source.indexOf('function normalizeIdentity');
-  const end = source.indexOf('async function ensureStoreFile');
+  const end = source.indexOf('async function readStore');
   assert.notEqual(start, -1, 'Site linking helpers should exist');
   assert.notEqual(end, -1, 'Site linking helper block should be bounded');
 

@@ -27,7 +27,7 @@ async function importPhoneSecurityModules() {
   }).outputText;
   const securityStoreOutput = ts.transpileModule(securityStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
+  }).outputText.replace('./serverStateStore', './serverStateStore.mjs');
   const serverStateStoreOutput = ts.transpileModule(serverStateStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText;
@@ -36,6 +36,7 @@ async function importPhoneSecurityModules() {
       compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
     })
     .outputText
+    .replace('./serverStateStore', './serverStateStore.mjs')
     .replace('./rateLimit', './rateLimit.mjs')
     .replace('./securityStore', './securityStore.mjs');
 

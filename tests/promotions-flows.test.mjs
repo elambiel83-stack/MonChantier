@@ -22,7 +22,7 @@ async function importPromotionModules() {
 
   const promotionStoreOutput = ts.transpileModule(promotionStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
+  }).outputText.replace('./serverStateStore', './serverStateStore.mjs');
   const serverStateStoreOutput = ts.transpileModule(serverStateStoreSource, {
     compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
   }).outputText;
