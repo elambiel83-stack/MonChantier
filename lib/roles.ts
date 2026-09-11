@@ -149,14 +149,14 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
   ],
   accountant: [
     { fr: "Factures", en: "Invoices", anchor: "factures" },
-    { fr: "Proformas", en: "Proformas" },
-    { fr: "Paiements", en: "Payments" },
+    { fr: "Proformas", en: "Proformas", anchor: "proformas" },
+    { fr: "Paiements", en: "Payments", anchor: "paiements" },
     { fr: "Dépenses", en: "Expenses", anchor: "depenses" },
     { fr: "TVA", en: "VAT", anchor: "tva" },
-    { fr: "Clients", en: "Clients" },
-    { fr: "Fournisseurs", en: "Suppliers" },
+    { fr: "Clients", en: "Clients", anchor: "clients" },
+    { fr: "Fournisseurs", en: "Suppliers", anchor: "fournisseurs" },
     { fr: "Trésorerie", en: "Treasury", anchor: "tresorerie" },
-    { fr: "Rapports", en: "Reports" },
+    { fr: "Rapports", en: "Reports", anchor: "rapports" },
     { fr: "Export comptable", en: "Accounting export", anchor: "factures" },
   ],
   director: [
@@ -207,7 +207,7 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
   ],
   "credit-committee": [
     { fr: "Dossiers à décider", en: "Files to decide", anchor: "dossiers-a-decider" },
-    { fr: "Historique des décisions", en: "Decision history" },
+    { fr: "Historique des décisions", en: "Decision history", anchor: "historique-decisions" },
   ],
 };
 
