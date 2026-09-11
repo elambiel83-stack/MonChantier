@@ -125,7 +125,6 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       message: 'Paiement Mobile Money simulé initié. Confirmez la demande sur le téléphone pour finaliser la commande.',
       reference,
-      demoMode: true,
     });
   } catch (error) {
     console.error('Erreur paiement Mobile Money:', error);

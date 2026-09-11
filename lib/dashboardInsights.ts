@@ -644,7 +644,7 @@ export function buildDashboardInsights(input: {
       openCount: openDeliveries.length,
       deliveredCount: deliveryByStatus.delivered,
       cancelledCount: deliveryByStatus.cancelled,
-      unassignedCount: deliveries.filter((delivery) => !delivery.driverIdentity).length,
+      unassignedCount: openDeliveries.filter((delivery) => !delivery.driverIdentity).length,
       missingDestinationCount: openDeliveries.filter((delivery) => !delivery.destination).length,
       byStatus: deliveryByStatus,
       driverLoads: Array.from(

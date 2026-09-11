@@ -92,6 +92,6 @@ export function listQuoteRequestsByEmail(email: string): Promise<StoredQuoteRequ
 export function listAllQuoteRequests(): Promise<StoredQuoteRequest[]> {
   return withLock(async () => {
     const store = await readStore();
-    return store.requests;
+    return [...store.requests];
   });
 }

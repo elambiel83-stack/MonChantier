@@ -118,7 +118,15 @@ export async function initiateMobileMoneyPayment(args: {
     body: JSON.stringify(requestBody),
   });
 
-  const raw = (await response.json().catch(() => null)) as unknown;
+  const responseText = await response.text();
+  let raw: unknown = null;
+  if (responseText) {
+    try {
+      raw = JSON.parse(responseText) as unknown;
+    } catch {
+      raw = { message: responseText };
+    }
+  }
   const payload = asRecord(raw);
   const data = asRecord(payload?.data);
 
