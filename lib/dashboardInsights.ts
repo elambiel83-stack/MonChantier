@@ -190,6 +190,7 @@ export function buildDashboardInsights(input: {
       clientActivity.set(clientKey, entry);
     }
 
+    const countedOrders = new Set<string>();
     for (const item of invoice?.items || []) {
       const itemKey = normalizeLabel(item.productName || 'Produit');
       const demand =
@@ -200,7 +201,10 @@ export function buildDashboardInsights(input: {
           revenue: {},
         };
       demand.quantity += item.quantity;
-      demand.orderCount += 1;
+      if (!countedOrders.has(itemKey)) {
+        demand.orderCount += 1;
+        countedOrders.add(itemKey);
+      }
       addCurrencyAmount(demand.revenue, currency, item.lineTotal || 0);
       productDemand.set(itemKey, demand);
     }

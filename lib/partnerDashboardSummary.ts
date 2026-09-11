@@ -182,20 +182,25 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
 
   const interventions = services.map((service) => {
     const names = new Set([normalizeLabel(service.fr), normalizeLabel(service.en)]);
-    const linked = matchedConfirmed.filter((payment) =>
-      (payment.fullInvoice?.items || []).some((item) => names.has(normalizeLabel(item.productName || '')))
-    );
+    const linked = matchedConfirmed
+      .map((payment) => {
+        const matchedItems = (payment.fullInvoice?.items || []).filter((item) =>
+          names.has(normalizeLabel(item.productName || ''))
+        );
+        return matchedItems.length > 0 ? { payment, matchedItems } : null;
+      })
+      .filter((entry): entry is { payment: StoredPaymentStatus; matchedItems: NonNullable<StoredPaymentStatus['fullInvoice']>['items'] } => Boolean(entry));
 
     return {
       id: service.id,
       name: service.fr,
       active: service.active,
       confirmedJobs: linked.length,
-      openJobs: linked.filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled').length,
+      openJobs: linked.filter(({ payment }) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled').length,
       revenueByCurrency: groupCurrencyTotals(
-        linked.map((payment) => ({
+        linked.map(({ payment, matchedItems }) => ({
           currency: payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A',
-          amount: payment.fullInvoice?.totalTTC ?? payment.invoice?.totals.ttc ?? 0,
+          amount: matchedItems.reduce((sum, item) => sum + item.lineTotal, 0),
         }))
       ),
     };

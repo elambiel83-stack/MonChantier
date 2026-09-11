@@ -94,6 +94,8 @@ export async function POST(request: NextRequest) {
         invoicePayload: encodeInvoicePayload(paymentPayload),
       });
 
+      await registerPendingPayment(reference, 'mobilemoney');
+
       if (providerResponse.status === 'confirmed') {
         const confirmation = await confirmPayment(paymentPayload);
         return NextResponse.json({
@@ -106,7 +108,6 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      await registerPendingPayment(reference, 'mobilemoney');
       return NextResponse.json({
         success: true,
         transaction_id: providerResponse.transactionId,

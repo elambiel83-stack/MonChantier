@@ -5,8 +5,9 @@ export function resolveTrustedRedirectUrl(
   if (typeof value !== 'string' || !value.trim()) return { ok: false };
 
   try {
-    const nextUrl = new URL(value, baseOrigin);
-    if (nextUrl.origin !== baseOrigin) return { ok: false };
+    const trustedOrigin = new URL(baseOrigin).origin;
+    const nextUrl = new URL(value, trustedOrigin);
+    if (nextUrl.origin !== trustedOrigin) return { ok: false };
     return { ok: true, url: nextUrl.toString() };
   } catch {
     return { ok: false };
