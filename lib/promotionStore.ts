@@ -138,7 +138,13 @@ export function updatePromotion(id: number, patch: UpdatePromotionPatch): Promis
     const store = await readStore();
     const promotion = store.promotions.find((entry) => entry.id === id);
     if (!promotion) return null;
-    Object.assign(promotion, patch, { updatedAt: new Date().toISOString() });
+    const sanitizedPatch: UpdatePromotionPatch = {};
+    if (patch.label !== undefined) sanitizedPatch.label = patch.label;
+    if (patch.discountPercent !== undefined) sanitizedPatch.discountPercent = patch.discountPercent;
+    if (patch.active !== undefined) sanitizedPatch.active = patch.active;
+    if (patch.startsAt !== undefined) sanitizedPatch.startsAt = patch.startsAt;
+    if (patch.endsAt !== undefined) sanitizedPatch.endsAt = patch.endsAt;
+    Object.assign(promotion, sanitizedPatch, { updatedAt: new Date().toISOString() });
     await writeStore(store);
     return promotion;
   });

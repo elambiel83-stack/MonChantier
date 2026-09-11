@@ -23,11 +23,17 @@ export function applyCatalogPromotions<T extends CatalogPricedItem>(
   items: T[],
   promotions: StoredPromotion[]
 ): Array<T & CatalogPromotionFields> {
+  const bestPromotionsByItemId = promotions.reduce<Map<number, StoredPromotion>>((acc, promotion) => {
+    if (!isPromotionLive(promotion)) return acc;
+    const current = acc.get(promotion.itemId);
+    if (!current || promotion.discountPercent > current.discountPercent) {
+      acc.set(promotion.itemId, promotion);
+    }
+    return acc;
+  }, new Map());
+
   return items.map((item) => {
-    const bestPromotion =
-      promotions
-        .filter((promotion) => promotion.itemId === item.id && isPromotionLive(promotion))
-        .sort((left, right) => right.discountPercent - left.discountPercent)[0] || null;
+    const bestPromotion = bestPromotionsByItemId.get(item.id) || null;
 
     if (!bestPromotion) {
       return {
