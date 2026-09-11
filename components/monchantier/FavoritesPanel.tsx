@@ -70,12 +70,12 @@ export default function FavoritesPanel() {
   };
 
   const favoriteProducts = useMemo(
-    () => products.filter((p) => isFavorite("product", p.id)),
-    [products, favorites]
+    () => products.filter((p) => favoriteKeys.has(`product-${p.id}`)),
+    [products, favoriteKeys]
   );
   const favoriteServices = useMemo(
-    () => services.filter((s) => isFavorite("service", s.id)),
-    [services, favorites]
+    () => services.filter((s) => favoriteKeys.has(`service-${s.id}`)),
+    [services, favoriteKeys]
   );
 
   return (
