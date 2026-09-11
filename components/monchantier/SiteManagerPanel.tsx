@@ -632,6 +632,7 @@ export default function SiteManagerPanel() {
 
           <div id="commandes" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Commandes</h2>
+            <p className="mt-1 text-sm text-slate-500">Les commandes confirmées sont reliées automatiquement quand l&apos;adresse correspond au chantier. Ajoutez une référence si nécessaire.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <input value={newOrderReference} onChange={(e) => setNewOrderReference(e.target.value)} placeholder="Référence commande" className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
               <button type="button" onClick={addOrderReference} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
@@ -657,6 +658,7 @@ export default function SiteManagerPanel() {
 
           <div id="livraisons" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Livraisons</h2>
+            <p className="mt-1 text-sm text-slate-500">Les livraisons créées depuis les paiements sont reliées automatiquement quand l&apos;adresse correspond au chantier. Ajoutez une référence si nécessaire.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <input value={newDeliveryReference} onChange={(e) => setNewDeliveryReference(e.target.value)} placeholder="Référence livraison" className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
               <button type="button" onClick={addDeliveryReference} disabled={busy} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">

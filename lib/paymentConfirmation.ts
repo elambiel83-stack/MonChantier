@@ -9,6 +9,7 @@ import {
   StoredInvoice,
 } from '@/lib/paymentStore';
 import { createDeliveryFromPayment } from '@/lib/deliveryStore';
+import { autoLinkDeliveryReferenceToSite, autoLinkOrderReferenceToSite } from '@/lib/siteStore';
 
 export type ConfirmPaymentPayload = {
   reference: string;
@@ -152,13 +153,26 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     orderStatus: 'processing',
   });
 
+  if (invoice.deliveryAddress) {
+    await autoLinkOrderReferenceToSite({
+      reference: payload.reference,
+      clientIdentity: invoice.customerEmail,
+      deliveryAddress: invoice.deliveryAddress,
+    });
+  }
+
   if (invoice.deliveryAddress && invoice.customerEmail) {
-    await createDeliveryFromPayment({
+    const delivery = await createDeliveryFromPayment({
       reference: payload.reference,
       clientIdentity: invoice.customerEmail,
       clientName: invoice.customerName,
       deliveryAddress: invoice.deliveryAddress,
       location: invoice.location,
+    });
+    await autoLinkDeliveryReferenceToSite({
+      reference: delivery.reference,
+      clientIdentity: delivery.clientIdentity,
+      deliveryAddress: delivery.deliveryAddress,
     });
   }
 

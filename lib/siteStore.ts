@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { listAllDeliveries } from '@/lib/deliveryStore';
+import { listPaymentStatuses } from '@/lib/paymentStore';
 
 export type SiteStatus = 'planning' | 'active' | 'paused' | 'completed';
 export type IncidentSeverity = 'low' | 'medium' | 'high';
@@ -89,6 +91,112 @@ function generateId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeIdentity(value?: string) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizeAddress(value?: string) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function addressesLikelyMatch(left?: string, right?: string) {
+  const normalizedLeft = normalizeAddress(left);
+  const normalizedRight = normalizeAddress(right);
+  if (!normalizedLeft || !normalizedRight) return false;
+  if (normalizedLeft === normalizedRight) return true;
+  const [longer, shorter] =
+    normalizedLeft.length >= normalizedRight.length
+      ? [normalizedLeft, normalizedRight]
+      : [normalizedRight, normalizedLeft];
+  return shorter.length >= 10 && longer.includes(shorter);
+}
+
+function addUniqueReference<T extends { reference: string; addedAt: string }>(
+  list: T[],
+  factory: () => T
+) {
+  const next = factory();
+  if (list.some((entry) => entry.reference === next.reference)) return false;
+  list.push(next);
+  return true;
+}
+
+function findBestMatchingSiteIndex(
+  sites: Site[],
+  input: { clientIdentity?: string; address?: string }
+) {
+  const clientIdentity = normalizeIdentity(input.clientIdentity);
+  const address = input.address;
+  const scored = sites
+    .map((site, index) => {
+      const sameAddress = addressesLikelyMatch(site.address, address);
+      const sameClient = clientIdentity && normalizeIdentity(site.clientIdentity) === clientIdentity;
+      return { index, sameAddress, sameClient };
+    })
+    .filter((entry) => entry.sameAddress || entry.sameClient);
+
+  const addressAndClient = scored.find((entry) => entry.sameAddress && entry.sameClient);
+  if (addressAndClient) return addressAndClient.index;
+
+  const addressMatches = scored.filter((entry) => entry.sameAddress);
+  if (addressMatches.length === 1) return addressMatches[0].index;
+  if (addressMatches.length > 1) {
+    const clientAware = addressMatches.find((entry) => entry.sameClient);
+    if (clientAware) return clientAware.index;
+  }
+
+  const clientMatches = scored.filter((entry) => entry.sameClient);
+  if (clientMatches.length === 1) return clientMatches[0].index;
+
+  return -1;
+}
+
+function backfillSiteReferences(
+  site: Site,
+  payments: Awaited<ReturnType<typeof listPaymentStatuses>>,
+  deliveries: Awaited<ReturnType<typeof listAllDeliveries>>
+) {
+  let changed = false;
+
+  for (const payment of payments) {
+    if (!payment.reference) continue;
+    if (!addressesLikelyMatch(site.address, payment.fullInvoice?.deliveryAddress)) continue;
+    if (
+      site.clientIdentity &&
+      payment.fullInvoice?.customerEmail &&
+      normalizeIdentity(site.clientIdentity) !== normalizeIdentity(payment.fullInvoice.customerEmail)
+    ) {
+      continue;
+    }
+    changed =
+      addUniqueReference(site.orderReferences, () => ({
+        reference: payment.reference,
+        addedAt: payment.updatedAt || new Date().toISOString(),
+      })) || changed;
+  }
+
+  for (const delivery of deliveries) {
+    if (!delivery.reference) continue;
+    if (!addressesLikelyMatch(site.address, delivery.deliveryAddress)) continue;
+    if (site.clientIdentity && normalizeIdentity(site.clientIdentity) !== normalizeIdentity(delivery.clientIdentity)) {
+      continue;
+    }
+    changed =
+      addUniqueReference(site.deliveryReferences, () => ({
+        reference: delivery.reference,
+        addedAt: delivery.createdAt || new Date().toISOString(),
+      })) || changed;
+  }
+
+  return changed;
+}
+
 async function ensureStoreFile() {
   await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
   try {
@@ -165,6 +273,7 @@ export function createSite(input: {
   currency?: 'USD' | 'CDF';
 }): Promise<Site> {
   return withLock(async () => {
+    const [payments, deliveries] = await Promise.all([listPaymentStatuses(), listAllDeliveries()]);
     const store = await readStore();
     const now = new Date().toISOString();
     const site: Site = {
@@ -187,6 +296,7 @@ export function createSite(input: {
       createdAt: now,
       updatedAt: now,
     };
+    backfillSiteReferences(site, payments, deliveries);
     store.sites.push(site);
     await writeStore(store);
     return site;
@@ -273,6 +383,54 @@ export function resolveSiteIncident(siteId: string, incidentId: string): Promise
     const incident = site.incidents.find((i) => i.id === incidentId);
     if (!incident) return null;
     incident.resolved = true;
+    site.updatedAt = new Date().toISOString();
+    await writeStore(store);
+    return site;
+  });
+}
+
+export function autoLinkOrderReferenceToSite(input: {
+  reference: string;
+  clientIdentity?: string;
+  deliveryAddress?: string;
+}): Promise<Site | null> {
+  return withLock(async () => {
+    const store = await readStore();
+    const index = findBestMatchingSiteIndex(store.sites, {
+      clientIdentity: input.clientIdentity,
+      address: input.deliveryAddress,
+    });
+    if (index === -1) return null;
+    const site = store.sites[index];
+    const changed = addUniqueReference(site.orderReferences, () => ({
+      reference: input.reference,
+      addedAt: new Date().toISOString(),
+    }));
+    if (!changed) return site;
+    site.updatedAt = new Date().toISOString();
+    await writeStore(store);
+    return site;
+  });
+}
+
+export function autoLinkDeliveryReferenceToSite(input: {
+  reference: string;
+  clientIdentity?: string;
+  deliveryAddress?: string;
+}): Promise<Site | null> {
+  return withLock(async () => {
+    const store = await readStore();
+    const index = findBestMatchingSiteIndex(store.sites, {
+      clientIdentity: input.clientIdentity,
+      address: input.deliveryAddress,
+    });
+    if (index === -1) return null;
+    const site = store.sites[index];
+    const changed = addUniqueReference(site.deliveryReferences, () => ({
+      reference: input.reference,
+      addedAt: new Date().toISOString(),
+    }));
+    if (!changed) return site;
     site.updatedAt = new Date().toISOString();
     await writeStore(store);
     return site;
