@@ -188,14 +188,15 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
     (quote.services || []).some((serviceName) => serviceNames.has(normalizeLabel(serviceName)))
   );
 
+  const matchedInterventions = matchedConfirmedDetails.flatMap(({ payment, matchedItems }) =>
+    matchedItems.map((item) => ({ payment, item }))
+  );
+
   const interventions = services.map((service) => {
     const names = new Set([normalizeLabel(service.fr), normalizeLabel(service.en)]);
-    const linked = matchedConfirmedDetails
-      .map(({ payment, matchedItems }) => ({
-        payment,
-        matchedItems: matchedItems.filter((item) => names.has(normalizeLabel(item.productName || ''))),
-      }))
-      .filter(({ matchedItems }) => matchedItems.length > 0);
+    const linked = matchedInterventions.filter(({ item }) =>
+      names.has(normalizeLabel(item.productName || ''))
+    );
 
     return {
       id: service.id,
@@ -204,9 +205,9 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
       confirmedJobs: linked.length,
       openJobs: linked.filter(({ payment }) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled').length,
       revenueByCurrency: groupCurrencyTotals(
-        linked.map(({ payment, matchedItems }) => ({
+        linked.map(({ payment, item }) => ({
           currency: payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A',
-          amount: matchedItems.reduce((sum, item) => sum + item.lineTotal, 0),
+          amount: item.lineTotal,
         }))
       ),
     };
@@ -215,14 +216,14 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
   const confirmedJobs = interventions.reduce((sum, service) => sum + service.confirmedJobs, 0);
 
   const clients = Object.values(
-    matchedConfirmedDetails.reduce<
+    matchedInterventions.reduce<
       Record<string, { label: string; jobs: number; spendByCurrency: Record<string, number> }>
->((acc, { payment, matchedItems }) => {
+    >((acc, { payment, item }) => {
       const key = payment.fullInvoice?.customerEmail || payment.reference;
       const current = acc[key] || { label: getInvoiceCustomer(payment), jobs: 0, spendByCurrency: {} };
       current.jobs += 1;
       const currency = payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A';
-      const amount = matchedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      const amount = item.lineTotal;
       current.spendByCurrency[currency] = (current.spendByCurrency[currency] || 0) + amount;
       acc[key] = current;
       return acc;
@@ -242,28 +243,28 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
       quoteCount: matchedQuotes.length,
       confirmedJobs,
       revenueByCurrency: groupCurrencyTotals(
-        matchedConfirmedDetails.map(({ payment, matchedItems }) => ({
+        matchedInterventions.map(({ payment, item }) => ({
           currency: payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A',
-          amount: matchedItems.reduce((sum, item) => sum + item.lineTotal, 0),
+          amount: item.lineTotal,
         }))
       ),
     },
     interventions: interventions.sort((left, right) => right.confirmedJobs - left.confirmedJobs),
-    missions: matchedConfirmedDetails.map(({ payment }) => payment)
-      .filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
-      .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    missions: matchedInterventions
+      .filter(({ payment }) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
+      .sort((left, right) => new Date(right.payment.updatedAt).getTime() - new Date(left.payment.updatedAt).getTime())
       .slice(0, 8)
-      .map((payment) => ({
+      .map(({ payment }) => ({
         reference: payment.reference,
         customer: getInvoiceCustomer(payment),
         updatedAt: payment.updatedAt,
         status: payment.orderStatus || 'processing',
       })),
-    planning: matchedConfirmedDetails.map(({ payment }) => payment)
-      .filter((payment) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
-      .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    planning: matchedInterventions
+      .filter(({ payment }) => payment.orderStatus !== 'delivered' && payment.orderStatus !== 'cancelled')
+      .sort((left, right) => new Date(right.payment.updatedAt).getTime() - new Date(left.payment.updatedAt).getTime())
       .slice(0, 8)
-      .map((payment) => ({
+      .map(({ payment }) => ({
         reference: payment.reference,
         customer: getInvoiceCustomer(payment),
         updatedAt: payment.updatedAt,
@@ -271,12 +272,12 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
     clients,
     quotes: matchedQuotes.slice(0, 8),
     paymentsByMethod: Object.values(
-      matchedConfirmedDetails.reduce<Record<string, { method: string; count: number; totalsByCurrency: Record<string, number> }>>(
-        (acc, { payment, matchedItems }) => {
+      matchedInterventions.reduce<Record<string, { method: string; count: number; totalsByCurrency: Record<string, number> }>>(
+        (acc, { payment, item }) => {
           const current = acc[payment.method] || { method: payment.method, count: 0, totalsByCurrency: {} };
           current.count += 1;
           const currency = payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A';
-          const amount = matchedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+          const amount = item.lineTotal;
           current.totalsByCurrency[currency] = (current.totalsByCurrency[currency] || 0) + amount;
           acc[payment.method] = current;
           return acc;

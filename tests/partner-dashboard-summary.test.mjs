@@ -59,6 +59,7 @@ test('technician summary counts only matched service totals for clients and reve
           totalTTC: 1000,
           items: [
             { productName: 'Plomberie', lineTotal: 100 },
+            { productName: 'Plomberie', lineTotal: 25 },
             { productName: 'Ciment', lineTotal: 900 },
           ],
         },
@@ -86,10 +87,16 @@ test('technician summary counts only matched service totals for clients and reve
     []
   );
 
-  assert.deepEqual(summary.totals.revenueByCurrency, [['USD', 225]]);
-  assert.equal(summary.totals.confirmedJobs, 3);
-  assert.deepEqual(summary.clients[0].spendByCurrency, [['USD', 225]]);
-  assert.deepEqual(summary.paymentsByMethod[0].totalsByCurrency, [['USD', 225]]);
-  assert.deepEqual(summary.interventions[0].revenueByCurrency, [['USD', 150]]);
+  assert.deepEqual(summary.totals.revenueByCurrency, [['USD', 250]]);
+  assert.equal(summary.totals.confirmedJobs, 4);
+  assert.equal(summary.clients[0].jobs, 4);
+  assert.deepEqual(summary.clients[0].spendByCurrency, [['USD', 250]]);
+  assert.deepEqual(summary.paymentsByMethod[0].totalsByCurrency, [['USD', 250]]);
+  assert.equal(summary.interventions[0].confirmedJobs, 3);
+  assert.equal(summary.interventions[0].openJobs, 3);
+  assert.deepEqual(summary.interventions[0].revenueByCurrency, [['USD', 175]]);
+  assert.equal(summary.interventions[1].confirmedJobs, 1);
   assert.deepEqual(summary.interventions[1].revenueByCurrency, [['USD', 75]]);
+  assert.equal(summary.missions.length, 4);
+  assert.equal(summary.planning.length, 4);
 });

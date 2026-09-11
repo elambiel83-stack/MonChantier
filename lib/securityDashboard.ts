@@ -18,7 +18,7 @@ export async function buildSecurityDashboardSummary() {
   ]);
 
   const users = listUsers();
-  const rateLimitBuckets = listRateLimitBuckets();
+  const rateLimitBuckets = listRateLimitBuckets(['otp-request:', 'otp-verify:', 'admin-login:']);
   const throttledBuckets = rateLimitBuckets.filter((bucket) => !bucket.allowed);
   const sortedSecurityEvents = [...securityEvents].sort(
     (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()

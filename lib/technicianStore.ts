@@ -65,6 +65,14 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeReviewRating(value: number) {
+  if (!Number.isFinite(value) || value < 1 || value > 5) {
+    throw new RangeError('Review rating must be between 1 and 5');
+  }
+
+  return value;
+}
+
 function emptyProfile(identity: string): TechnicianProfile {
   return {
     identity,
@@ -234,7 +242,7 @@ export function addTechnicianReview(
       id: makeId('TECH-REVIEW'),
       authorIdentity: input.authorIdentity ? normalizeIdentity(input.authorIdentity) : undefined,
       authorName: input.authorName,
-      rating: input.rating,
+      rating: normalizeReviewRating(input.rating),
       comment: input.comment,
       orderReference: input.orderReference,
       serviceId: input.serviceId,
