@@ -88,3 +88,10 @@ export function listQuoteRequestsByEmail(email: string): Promise<StoredQuoteRequ
     return store.requests.filter((request) => request.email.trim().toLowerCase() === normalized);
   });
 }
+
+export function listAllQuoteRequests(): Promise<StoredQuoteRequest[]> {
+  return withLock(async () => {
+    const store = await readStore();
+    return store.requests;
+  });
+}
