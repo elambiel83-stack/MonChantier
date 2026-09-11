@@ -118,14 +118,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const confirmation = await confirmPayment(paymentPayload);
+    await registerPendingPayment(reference, 'mobilemoney');
     return NextResponse.json({
       success: true,
       transaction_id: `TXN-DEMO-${Date.now()}`,
-      status: 'confirmed',
-      message: 'Paiement Mobile Money simulé confirmé. La facture a été générée.',
+      status: 'pending',
+      message: 'Paiement Mobile Money simulé initié. Confirmez la demande sur le téléphone pour finaliser la commande.',
       reference,
-      invoice: confirmation.invoice,
+      demoMode: true,
     });
   } catch (error) {
     console.error('Erreur paiement Mobile Money:', error);
