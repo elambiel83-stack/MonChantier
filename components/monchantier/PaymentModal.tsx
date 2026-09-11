@@ -148,10 +148,16 @@ export function PaymentModal({
         if (!res.ok) throw new Error(data?.message || "Payment init failed");
         setPayStatus("success");
         setPayMsg(
-          t(
-            "Demande envoyée. Confirme le paiement sur ton téléphone.",
-            "Prompt sent. Please confirm the payment on your phone."
-          )
+          data?.message ||
+            (data?.status === "confirmed"
+              ? t(
+                  "Paiement confirmé. La facture a été générée.",
+                  "Payment confirmed. The invoice has been generated."
+                )
+              : t(
+                  "Demande envoyée. Confirme le paiement sur ton téléphone.",
+                  "Prompt sent. Please confirm the payment on your phone."
+                ))
         );
         if (onPaymentSuccess) onPaymentSuccess();
         return;
