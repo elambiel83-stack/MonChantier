@@ -212,6 +212,8 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
     };
   });
 
+  const confirmedJobs = interventions.reduce((sum, service) => sum + service.confirmedJobs, 0);
+
   const clients = Object.values(
     matchedConfirmedDetails.reduce<
       Record<string, { label: string; jobs: number; spendByCurrency: Record<string, number> }>
@@ -238,7 +240,7 @@ export function buildTechnicianSummary(services: StoredService[], payments: Stor
       serviceCount: services.length,
       activeCount: services.filter((service) => service.active).length,
       quoteCount: matchedQuotes.length,
-      confirmedJobs: matchedConfirmedDetails.length,
+      confirmedJobs,
       revenueByCurrency: groupCurrencyTotals(
         matchedConfirmedDetails.map(({ payment, matchedItems }) => ({
           currency: payment.fullInvoice?.currency || payment.invoice?.totals.currency || 'N/A',

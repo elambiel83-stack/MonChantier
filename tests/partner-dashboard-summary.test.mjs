@@ -40,7 +40,10 @@ test('technician summary counts only matched service totals for clients and reve
   const { buildTechnicianSummary } = await importPartnerSummaryModule();
 
   const summary = buildTechnicianSummary(
-    [{ id: 1, fr: 'Plomberie', en: 'Plumbing', active: true }],
+    [
+      { id: 1, fr: 'Plomberie', en: 'Plumbing', active: true },
+      { id: 2, fr: 'Électricité', en: 'Electricity', active: true },
+    ],
     [
       {
         reference: 'PAY-1',
@@ -74,6 +77,7 @@ test('technician summary counts only matched service totals for clients and reve
           totalTTC: 250,
           items: [
             { productName: 'Plomberie', lineTotal: 50 },
+            { productName: 'Électricité', lineTotal: 75 },
             { productName: 'Peinture', lineTotal: 200 },
           ],
         },
@@ -82,9 +86,10 @@ test('technician summary counts only matched service totals for clients and reve
     []
   );
 
-  assert.deepEqual(summary.totals.revenueByCurrency, [['USD', 150]]);
-  assert.equal(summary.totals.confirmedJobs, 2);
-  assert.deepEqual(summary.clients[0].spendByCurrency, [['USD', 150]]);
-  assert.deepEqual(summary.paymentsByMethod[0].totalsByCurrency, [['USD', 150]]);
+  assert.deepEqual(summary.totals.revenueByCurrency, [['USD', 225]]);
+  assert.equal(summary.totals.confirmedJobs, 3);
+  assert.deepEqual(summary.clients[0].spendByCurrency, [['USD', 225]]);
+  assert.deepEqual(summary.paymentsByMethod[0].totalsByCurrency, [['USD', 225]]);
   assert.deepEqual(summary.interventions[0].revenueByCurrency, [['USD', 150]]);
+  assert.deepEqual(summary.interventions[1].revenueByCurrency, [['USD', 75]]);
 });
