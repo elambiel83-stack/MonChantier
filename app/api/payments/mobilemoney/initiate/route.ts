@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
           providerResponse.message ||
           `Demande envoyée à ${normalizedPhone}. Veuillez confirmer sur votre téléphone.`,
         reference,
+        invoice: null,
       });
     }
 
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       message: 'Paiement Mobile Money simulé initié. Confirmez la demande sur le téléphone pour finaliser la commande.',
       reference,
+      invoice: null,
     });
   } catch (error) {
     console.error('Erreur paiement Mobile Money:', error);
