@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         withSearchParam(
           withSearchParam(successUrlWithReference, 'session_id', `demo_${Date.now()}`, baseOrigin),
           'amount',
-          String(amount),
+          String(parsedAmount),
           baseOrigin
         ),
         'items',

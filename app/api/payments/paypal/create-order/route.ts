@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         withSearchParam(
           withSearchParam(returnUrlWithReference, 'paypal_order_id', `demo_${Date.now()}`, baseOrigin),
           'amount',
-          String(amount),
+          String(parsedAmount),
           baseOrigin
         ),
         'items',
