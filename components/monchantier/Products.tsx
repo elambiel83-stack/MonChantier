@@ -185,7 +185,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
               <div className="mt-auto pt-4 flex items-center justify-between gap-3">
                 <div className="flex flex-col">
                   <span className="text-slate-900 font-bold whitespace-nowrap">{p.price}</span>
-                  {originalPriceLabel ? <span className="text-xs text-slate-400 line-through">{originalPriceLabel}</span> : null}
+                  {rawProduct.promotionDiscountPercent && originalPriceLabel ? <span className="text-xs text-slate-400 line-through">{originalPriceLabel}</span> : null}
                 </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
                   <a

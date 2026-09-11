@@ -10,5 +10,5 @@ export async function GET() {
     itemType: 'service',
     itemIds: services.map((service) => service.id),
   });
-  return NextResponse.json({ services: applyCatalogPromotions(services, promotions) });
+  return NextResponse.json({ services: applyCatalogPromotions(services, promotions, 'service') });
 }

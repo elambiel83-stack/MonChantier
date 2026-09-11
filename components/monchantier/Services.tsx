@@ -161,7 +161,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
                 {priceLabel && (
                   <div className="mt-2">
                     <p className="text-sm font-bold text-slate-900">{priceLabel}</p>
-                    {originalPriceLabel ? <p className="text-xs text-slate-400 line-through">{originalPriceLabel}</p> : null}
+                    {s.promotionDiscountPercent && originalPriceLabel ? <p className="text-xs text-slate-400 line-through">{originalPriceLabel}</p> : null}
                   </div>
                 )}
                 {isDeliveryService && (

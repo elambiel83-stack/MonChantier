@@ -62,6 +62,34 @@ async function writeStore(store: PromotionStoreModel) {
   await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
 }
 
+function normalizePromotionWindow(
+  value: string | null | undefined,
+  boundary: 'start' | 'end'
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return trimmed;
+
+  if (boundary === 'end') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      parsed.setHours(23, 59, 59, 999);
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+      parsed.setSeconds(59, 999);
+    }
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    parsed.setHours(0, 0, 0, 0);
+  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+    parsed.setSeconds(0, 0);
+  }
+
+  return parsed.toISOString();
+}
+
 export function isPromotionLive(promotion: StoredPromotion, referenceDate = new Date()): boolean {
   if (!promotion.active) return false;
   const startsAt = promotion.startsAt ? new Date(promotion.startsAt) : null;
@@ -117,8 +145,8 @@ export function createPromotion(input: {
       label: input.label.trim(),
       discountPercent: input.discountPercent,
       active: input.active ?? true,
-      startsAt: input.startsAt ?? null,
-      endsAt: input.endsAt ?? null,
+      startsAt: normalizePromotionWindow(input.startsAt, 'start') ?? null,
+      endsAt: normalizePromotionWindow(input.endsAt, 'end') ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -142,8 +170,8 @@ export function updatePromotion(id: number, patch: UpdatePromotionPatch): Promis
     if (patch.label !== undefined) sanitizedPatch.label = patch.label;
     if (patch.discountPercent !== undefined) sanitizedPatch.discountPercent = patch.discountPercent;
     if (patch.active !== undefined) sanitizedPatch.active = patch.active;
-    if (patch.startsAt !== undefined) sanitizedPatch.startsAt = patch.startsAt;
-    if (patch.endsAt !== undefined) sanitizedPatch.endsAt = patch.endsAt;
+    if (patch.startsAt !== undefined) sanitizedPatch.startsAt = normalizePromotionWindow(patch.startsAt, 'start');
+    if (patch.endsAt !== undefined) sanitizedPatch.endsAt = normalizePromotionWindow(patch.endsAt, 'end');
     Object.assign(promotion, sanitizedPatch, { updatedAt: new Date().toISOString() });
     await writeStore(store);
     return promotion;

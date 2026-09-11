@@ -115,7 +115,7 @@ export default async function ClientDashboardPage() {
       <WalletPanel />
       <LoanPanel />
       <DeliveryTrackingPanel />
-      <ClientTechnicianReviewsPanel />
+      {hasEmail && <ClientTechnicianReviewsPanel />}
 
       <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Mes commandes</h2>

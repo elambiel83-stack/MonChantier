@@ -21,10 +21,11 @@ function applyDiscount(price: number | null, discountPercent: number): number | 
 
 export function applyCatalogPromotions<T extends CatalogPricedItem>(
   items: T[],
-  promotions: StoredPromotion[]
+  promotions: StoredPromotion[],
+  itemType: StoredPromotion['itemType']
 ): Array<T & CatalogPromotionFields> {
   const bestPromotionsByItemId = promotions.reduce<Map<number, StoredPromotion>>((acc, promotion) => {
-    if (!isPromotionLive(promotion)) return acc;
+    if (promotion.itemType !== itemType || !isPromotionLive(promotion)) return acc;
     const current = acc.get(promotion.itemId);
     if (!current || promotion.discountPercent > current.discountPercent) {
       acc.set(promotion.itemId, promotion);

@@ -125,7 +125,8 @@ test('catalog promotions apply the best live discount and preserve original pric
         createdAt: '',
         updatedAt: '',
       },
-    ]
+    ],
+    'product'
   );
 
   assert.equal(promoted.priceUSD, 75);
@@ -134,4 +135,31 @@ test('catalog promotions apply the best live discount and preserve original pric
   assert.equal(promoted.originalPriceCDF, 200000);
   assert.equal(promoted.promotionLabel, 'Best');
   assert.equal(promoted.promotionDiscountPercent, 25);
+});
+
+test('catalog promotions keep product and service ids isolated', async () => {
+  const { catalogPromotions } = await importPromotionModules();
+  const { applyCatalogPromotions } = catalogPromotions;
+
+  const [productResult] = applyCatalogPromotions(
+    [{ id: 7, priceUSD: 100, priceCDF: null }],
+    [
+      {
+        id: 1,
+        itemType: 'service',
+        itemId: 7,
+        label: 'Service only',
+        discountPercent: 50,
+        active: true,
+        startsAt: null,
+        endsAt: null,
+        createdAt: '',
+        updatedAt: '',
+      },
+    ],
+    'product'
+  );
+
+  assert.equal(productResult.priceUSD, 100);
+  assert.equal(productResult.promotionLabel, null);
 });
