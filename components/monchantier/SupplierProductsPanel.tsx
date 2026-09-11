@@ -250,6 +250,8 @@ export default function SupplierProductsPanel() {
     const now = Date.now();
     const startsAt = promotion.startsAt ? new Date(promotion.startsAt).getTime() : null;
     const endsAt = promotion.endsAt ? new Date(promotion.endsAt).getTime() : null;
+    if (promotion.startsAt && startsAt !== null && Number.isNaN(startsAt)) return false;
+    if (promotion.endsAt && endsAt !== null && Number.isNaN(endsAt)) return false;
     if (startsAt !== null && !Number.isNaN(startsAt) && startsAt > now) return false;
     if (endsAt !== null && !Number.isNaN(endsAt) && endsAt < now) return false;
     return true;

@@ -32,14 +32,11 @@ type CatalogService = {
 const SERVICE_CART_ID_OFFSET = 1_000_000;
 
 function toCartProduct(s: CatalogService): Product {
-  let priceLabel: string;
-  if (s.priceUSD !== null) {
-    priceLabel = `$${s.priceUSD}`;
-  } else if (s.priceCDF !== null) {
-    priceLabel = `${s.priceCDF.toLocaleString("fr-FR")} FC`;
-  } else {
-    priceLabel = `$—`;
-  }
+  const amounts = [
+    s.priceUSD !== null ? `$${s.priceUSD}` : null,
+    s.priceCDF !== null ? `${s.priceCDF.toLocaleString("fr-FR")} FC` : null,
+  ].filter(Boolean);
+  const priceLabel = amounts.length ? amounts.join(" / ") : `$—`;
   return {
     id: SERVICE_CART_ID_OFFSET + s.id,
     fr: s.fr,
@@ -61,6 +58,16 @@ function normalize(value: string): string {
 }
 
 type SortOption = "default" | "price-asc" | "price-desc";
+
+function formatServicePrice(service: CatalogService, useOriginal = false) {
+  const usd = useOriginal ? service.originalPriceUSD : service.priceUSD;
+  const cdf = useOriginal ? service.originalPriceCDF : service.priceCDF;
+  const amounts = [
+    usd !== null && usd !== undefined ? `$${usd}` : null,
+    cdf !== null && cdf !== undefined ? `${cdf.toLocaleString("fr-FR")} FC` : null,
+  ].filter(Boolean);
+  return amounts.length ? amounts.join(" / ") : null;
+}
 
 export function Services({ lang, t, onAddToCart }: ServicesProps) {
   const [services, setServices] = useState<CatalogService[]>([]);
@@ -132,12 +139,8 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredServices.map((s) => {
             const isDeliveryService = s.fr === "Livraison sur chantier";
-            let priceLabel: string | null = null;
-            if (s.priceUSD !== null) {
-              priceLabel = `$${s.priceUSD}`;
-            } else if (s.priceCDF !== null) {
-              priceLabel = `${s.priceCDF.toLocaleString("fr-FR")} FC`;
-            }
+            const priceLabel = formatServicePrice(s);
+            const originalPriceLabel = formatServicePrice(s, true);
             const quoteHref = `https://wa.me/243999972466?text=${encodeURIComponent(
               `Bonjour MonChantier, je souhaite un devis pour: ${lang === "fr" ? s.fr : s.en}`
             )}`;
@@ -158,14 +161,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
                 {priceLabel && (
                   <div className="mt-2">
                     <p className="text-sm font-bold text-slate-900">{priceLabel}</p>
-                    {(s.originalPriceUSD !== null && s.originalPriceUSD !== undefined) ||
-                    (s.originalPriceCDF !== null && s.originalPriceCDF !== undefined) ? (
-                      <p className="text-xs text-slate-400 line-through">
-                        {s.originalPriceUSD !== null && s.originalPriceUSD !== undefined
-                          ? `$${s.originalPriceUSD}`
-                          : `${s.originalPriceCDF?.toLocaleString("fr-FR")} FC`}
-                      </p>
-                    ) : null}
+                    {originalPriceLabel ? <p className="text-xs text-slate-400 line-through">{originalPriceLabel}</p> : null}
                   </div>
                 )}
                 {isDeliveryService && (

@@ -67,6 +67,9 @@ export function isPromotionLive(promotion: StoredPromotion, referenceDate = new 
   const startsAt = promotion.startsAt ? new Date(promotion.startsAt) : null;
   const endsAt = promotion.endsAt ? new Date(promotion.endsAt) : null;
 
+  if (promotion.startsAt && startsAt && Number.isNaN(startsAt.getTime())) return false;
+  if (promotion.endsAt && endsAt && Number.isNaN(endsAt.getTime())) return false;
+
   if (startsAt && !Number.isNaN(startsAt.getTime()) && startsAt > referenceDate) return false;
   if (endsAt && !Number.isNaN(endsAt.getTime()) && endsAt < referenceDate) return false;
   return true;

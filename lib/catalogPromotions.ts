@@ -1,4 +1,4 @@
-import { StoredPromotion, isPromotionLive } from '@/lib/promotionStore';
+import { StoredPromotion, isPromotionLive } from './promotionStore';
 
 type CatalogPricedItem = {
   id: number;

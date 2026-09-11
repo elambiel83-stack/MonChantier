@@ -30,14 +30,11 @@ type CatalogProduct = {
 
 function toProduct(p: CatalogProduct, lang: Language): Product {
   const unit = lang === "fr" ? p.unitFr : p.unitEn;
-  let priceLabel: string;
-  if (p.priceUSD !== null) {
-    priceLabel = `$${p.priceUSD} / ${unit}`;
-  } else if (p.priceCDF !== null) {
-    priceLabel = `${p.priceCDF.toLocaleString("fr-FR")} FC / ${unit}`;
-  } else {
-    priceLabel = `$— / ${unit}`;
-  }
+  const amounts = [
+    p.priceUSD !== null ? `$${p.priceUSD}` : null,
+    p.priceCDF !== null ? `${p.priceCDF.toLocaleString("fr-FR")} FC` : null,
+  ].filter(Boolean);
+  const priceLabel = amounts.length ? `${amounts.join(" / ")} / ${unit}` : `$— / ${unit}`;
   return {
     id: p.id,
     fr: p.fr,
@@ -62,6 +59,15 @@ type SortOption = "default" | "price-asc" | "price-desc";
 
 function productPriceValue(p: CatalogProduct): number | null {
   return p.priceUSD ?? p.priceCDF ?? null;
+}
+
+function formatOriginalPrice(p: CatalogProduct, lang: Language): string | null {
+  const unit = lang === "fr" ? p.unitFr : p.unitEn;
+  const amounts = [
+    p.originalPriceUSD !== null && p.originalPriceUSD !== undefined ? `$${p.originalPriceUSD}` : null,
+    p.originalPriceCDF !== null && p.originalPriceCDF !== undefined ? `${p.originalPriceCDF.toLocaleString("fr-FR")} FC` : null,
+  ].filter(Boolean);
+  return amounts.length ? `${amounts.join(" / ")} / ${unit}` : null;
 }
 
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
@@ -151,12 +157,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         {products.map((rawProduct) => {
           const p = toProduct(rawProduct, lang);
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
-          const originalPriceLabel =
-            rawProduct.originalPriceUSD !== null && rawProduct.originalPriceUSD !== undefined
-              ? `$${rawProduct.originalPriceUSD} / ${lang === "fr" ? rawProduct.unitFr : rawProduct.unitEn}`
-              : rawProduct.originalPriceCDF !== null && rawProduct.originalPriceCDF !== undefined
-                ? `${rawProduct.originalPriceCDF.toLocaleString("fr-FR")} FC / ${lang === "fr" ? rawProduct.unitFr : rawProduct.unitEn}`
-                : null;
+          const originalPriceLabel = formatOriginalPrice(rawProduct, lang);
           return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
