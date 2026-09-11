@@ -46,6 +46,14 @@ type TikTokProfile = {
   };
 };
 
+function getRequestIp(forwardedFor: string | string[] | undefined) {
+  const firstValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+  if (typeof firstValue !== 'string') return 'unknown';
+
+  const ip = firstValue.split(',')[0]?.trim();
+  return ip || 'unknown';
+}
+
 const tikTokProvider = {
   id: "tiktok",
   name: "TikTok",
@@ -84,7 +92,7 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         const phone = credentials?.phone?.trim() || "";
         const code = credentials?.code?.trim() || "";
         const forwardedFor = req?.headers?.["x-forwarded-for"];
-        const ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "unknown";
+        const ip = getRequestIp(forwardedFor);
 
         if (!phone || !code) return null;
 
@@ -117,7 +125,7 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         if (!email || !password || !totp) return null;
 
         const forwardedFor = req?.headers?.["x-forwarded-for"];
-        const ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "unknown";
+        const ip = getRequestIp(forwardedFor);
 
         // Two independent buckets, as with OTP requests: per-email caps brute-forcing
         // the known admin password, per-IP caps a single source hammering many emails

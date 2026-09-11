@@ -53,6 +53,30 @@ test('promotion live-window rules handle scheduled, expired, inactive and invali
   assert.equal(isPromotionLive({ active: true, startsAt: 'not-a-date', endsAt: null }, now), false);
 });
 
+test('promotion store rejects invalid discount writes', async () => {
+  const { promotionStore } = await importPromotionModules();
+
+  await assert.rejects(
+    () =>
+      promotionStore.createPromotion({
+        itemType: 'product',
+        itemId: 1,
+        label: 'Invalid',
+        discountPercent: 0,
+      }),
+    RangeError
+  );
+
+  const promotion = await promotionStore.createPromotion({
+    itemType: 'service',
+    itemId: 2,
+    label: 'Valid',
+    discountPercent: 20,
+  });
+
+  await assert.rejects(() => promotionStore.updatePromotion(promotion.id, { discountPercent: 120 }), RangeError);
+});
+
 test('admin and supplier promotion routes are wired to stored promotions', async () => {
   const [adminRouteSource, adminDetailRouteSource, partnerRouteSource] = await Promise.all([
     read('app/api/admin/promotions/route.ts'),

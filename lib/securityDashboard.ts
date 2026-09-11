@@ -12,7 +12,7 @@ function isRecent(value: string, thresholdMs: number) {
 
 export async function buildSecurityDashboardSummary() {
   const [securityEvents, roleAssignments, roleAudit] = await Promise.all([
-    listSecurityEvents({ limit: 30 }),
+    listSecurityEvents(),
     listStoredRoles(),
     listRoleAudit(),
   ]);
@@ -45,7 +45,7 @@ export async function buildSecurityDashboardSummary() {
       adminSuccess24h: recentEvents24h.filter((event) => event.type === 'admin_login_succeeded').length,
     },
     throttledBuckets: throttledBuckets.slice(0, 10),
-    recentEvents: securityEvents,
+    recentEvents: securityEvents.slice(0, 30),
     recentRoleAudit: roleAudit.slice(0, 10),
   };
 }

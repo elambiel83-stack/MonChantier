@@ -20,6 +20,14 @@ type PromotionStoreModel = { promotions: StoredPromotion[]; nextId: number };
 
 const STORE_PATH = path.join(process.cwd(), 'data', 'promotion-store.json');
 
+function normalizeDiscountPercent(value: number) {
+  if (!Number.isFinite(value) || value <= 0 || value >= 100) {
+    throw new RangeError('Discount percent must be between 0 and 100');
+  }
+
+  return value;
+}
+
 let storeMutex: Promise<void> = Promise.resolve();
 
 function withLock<T>(task: () => Promise<T>): Promise<T> {
@@ -143,7 +151,7 @@ export function createPromotion(input: {
       itemType: input.itemType,
       itemId: input.itemId,
       label: input.label.trim(),
-      discountPercent: input.discountPercent,
+      discountPercent: normalizeDiscountPercent(input.discountPercent),
       active: input.active ?? true,
       startsAt: normalizePromotionWindow(input.startsAt, 'start') ?? null,
       endsAt: normalizePromotionWindow(input.endsAt, 'end') ?? null,
@@ -168,7 +176,7 @@ export function updatePromotion(id: number, patch: UpdatePromotionPatch): Promis
     if (!promotion) return null;
     const sanitizedPatch: UpdatePromotionPatch = {};
     if (patch.label !== undefined) sanitizedPatch.label = patch.label;
-    if (patch.discountPercent !== undefined) sanitizedPatch.discountPercent = patch.discountPercent;
+    if (patch.discountPercent !== undefined) sanitizedPatch.discountPercent = normalizeDiscountPercent(patch.discountPercent);
     if (patch.active !== undefined) sanitizedPatch.active = patch.active;
     if (patch.startsAt !== undefined) sanitizedPatch.startsAt = normalizePromotionWindow(patch.startsAt, 'start');
     if (patch.endsAt !== undefined) sanitizedPatch.endsAt = normalizePromotionWindow(patch.endsAt, 'end');

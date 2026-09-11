@@ -1,4 +1,17 @@
 {
-  "promotions": [],
-  "nextId": 1
+  "promotions": [
+    {
+      "id": 1,
+      "itemType": "service",
+      "itemId": 2,
+      "label": "Valid",
+      "discountPercent": 20,
+      "active": true,
+      "startsAt": null,
+      "endsAt": null,
+      "createdAt": "2026-09-11T12:41:48.667Z",
+      "updatedAt": "2026-09-11T12:41:48.667Z"
+    }
+  ],
+  "nextId": 2
 }

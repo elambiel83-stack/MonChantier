@@ -69,9 +69,14 @@ async function writeStore(store: SecurityStoreModel) {
   await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
 }
 
-function normalizeOptional(value?: string) {
+function normalizeOptionalIdentity(value?: string) {
   const normalized = value?.trim();
   return normalized ? normalized.toLowerCase() : undefined;
+}
+
+function normalizeOptionalText(value?: string) {
+  const normalized = value?.trim();
+  return normalized || undefined;
 }
 
 export function recordSecurityEvent(input: {
@@ -87,8 +92,8 @@ export function recordSecurityEvent(input: {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       type: input.type,
       severity: input.severity,
-      identity: normalizeOptional(input.identity),
-      ip: normalizeOptional(input.ip),
+      identity: normalizeOptionalIdentity(input.identity),
+      ip: normalizeOptionalText(input.ip),
       detail: input.detail?.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
