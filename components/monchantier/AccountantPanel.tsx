@@ -262,6 +262,12 @@ export default function AccountantPanel() {
     }));
   }, [taxSummary, expenses]);
 
+  const latestInvoiceDate = useMemo(() => {
+    const values = (taxSummary?.invoices || []).map((invoice) => invoice.updatedAt).filter(Boolean);
+    if (values.length === 0) return null;
+    return values.sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0];
+  }, [taxSummary]);
+
   const bannerClassName =
     banner?.type === "error"
       ? "border-red-200 bg-red-50 text-red-800"
@@ -603,9 +609,14 @@ export default function AccountantPanel() {
         </div>
       </div>
 
-      <div id="factures" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="export-comptable" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Factures</h2>
+          <div>
+            <h2 className="text-lg font-semibold">Export comptable</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Export CSV des factures confirmées pour reprise comptable.
+            </p>
+          </div>
           <button
             type="button"
             onClick={exportInvoicesCsv}
@@ -614,6 +625,28 @@ export default function AccountantPanel() {
           >
             Export comptable (CSV)
           </button>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Factures exportables</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">{taxSummary?.invoices.length ?? 0}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Dernier export possible</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {latestInvoiceDate ? formatDate(latestInvoiceDate) : "Aucune facture"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Colonnes incluses</p>
+            <p className="mt-1 text-sm text-slate-900">Référence, facture, méthode, HT, TVA, TTC, devise, date</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="factures" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Factures</h2>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">

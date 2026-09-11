@@ -157,7 +157,7 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
     { fr: "Fournisseurs", en: "Suppliers", anchor: "fournisseurs" },
     { fr: "Trésorerie", en: "Treasury", anchor: "tresorerie" },
     { fr: "Rapports", en: "Reports", anchor: "rapports" },
-    { fr: "Export comptable", en: "Accounting export", anchor: "factures" },
+    { fr: "Export comptable", en: "Accounting export", anchor: "export-comptable" },
   ],
   director: [
     { fr: "Vue générale", en: "Overview", anchor: "vue-generale" },
