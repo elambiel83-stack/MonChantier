@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type FavoriteItemType = "product" | "service";
 type Favorite = { itemType: FavoriteItemType; itemId: number };
@@ -41,8 +41,15 @@ export default function FavoritesPanel() {
     void load();
   }, []);
 
-  const isFavorite = (itemType: FavoriteItemType, itemId: number) =>
-    favorites.some((f) => f.itemType === itemType && f.itemId === itemId);
+  const favoriteKeys = useMemo(
+    () => new Set(favorites.map((favorite) => `${favorite.itemType}-${favorite.itemId}`)),
+    [favorites]
+  );
+
+  const isFavorite = useCallback(
+    (itemType: FavoriteItemType, itemId: number) => favoriteKeys.has(`${itemType}-${itemId}`),
+    [favoriteKeys]
+  );
 
   const toggleFavorite = async (itemType: FavoriteItemType, itemId: number) => {
     const key = `${itemType}-${itemId}`;
