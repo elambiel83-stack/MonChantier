@@ -18,6 +18,12 @@ function sanitizeCurrency(value: unknown) {
   return /^[A-Z]{3,5}$/.test(normalized) ? normalized : 'CDF';
 }
 
+function withSearchParam(url: string, key: string, value: string) {
+  const nextUrl = new URL(url);
+  nextUrl.searchParams.set(key, value);
+  return nextUrl.toString();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -58,8 +64,7 @@ export async function POST(request: NextRequest) {
       location,
     });
 
-    const joiner = returnUrl.includes('?') ? '&' : '?';
-    const returnUrlWithReference = `${returnUrl}${joiner}reference=${encodeURIComponent(paymentReference)}`;
+    const returnUrlWithReference = withSearchParam(returnUrl, 'reference', paymentReference);
 
     if (isPayPalConfigured()) {
       await registerPendingPayment(paymentReference, 'paypal');
@@ -94,7 +99,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      approveUrl: `${returnUrlWithReference}&paypal_order_id=demo_${Date.now()}&amount=${amount}&items=${encodeURIComponent(productSummary)}`,
+      approveUrl: withSearchParam(
+        withSearchParam(
+          withSearchParam(returnUrlWithReference, 'paypal_order_id', `demo_${Date.now()}`),
+          'amount',
+          String(amount)
+        ),
+        'items',
+        productSummary
+      ),
       orderId: paymentReference,
       reference: paymentReference,
       invoice: confirmation.invoice,
