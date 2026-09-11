@@ -13,6 +13,7 @@ export default function SupportPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [banner, setBanner] = useState("");
+  const [bannerTone, setBannerTone] = useState<"success" | "error">("success");
   const [newTicket, setNewTicket] = useState({ subject: "", message: "" });
 
   const load = async () => {
@@ -44,9 +45,11 @@ export default function SupportPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Erreur envoi");
       setNewTicket({ subject: "", message: "" });
+      setBannerTone("success");
       setBanner("Ticket envoyé. Notre équipe vous répondra rapidement.");
       await load();
     } catch (err) {
+      setBannerTone("error");
       setBanner(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setSaving(false);
@@ -58,7 +61,13 @@ export default function SupportPanel() {
       <h2 className="text-lg font-semibold">Support</h2>
 
       {banner && (
-        <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+        <div
+          className={`mt-3 rounded-lg border p-3 text-sm ${
+            bannerTone === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}
+        >
           {banner}
         </div>
       )}
