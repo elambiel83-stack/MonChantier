@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   confirmPayment,
+  ConfirmPaymentPayload,
   generatePaymentReference,
   registerPendingPayment,
 } from '@/lib/paymentConfirmation';
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     const reference = typeof tx_ref === 'string' && tx_ref.trim()
       ? tx_ref.trim()
       : generatePaymentReference('MM');
-    const paymentPayload = {
+    const paymentPayload: ConfirmPaymentPayload = {
       reference,
       customerName: resolvedCustomerName,
       customerEmail: resolvedCustomerEmail,
