@@ -263,7 +263,6 @@ export function createSite(input: {
   currency?: 'USD' | 'CDF';
 }): Promise<Site> {
   return withLock(async () => {
-    const [payments, deliveries] = await Promise.all([listPaymentStatuses(), listAllDeliveries()]);
     const store = await readStore();
     const now = new Date().toISOString();
     const site: Site = {
@@ -286,7 +285,10 @@ export function createSite(input: {
       createdAt: now,
       updatedAt: now,
     };
-    backfillSiteReferences(site, payments, deliveries);
+    if (site.clientIdentity && site.address) {
+      const [payments, deliveries] = await Promise.all([listPaymentStatuses(), listAllDeliveries()]);
+      backfillSiteReferences(site, payments, deliveries);
+    }
     store.sites.push(site);
     await writeStore(store);
     return site;

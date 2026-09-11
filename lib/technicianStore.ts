@@ -205,7 +205,7 @@ export function addTechnicianReview(
     const store = await readStore();
     const profile = store.profiles[normalized] || emptyProfile(normalized);
     const nextReviewKey =
-      input.authorIdentity && input.orderReference && input.serviceId
+      input.authorIdentity && input.orderReference && input.serviceId !== undefined
         ? buildTechnicianReviewKey({
             technicianIdentity: normalized,
             authorIdentity: input.authorIdentity,
@@ -256,7 +256,7 @@ export function hasTechnicianReview(
   const normalized = normalizeIdentity(identity);
   const key = buildTechnicianReviewKey({
     technicianIdentity: normalized,
-    authorIdentity: input.authorIdentity,
+    authorIdentity: normalizeIdentity(input.authorIdentity),
     orderReference: input.orderReference,
     serviceId: input.serviceId,
   });
