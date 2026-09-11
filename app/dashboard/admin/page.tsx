@@ -99,6 +99,23 @@ type Delivery = {
   deliveryAddress: string;
 };
 
+type SiteStatus = 'planning' | 'active' | 'paused' | 'completed';
+
+type Site = {
+  id: string;
+  name: string;
+  address: string;
+  siteManagerIdentity: string;
+  clientIdentity?: string;
+  status: SiteStatus;
+  budget?: number;
+  currency?: 'USD' | 'CDF';
+  tasks: Array<{ id: string; done: boolean }>;
+  incidents: Array<{ id: string; resolved: boolean }>;
+  team: Array<{ identity: string }>;
+  updatedAt: string;
+};
+
 type LoanBorrower = {
   fullName: string;
   phone: string;
@@ -219,6 +236,7 @@ export default function AdminPage() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [busyDeliveryId, setBusyDeliveryId] = useState<string | null>(null);
   const [driverAssignInput, setDriverAssignInput] = useState<Record<string, string>>({});
+  const [sites, setSites] = useState<Site[]>([]);
   const [products, setProducts] = useState<StoredProduct[]>([]);
   const [productEdits, setProductEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
   const [busyProductId, setBusyProductId] = useState<number | null>(null);
@@ -315,6 +333,17 @@ export default function AdminPage() {
       setDeliveries(Array.isArray(data.deliveries) ? data.deliveries : []);
     } catch {
       setDeliveries([]);
+    }
+  };
+
+  const loadSites = async () => {
+    try {
+      const response = await fetch('/api/sites', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les chantiers');
+      const data = (await response.json()) as { sites?: Site[] };
+      setSites(Array.isArray(data.sites) ? data.sites : []);
+    } catch {
+      setSites([]);
     }
   };
 
@@ -618,6 +647,7 @@ export default function AdminPage() {
         loadPlatformRoles(),
         loadLoans(),
         loadDeliveries(),
+        loadSites(),
         loadProducts(),
         loadServices(),
         loadTaxes(),
@@ -652,6 +682,46 @@ export default function AdminPage() {
   ];
 
   const paymentRows = stats.recent.filter((event) => event.kind === 'payment');
+  const roleAssignmentsByRole = APP_ROLES.map((role) => ({
+    role,
+    label: ROLE_LABELS[role][lang],
+    count: platformRoles.filter((assignment) => assignment.role === role).length,
+  }));
+  const adminUsersByRole = APP_ROLES.map((role) => ({
+    role,
+    label: ROLE_LABELS[role][lang],
+    count: users.filter((user) => user.role === role).length,
+    activeCount: users.filter((user) => user.role === role && user.active).length,
+  }));
+  const clientUsers = adminUsersByRole.find((item) => item.role === 'client');
+  const supplierUsers = adminUsersByRole.find((item) => item.role === 'supplier');
+  const driverUsers = adminUsersByRole.find((item) => item.role === 'driver');
+  const technicianUsers = adminUsersByRole.find((item) => item.role === 'technician');
+  const siteManagerUsers = adminUsersByRole.find((item) => item.role === 'site-manager');
+  const supportEvents = stats.recent.filter((event) => event.kind === 'contact');
+  const partnerEvents = stats.recent.filter((event) => event.kind === 'partner');
+  const activeSites = sites.filter((site) => site.status === 'active');
+  const configuredProductCount = products.filter((product) => product.priceUSD !== null || product.priceCDF !== null).length;
+  const configuredServiceCount = services.filter((service) => service.priceUSD !== null || service.priceCDF !== null).length;
+  const deliveryStatusCounts = Object.entries(
+    deliveries.reduce<Record<string, number>>((acc, delivery) => {
+      acc[delivery.status] = (acc[delivery.status] || 0) + 1;
+      return acc;
+    }, {})
+  );
+  const orderStatusCounts = Object.entries(
+    orders.reduce<Record<string, number>>((acc, order) => {
+      const key = order.orderStatus || 'processing';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  );
+  const loanStatusCounts = Object.entries(
+    loans.reduce<Record<string, number>>((acc, loan) => {
+      acc[loan.status] = (acc[loan.status] || 0) + 1;
+      return acc;
+    }, {})
+  );
   const getEventLabel = (event: AdminEvent) => {
     if (lang === 'fr') return event.labelFr || event.label;
     return event.labelEn || event.label;
@@ -660,6 +730,9 @@ export default function AdminPage() {
   const getRoleLabel = (role?: string) => {
     if (!role) return '-';
     const roleKey = role.toLowerCase();
+    if (roleKey in ROLE_LABELS) {
+      return ROLE_LABELS[roleKey as AppRole][lang];
+    }
     const labels = {
       fr: {
         admin: 'Administrateur',
@@ -825,6 +898,43 @@ export default function AdminPage() {
           ))}
         </div>
 
+        <div id="analytics" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Analytics opérationnels', 'Operational analytics')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm font-medium text-slate-900">{t('Paiements par canal', 'Payments by channel')}</p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                <p>Mobile Money: {stats.summary.mobileMoneyPayments}</p>
+                <p>{t('Carte', 'Card')}: {stats.summary.cardPayments}</p>
+                <p>PayPal: {stats.summary.paypalPayments}</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm font-medium text-slate-900">{t('Commandes et livraisons', 'Orders and deliveries')}</p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                {orderStatusCounts.length === 0 ? (
+                  <p>{t('Aucune commande confirmée.', 'No confirmed orders.')}</p>
+                ) : (
+                  orderStatusCounts.map(([status, count]) => <p key={status}>{status}: {count}</p>)
+                )}
+                {deliveryStatusCounts.map(([status, count]) => <p key={status}>{status}: {count}</p>)}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm font-medium text-slate-900">{t('Crédits et catalogue', 'Loans and catalog')}</p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                {loanStatusCounts.length === 0 ? (
+                  <p>{t('Aucun crédit chargé.', 'No loans loaded.')}</p>
+                ) : (
+                  loanStatusCounts.map(([status, count]) => <p key={status}>{status}: {count}</p>)
+                )}
+                <p>{t('Produits tarifés', 'Priced products')}: {configuredProductCount}/{products.length}</p>
+                <p>{t('Services tarifés', 'Priced services')}: {configuredServiceCount}/{services.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">{t('Activité récente', 'Recent activity')}</h2>
@@ -865,6 +975,36 @@ export default function AdminPage() {
               ))
             )}
           </ul>
+        </div>
+
+        <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Support', 'Support')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Messages reçus', 'Messages received')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{stats.summary.contacts}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Nouveaux partenaires', 'New partners')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{stats.summary.partners}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Derniers tickets visibles', 'Recent visible tickets')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{supportEvents.length}</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {supportEvents.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('Aucun message support récent.', 'No recent support messages.')}</p>
+            ) : (
+              supportEvents.map((event) => (
+                <div key={event.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <p className="font-medium text-slate-900">{getEventLabel(event)}</p>
+                  <p className="mt-1 text-slate-500">{getEventDetails(event) || '—'}</p>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1076,7 +1216,79 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="clients" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Clients', 'Clients')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Utilisateurs admin', 'Admin users')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{clientUsers?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Actifs', 'Active')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{clientUsers?.activeCount ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Rôles plateforme', 'Platform roles')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{roleAssignmentsByRole.find((item) => item.role === 'client')?.count ?? 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="fournisseurs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Fournisseurs', 'Suppliers')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Utilisateurs admin', 'Admin users')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{supplierUsers?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Rôles plateforme', 'Platform roles')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{roleAssignmentsByRole.find((item) => item.role === 'supplier')?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Demandes partenaires visibles', 'Visible partner requests')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{partnerEvents.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="transporteurs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Transporteurs', 'Drivers')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Utilisateurs admin', 'Admin users')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{driverUsers?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Rôles plateforme', 'Platform roles')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{roleAssignmentsByRole.find((item) => item.role === 'driver')?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Livraisons assignées', 'Assigned deliveries')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{deliveries.filter((delivery) => Boolean(delivery.driverIdentity)).length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="professionnels" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Professionnels', 'Professionals')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Techniciens', 'Technicians')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{technicianUsers?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Services publiés', 'Published services')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{services.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Services actifs', 'Active services')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{services.filter((service) => service.active).length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="configuration" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">
             {t('Attribution des rôles plateforme', 'Platform role assignment')}
           </h2>
@@ -1404,6 +1616,46 @@ export default function AdminPage() {
           </div>
         </div>
 
+        <div id="chantiers" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Chantiers', 'Sites')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Chantiers', 'Sites')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{sites.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Actifs', 'Active')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{activeSites.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Chefs de chantier', 'Site managers')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{siteManagerUsers?.count ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Rôles plateforme', 'Platform roles')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{roleAssignmentsByRole.find((item) => item.role === 'site-manager')?.count ?? 0}</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {sites.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('Aucun chantier chargé.', 'No sites loaded.')}</p>
+            ) : (
+              sites.slice(0, 8).map((site) => (
+                <div key={site.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium text-slate-900">{site.name}</p>
+                    <span className="text-slate-500">{site.status}</span>
+                  </div>
+                  <p className="mt-1 text-slate-600">{site.address}</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {site.team.length} {t('membre(s)', 'member(s)')} · {site.tasks.length} {t('tâche(s)', 'task(s)')} · {site.incidents.filter((incident) => !incident.resolved).length} {t('incident(s) ouverts', 'open incident(s)')}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         <div id="produits" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Produits', 'Products')}</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -1559,7 +1811,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="services" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Services', 'Services')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1726,7 +1978,71 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="promotions" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Promotions', 'Promotions')}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {t(
+              'Aucun moteur de promotions dédié n’est encore stocké ; ce suivi affiche la couverture tarifaire du catalogue.',
+              'No dedicated promotions engine is stored yet; this view tracks catalog pricing coverage.'
+            )}
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Produits tarifés', 'Priced products')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{configuredProductCount}/{products.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Services tarifés', 'Priced services')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{configuredServiceCount}/{services.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="securite" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Sécurité', 'Security')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Utilisateurs inactifs', 'Inactive users')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{users.filter((user) => !user.active).length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('API stats', 'Stats API')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{apiOnline ? t('OK', 'OK') : t('Hors ligne', 'Offline')}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('API utilisateurs', 'Users API')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{usersApiOnline ? t('OK', 'OK') : t('Hors ligne', 'Offline')}</p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-slate-500">
+            {t(
+              'Aucun audit de connexion ni alerting dédié n’est encore branché ; la surveillance se limite ici aux états des APIs et à l’activation des identités.',
+              'No dedicated sign-in audit or alerting is wired yet; monitoring here is limited to API health and identity activation.'
+            )}
+          </p>
+        </div>
+
+        <div id="logs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Logs', 'Logs')}</h2>
+          <div className="mt-4 space-y-3">
+            {stats.recent.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('Aucun événement récent.', 'No recent events.')}</p>
+            ) : (
+              stats.recent.map((event) => (
+                <div key={event.id} className="rounded-lg border border-slate-100 p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium text-slate-900">{getEventLabel(event)}</p>
+                    <span className="text-xs uppercase tracking-wide text-slate-400">{event.kind}</span>
+                  </div>
+                  <p className="mt-1 text-slate-500">{getEventDetails(event) || '—'}</p>
+                  <p className="mt-1 text-xs text-slate-400">{formatDate(event.createdAt)}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div id="taxes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">{t('Taxes (TVA à reverser)', 'Taxes (VAT payable)')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1794,6 +2110,24 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+        </div>
+
+        <div id="configuration-details" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Configuration applicative', 'Application configuration')}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Rôles avec affectation', 'Roles with assignments')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{roleAssignmentsByRole.filter((item) => item.count > 0).length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Identités affectées', 'Assigned identities')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{platformRoles.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">{t('Catalogue global', 'Global catalog')}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{products.length + services.length}</p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
