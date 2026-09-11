@@ -154,14 +154,6 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
   });
 
   if (invoice.deliveryAddress && invoice.customerEmail) {
-    await autoLinkOrderReferenceToSite({
-      reference: payload.reference,
-      clientIdentity: invoice.customerEmail,
-      deliveryAddress: invoice.deliveryAddress,
-    });
-  }
-
-  if (invoice.deliveryAddress && invoice.customerEmail) {
     const delivery = await createDeliveryFromPayment({
       reference: payload.reference,
       clientIdentity: invoice.customerEmail,
@@ -173,6 +165,11 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
       reference: delivery.reference,
       clientIdentity: delivery.clientIdentity,
       deliveryAddress: delivery.deliveryAddress,
+    });
+    await autoLinkOrderReferenceToSite({
+      reference: payload.reference,
+      clientIdentity: invoice.customerEmail,
+      deliveryAddress: invoice.deliveryAddress,
     });
   }
 
