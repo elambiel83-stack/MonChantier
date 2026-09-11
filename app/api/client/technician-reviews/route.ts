@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       .trim()
       .toLowerCase();
 
-    if (!payment || payment.state !== 'confirmed' || payment.orderStatus !== 'delivered' || paymentClientIdentity !== actor.identity) {
+    if (!payment || payment.orderStatus !== 'delivered' || paymentClientIdentity !== actor.identity) {
       return NextResponse.json({ message: 'Commande non éligible à une évaluation' }, { status: 400 });
     }
 
