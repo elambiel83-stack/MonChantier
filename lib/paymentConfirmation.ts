@@ -4,8 +4,10 @@ import { buildInvoiceText, createInvoice, InvoicePaymentMethod } from '@/lib/inv
 import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 import {
+  buildPendingPaymentReconciliation,
   getStoredPaymentStatus,
   setStoredPaymentStatus,
+  StoredPaymentStatus,
   StoredInvoice,
 } from '@/lib/paymentStore';
 import { createDeliveryFromPayment } from '@/lib/deliveryStore';
@@ -55,6 +57,116 @@ export function generatePaymentReference(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomBytes(9).toString('base64url')}`;
 }
 
+function buildSkippedReconciliation() {
+  const updatedAt = new Date().toISOString();
+  return {
+    delivery: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
+    orderLink: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
+    deliveryLink: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
+  };
+}
+
+function isReconciliationComplete(status: StoredPaymentStatus | null) {
+  const reconciliation = status?.reconciliation;
+  if (!reconciliation) return false;
+  return [reconciliation.delivery, reconciliation.orderLink, reconciliation.deliveryLink].every(
+    (step) => step.state === 'completed' || step.state === 'skipped'
+  );
+}
+
+function updateReconciliationStep(status: StoredPaymentStatus, step: 'delivery' | 'orderLink' | 'deliveryLink', patch: {
+  state: 'pending' | 'completed' | 'failed' | 'skipped';
+  reference?: string;
+  siteId?: string;
+  detail?: string;
+}) {
+  const current = status.reconciliation || buildPendingPaymentReconciliation();
+  status.reconciliation = {
+    ...current,
+    [step]: {
+      ...current[step],
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+}
+
+async function synchronizePaymentArtifacts(
+  status: StoredPaymentStatus,
+  invoice: ConfirmPaymentPayload & { customerEmail?: string; customerName?: string; deliveryAddress?: string; location?: { lat?: number; lng?: number } | null }
+) {
+  if (!invoice.deliveryAddress || !invoice.customerEmail) {
+    status.reconciliation = buildSkippedReconciliation();
+    status.updatedAt = new Date().toISOString();
+    await setStoredPaymentStatus(status);
+    return status;
+  }
+
+  if (!status.reconciliation) {
+    status.reconciliation = buildPendingPaymentReconciliation();
+  }
+
+  let deliveryReference = status.reconciliation.delivery.reference;
+
+  try {
+    const delivery = await createDeliveryFromPayment({
+      reference: status.reference,
+      clientIdentity: invoice.customerEmail,
+      clientName: invoice.customerName || 'Client MonChantier',
+      deliveryAddress: invoice.deliveryAddress,
+      location: invoice.location,
+    });
+    deliveryReference = delivery.reference;
+    updateReconciliationStep(status, 'delivery', {
+      state: 'completed',
+      reference: delivery.reference,
+      detail: 'Livraison créée ou retrouvée',
+    });
+    await setStoredPaymentStatus(status);
+
+    const linkedDeliverySite = await autoLinkDeliveryReferenceToSite({
+      reference: delivery.reference,
+      clientIdentity: delivery.clientIdentity,
+      deliveryAddress: delivery.deliveryAddress,
+    });
+    updateReconciliationStep(status, 'deliveryLink', linkedDeliverySite
+      ? { state: 'completed', siteId: linkedDeliverySite.id, detail: 'Livraison reliée au chantier' }
+      : { state: 'skipped', detail: 'Aucun chantier correspondant pour la livraison' });
+    await setStoredPaymentStatus(status);
+  } catch (error) {
+    updateReconciliationStep(status, 'delivery', {
+      state: 'failed',
+      reference: deliveryReference,
+      detail: error instanceof Error ? error.message : 'Erreur création livraison',
+    });
+    status.updatedAt = new Date().toISOString();
+    await setStoredPaymentStatus(status);
+    throw error;
+  }
+
+  try {
+    const linkedOrderSite = await autoLinkOrderReferenceToSite({
+      reference: status.reference,
+      clientIdentity: invoice.customerEmail,
+      deliveryAddress: invoice.deliveryAddress,
+    });
+    updateReconciliationStep(status, 'orderLink', linkedOrderSite
+      ? { state: 'completed', siteId: linkedOrderSite.id, detail: 'Commande reliée au chantier' }
+      : { state: 'skipped', detail: 'Aucun chantier correspondant pour la commande' });
+    status.updatedAt = new Date().toISOString();
+    await setStoredPaymentStatus(status);
+    return status;
+  } catch (error) {
+    updateReconciliationStep(status, 'orderLink', {
+      state: 'failed',
+      detail: error instanceof Error ? error.message : 'Erreur liaison commande/chantier',
+    });
+    status.updatedAt = new Date().toISOString();
+    await setStoredPaymentStatus(status);
+    throw error;
+  }
+}
+
 export async function registerPendingPayment(reference: string, method: InvoicePaymentMethod) {
   await setStoredPaymentStatus({
     reference,
@@ -81,6 +193,12 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
 
   const existingStatus = await getStoredPaymentStatus(payload.reference);
   if (existingStatus?.state === 'confirmed' && existingStatus.invoice) {
+    if (
+      existingStatus.fullInvoice &&
+      !isReconciliationComplete(existingStatus)
+    ) {
+      await synchronizePaymentArtifacts(existingStatus, existingStatus.fullInvoice);
+    }
     return {
       success: true,
       alreadyConfirmed: true,
@@ -151,26 +269,15 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     invoice: invoiceResponse,
     fullInvoice: invoice,
     orderStatus: 'processing',
+    reconciliation:
+      invoice.deliveryAddress && invoice.customerEmail
+        ? buildPendingPaymentReconciliation()
+        : buildSkippedReconciliation(),
   });
 
-  if (invoice.deliveryAddress && invoice.customerEmail) {
-    const delivery = await createDeliveryFromPayment({
-      reference: payload.reference,
-      clientIdentity: invoice.customerEmail,
-      clientName: invoice.customerName,
-      deliveryAddress: invoice.deliveryAddress,
-      location: invoice.location,
-    });
-    await autoLinkDeliveryReferenceToSite({
-      reference: delivery.reference,
-      clientIdentity: delivery.clientIdentity,
-      deliveryAddress: delivery.deliveryAddress,
-    });
-    await autoLinkOrderReferenceToSite({
-      reference: payload.reference,
-      clientIdentity: invoice.customerEmail,
-      deliveryAddress: invoice.deliveryAddress,
-    });
+  const confirmedStatus = await getStoredPaymentStatus(payload.reference);
+  if (confirmedStatus) {
+    await synchronizePaymentArtifacts(confirmedStatus, invoice);
   }
 
   return {

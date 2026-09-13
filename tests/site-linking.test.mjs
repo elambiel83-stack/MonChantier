@@ -47,6 +47,15 @@ function createPaymentConfirmationHarness(source, overrides = {}) {
       'function isSupportedMethod(value)'
     )
     .replace('export function generatePaymentReference(prefix: string): string', 'function generatePaymentReference(prefix)')
+    .replace('function isReconciliationComplete(status: StoredPaymentStatus | null)', 'function isReconciliationComplete(status)')
+    .replace(
+      /function updateReconciliationStep\(status: StoredPaymentStatus, step: 'delivery' \| 'orderLink' \| 'deliveryLink', patch: \{\s*state: 'pending' \| 'completed' \| 'failed' \| 'skipped';\s*reference\?: string;\s*siteId\?: string;\s*detail\?: string;\s*\}\)/,
+      'function updateReconciliationStep(status, step, patch)'
+    )
+    .replace(
+      /async function synchronizePaymentArtifacts\(\s*status: StoredPaymentStatus,\s*invoice: ConfirmPaymentPayload & \{ customerEmail\?: string; customerName\?: string; deliveryAddress\?: string; location\?: \{ lat\?: number; lng\?: number \} \| null \}\s*\)/,
+      'async function synchronizePaymentArtifacts(status, invoice)'
+    )
     .replace(
       'export async function registerPendingPayment(reference: string, method: InvoicePaymentMethod)',
       'async function registerPendingPayment(reference, method)'
@@ -61,6 +70,7 @@ function createPaymentConfirmationHarness(source, overrides = {}) {
     'buildInvoicePdf',
     'isMailerConfigured',
     'sendInvoiceEmail',
+    'buildPendingPaymentReconciliation',
     'getStoredPaymentStatus',
     'setStoredPaymentStatus',
     'createDeliveryFromPayment',
@@ -77,6 +87,11 @@ function createPaymentConfirmationHarness(source, overrides = {}) {
     overrides.buildInvoicePdf || (async () => Buffer.from('')),
     overrides.isMailerConfigured || (() => false),
     overrides.sendInvoiceEmail || (async () => undefined),
+    overrides.buildPendingPaymentReconciliation || (() => ({
+      delivery: { state: 'pending', updatedAt: new Date().toISOString() },
+      orderLink: { state: 'pending', updatedAt: new Date().toISOString() },
+      deliveryLink: { state: 'pending', updatedAt: new Date().toISOString() },
+    })),
     overrides.getStoredPaymentStatus || (async () => null),
     overrides.setStoredPaymentStatus || (async () => undefined),
     overrides.createDeliveryFromPayment || (async (payload) => payload),
@@ -254,6 +269,101 @@ test('payment confirmation does not auto-link orders without matching client ide
   });
 
   assert.deepEqual(linkedReferences, []);
+});
+
+test('payment confirmation retries incomplete reconciliation on confirmed replay', async () => {
+  const source = await read('lib/paymentConfirmation.ts');
+  let storedStatus = {
+    reference: 'PAY-RETRY',
+    state: 'confirmed',
+    method: 'mobilemoney',
+    updatedAt: '2026-09-13T00:00:00.000Z',
+    invoice: { number: 'INV-RETRY' },
+    fullInvoice: {
+      customerEmail: 'client@example.com',
+      customerName: 'Client',
+      deliveryAddress: 'Avenue Kasavubu 10',
+      location: null,
+    },
+    reconciliation: {
+      delivery: { state: 'completed', reference: 'DEL-PAY-RETRY', updatedAt: '2026-09-13T00:00:00.000Z' },
+      deliveryLink: { state: 'completed', siteId: 'site-1', updatedAt: '2026-09-13T00:00:00.000Z' },
+      orderLink: { state: 'failed', detail: 'timeout', updatedAt: '2026-09-13T00:00:00.000Z' },
+    },
+  };
+  const { confirmPayment } = createPaymentConfirmationHarness(source, {
+    getStoredPaymentStatus: async () => storedStatus,
+    setStoredPaymentStatus: async (nextStatus) => {
+      storedStatus = nextStatus;
+    },
+    createDeliveryFromPayment: async () => ({
+      reference: 'DEL-PAY-RETRY',
+      clientIdentity: 'client@example.com',
+      deliveryAddress: 'Avenue Kasavubu 10',
+    }),
+    autoLinkDeliveryReferenceToSite: async () => ({ id: 'site-1' }),
+    autoLinkOrderReferenceToSite: async () => ({ id: 'site-1' }),
+  });
+
+  const result = await confirmPayment({
+    reference: 'PAY-RETRY',
+    method: 'mobilemoney',
+    amount: 116,
+    customerEmail: 'client@example.com',
+    deliveryAddress: 'Avenue Kasavubu 10',
+  });
+
+  assert.equal(result.alreadyConfirmed, true);
+  assert.equal(storedStatus.reconciliation.orderLink.state, 'completed');
+  assert.equal(storedStatus.reconciliation.orderLink.siteId, 'site-1');
+});
+
+test('payment confirmation records reconciliation failure before surfacing downstream errors', async () => {
+  const source = await read('lib/paymentConfirmation.ts');
+  const writes = [];
+  let storedStatus = null;
+  const { confirmPayment } = createPaymentConfirmationHarness(source, {
+    createInvoice: (payload) => ({
+      standard: 'OHADA',
+      legalReference: 'SYSCOHADA',
+      invoiceNumber: 'INV-FAIL',
+      customerName: payload.customerName,
+      customerEmail: payload.customerEmail,
+      taxRate: 16,
+      totalHT: 100,
+      totalTVA: 16,
+      totalTTC: 116,
+      currency: 'CDF',
+      deliveryAddress: payload.deliveryAddress,
+      location: payload.location,
+    }),
+    getStoredPaymentStatus: async () => storedStatus,
+    setStoredPaymentStatus: async (nextStatus) => {
+      storedStatus = nextStatus;
+      writes.push(nextStatus.reconciliation?.delivery.state || 'none');
+    },
+    createDeliveryFromPayment: async () => {
+      throw new Error('delivery store unavailable');
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      confirmPayment({
+        reference: 'PAY-FAIL',
+        method: 'mobilemoney',
+        amount: 116,
+        currency: 'CDF',
+        customerName: 'Client MonChantier',
+        customerEmail: 'client@example.com',
+        deliveryAddress: 'Avenue Kasavubu 10',
+      }),
+    /delivery store unavailable/
+  );
+
+  assert.equal(writes.includes('pending'), true);
+  assert.equal(storedStatus.reconciliation.delivery.state, 'failed');
+  assert.match(storedStatus.reconciliation.delivery.detail, /delivery store unavailable/);
 });
 
 test('site manager dashboard explains automatic linkage with manual fallback', async () => {

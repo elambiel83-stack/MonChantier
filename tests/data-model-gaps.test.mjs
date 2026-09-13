@@ -45,6 +45,18 @@ test('server-side stores use the shared SQLite-backed state store instead of wri
   }
 });
 
+test('payment status persistence tracks reconciliation of delivery and site-link side effects', async () => {
+  const [storeSource, confirmationSource] = await Promise.all([
+    read('lib/paymentStore.ts'),
+    read('lib/paymentConfirmation.ts'),
+  ]);
+
+  assert.match(storeSource, /export type PaymentReconciliation/);
+  assert.match(storeSource, /reconciliation\?: PaymentReconciliation/);
+  assert.match(confirmationSource, /synchronizePaymentArtifacts/);
+  assert.match(confirmationSource, /buildPendingPaymentReconciliation/);
+});
+
 test('driver profile model covers vehicle, documents and earnings', async () => {
   const source = await read('lib/driverStore.ts');
 

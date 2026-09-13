@@ -141,6 +141,7 @@ Anti-replay webhook:
 
 - Le serveur persiste les `event_id` Stripe/PayPal/Mobile Money déjà traités dans la base SQLite applicative.
 - Un même événement webhook ne déclenche pas deux fois la confirmation/facture, même après redémarrage serveur.
+- Les confirmations de paiement persistées gardent aussi un état de réconciliation livraison/chantier, pour permettre une reprise idempotente après incident partiel.
 
 Checklist go-live (paiements + factures):
 

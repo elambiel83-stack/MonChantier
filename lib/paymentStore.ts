@@ -21,6 +21,22 @@ export type StoredInvoice = {
 // paiement, puis suit le traitement logistique jusqu'à livraison ou annulation.
 export type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+export type PaymentReconciliationState = 'pending' | 'completed' | 'failed' | 'skipped';
+
+export type PaymentReconciliationStep = {
+  state: PaymentReconciliationState;
+  reference?: string;
+  siteId?: string;
+  detail?: string;
+  updatedAt: string;
+};
+
+export type PaymentReconciliation = {
+  delivery: PaymentReconciliationStep;
+  orderLink: PaymentReconciliationStep;
+  deliveryLink: PaymentReconciliationStep;
+};
+
 export type StoredPaymentStatus = {
   reference: string;
   state: 'pending' | 'confirmed';
@@ -32,6 +48,7 @@ export type StoredPaymentStatus = {
   fullInvoice?: InvoiceData;
   orderStatus?: OrderStatus;
   cancelReason?: string;
+  reconciliation?: PaymentReconciliation;
 };
 
 type WebhookProvider = 'stripe' | 'paypal' | 'mobilemoney';
@@ -58,6 +75,18 @@ const INITIAL_STORE: PaymentStoreModel = {
 };
 
 let storeMutex: Promise<void> = Promise.resolve();
+
+function buildReconciliationStep(state: PaymentReconciliationState): PaymentReconciliationStep {
+  return { state, updatedAt: new Date().toISOString() };
+}
+
+export function buildPendingPaymentReconciliation(): PaymentReconciliation {
+  return {
+    delivery: buildReconciliationStep('pending'),
+    orderLink: buildReconciliationStep('pending'),
+    deliveryLink: buildReconciliationStep('pending'),
+  };
+}
 
 
 async function readStore(): Promise<PaymentStoreModel> {
