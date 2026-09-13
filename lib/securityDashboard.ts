@@ -2,6 +2,7 @@ import { listUsers } from '@/lib/adminStore';
 import { listRateLimitBuckets } from '@/lib/rateLimit';
 import { listStoredRoles, listRoleAudit, isAssignmentActive } from '@/lib/roleStore';
 import { listSecurityEvents } from '@/lib/securityStore';
+import { buildSecurityConfigSummary } from '@/lib/securityConfig';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -16,6 +17,7 @@ export async function buildSecurityDashboardSummary() {
     listStoredRoles(),
     listRoleAudit(),
   ]);
+  const config = buildSecurityConfigSummary();
 
   const users = listUsers();
   const rateLimitBuckets = listRateLimitBuckets(['otp-request:', 'otp-verify:', 'admin-login:']);
@@ -51,6 +53,14 @@ export async function buildSecurityDashboardSummary() {
         event.type === 'admin_login_failed' || event.type === 'admin_login_rate_limited'
       ).length,
       adminSuccess24h: recentEvents24h.filter((event) => event.type === 'admin_login_succeeded').length,
+      webhookRejected24h: recentEvents24h.filter((event) => event.type === 'webhook_rejected').length,
+      manualPaymentDenied24h: recentEvents24h.filter((event) => event.type === 'manual_payment_denied').length,
+    },
+    configuration: {
+      environment: config.environment,
+      criticalIssues: config.issues.filter((issue) => issue.severity === 'critical').length,
+      totalIssues: config.issues.length,
+      issues: config.issues.slice(0, 10),
     },
     throttledBuckets: throttledBuckets.slice(0, 10),
     recentEvents: sortedSecurityEvents.slice(0, 30),

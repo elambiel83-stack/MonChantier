@@ -3,6 +3,7 @@ import { isAppRole } from '@/lib/roles';
 import { listStoredRoles, setStoredRole } from '@/lib/roleStore';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { requireAdmin } from '@/lib/requireAdmin';
+import { recordSecurityEvent } from '@/lib/securityStore';
 
 export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
@@ -35,5 +36,13 @@ export async function POST(request: NextRequest) {
   }
   const expiresAt = typeof body?.expiresAt === 'string' ? body.expiresAt : undefined;
   const assignment = await setStoredRole({ identity, role, actor: actor.identity, expiresAt });
+  await recordSecurityEvent({
+    type: 'role_assignment_changed',
+    severity: ['admin', 'director', 'accountant', 'credit-agent', 'credit-committee'].includes(role)
+      ? 'critical'
+      : 'warning',
+    identity,
+    detail: `Rôle défini sur ${role} par ${actor.identity}${expiresAt ? ` (expire ${expiresAt})` : ''}`,
+  });
   return NextResponse.json({ success: true, identity, ...assignment });
 }

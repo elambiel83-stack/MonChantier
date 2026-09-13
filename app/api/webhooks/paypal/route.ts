@@ -8,6 +8,7 @@ import {
   hasProcessedWebhookEvent,
   markWebhookEventProcessed,
 } from '@/lib/paymentStore';
+import { recordSecurityEvent } from '@/lib/securityStore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,12 @@ export async function POST(request: NextRequest) {
     const eventId = typeof body.id === 'string' ? body.id : null;
 
     if (!eventId) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'paypal',
+        detail: 'Event PayPal sans identifiant',
+      });
       return NextResponse.json(
         { message: 'Event PayPal sans identifiant' },
         { status: 400 }
@@ -23,11 +30,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (await hasProcessedWebhookEvent('paypal', eventId)) {
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'paypal',
+        detail: `Event dupliqué ${eventId}`,
+      });
       return NextResponse.json({ received: true, duplicate: true });
     }
 
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
     if (!webhookId) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'critical',
+        identity: 'paypal',
+        detail: 'PAYPAL_WEBHOOK_ID manquant',
+      });
       return NextResponse.json(
         { message: 'PAYPAL_WEBHOOK_ID manquant' },
         { status: 500 }
@@ -46,11 +65,24 @@ export async function POST(request: NextRequest) {
       },
     });
     if (!valid) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'paypal',
+        ip: request.headers.get('x-forwarded-for') || undefined,
+        detail: 'Signature PayPal invalide',
+      });
       return NextResponse.json({ message: 'Signature PayPal invalide' }, { status: 400 });
     }
 
     if (eventType !== 'CHECKOUT.ORDER.APPROVED' && eventType !== 'PAYMENT.CAPTURE.COMPLETED') {
       await markWebhookEventProcessed('paypal', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'paypal',
+        detail: `Event ignoré ${eventType || 'unknown'}`,
+      });
       return NextResponse.json({ received: true, ignored: true });
     }
 
@@ -80,11 +112,23 @@ export async function POST(request: NextRequest) {
         amount: walletPayload.amount,
       });
       await markWebhookEventProcessed('paypal', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'paypal',
+        detail: `Recharge validée ${eventId}`,
+      });
       return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
     }
 
     const invoicePayload = decodeInvoicePayload(customId);
     if (!invoicePayload) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'paypal',
+        detail: 'custom_id absent ou invalide',
+      });
       return NextResponse.json(
         { message: 'custom_id absent ou invalide dans le webhook PayPal' },
         { status: 400 }
@@ -93,6 +137,12 @@ export async function POST(request: NextRequest) {
 
     const result = await confirmPayment(invoicePayload);
     await markWebhookEventProcessed('paypal', eventId);
+    await recordSecurityEvent({
+      type: 'webhook_processed',
+      severity: 'info',
+      identity: 'paypal',
+      detail: `Event validé ${eventId}`,
+    });
     return NextResponse.json({ received: true, validated: true, ...result });
   } catch (error) {
     console.error('Erreur webhook PayPal:', error);

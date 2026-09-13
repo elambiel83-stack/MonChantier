@@ -8,6 +8,7 @@ import {
   hasProcessedWebhookEvent,
   markWebhookEventProcessed,
 } from '@/lib/paymentStore';
+import { recordSecurityEvent } from '@/lib/securityStore';
 
 function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
   const chunks = signatureHeader.split(',');
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('stripe-signature') || '';
 
     if (!stripeSecret) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'critical',
+        identity: 'stripe',
+        detail: 'STRIPE_WEBHOOK_SECRET manquant',
+      });
       return NextResponse.json(
         { message: 'STRIPE_WEBHOOK_SECRET manquant' },
         { status: 500 }
@@ -45,6 +52,13 @@ export async function POST(request: NextRequest) {
 
     const rawBody = await request.text();
     if (!verifyStripeSignature(rawBody, signature, stripeSecret)) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'stripe',
+        ip: request.headers.get('x-forwarded-for') || undefined,
+        detail: 'Signature Stripe invalide',
+      });
       return NextResponse.json({ message: 'Signature Stripe invalide' }, { status: 400 });
     }
 
@@ -56,6 +70,12 @@ export async function POST(request: NextRequest) {
 
     const eventId = event.id;
     if (!eventId) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'stripe',
+        detail: 'Event Stripe sans identifiant',
+      });
       return NextResponse.json(
         { message: 'Event Stripe sans identifiant' },
         { status: 400 }
@@ -63,11 +83,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (await hasProcessedWebhookEvent('stripe', eventId)) {
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'stripe',
+        detail: `Event dupliqué ${eventId}`,
+      });
       return NextResponse.json({ received: true, duplicate: true });
     }
 
     if (event.type !== 'checkout.session.completed') {
       await markWebhookEventProcessed('stripe', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'stripe',
+        detail: `Event ignoré ${event.type || 'unknown'}`,
+      });
       return NextResponse.json({ received: true, ignored: true });
     }
 
@@ -85,11 +117,23 @@ export async function POST(request: NextRequest) {
         amount: walletPayload.amount,
       });
       await markWebhookEventProcessed('stripe', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'stripe',
+        detail: `Recharge validée ${eventId}`,
+      });
       return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
     }
 
     const invoicePayload = decodeInvoicePayload(rawPayload);
     if (!invoicePayload) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'stripe',
+        detail: 'invoice_payload absent ou invalide',
+      });
       return NextResponse.json(
         { message: 'invoice_payload absent ou invalide dans metadata Stripe' },
         { status: 400 }
@@ -98,6 +142,12 @@ export async function POST(request: NextRequest) {
 
     const result = await confirmPayment(invoicePayload);
     await markWebhookEventProcessed('stripe', eventId);
+    await recordSecurityEvent({
+      type: 'webhook_processed',
+      severity: 'info',
+      identity: 'stripe',
+      detail: `Event validé ${eventId}`,
+    });
     return NextResponse.json({ received: true, validated: true, ...result });
   } catch (error) {
     console.error('Erreur webhook Stripe:', error);

@@ -239,6 +239,13 @@ type SecurityRoleAuditEntry = {
   role?: AppRole;
 };
 
+type SecurityConfigIssue = {
+  id: string;
+  area: 'auth' | 'otp' | 'payments' | 'webhooks' | 'operations';
+  severity: 'warning' | 'critical';
+  message: string;
+};
+
 type AdminSecuritySummary = {
   summary: {
     inactiveUsers: number;
@@ -252,6 +259,14 @@ type AdminSecuritySummary = {
     otpFailures24h: number;
     adminFailures24h: number;
     adminSuccess24h: number;
+    webhookRejected24h: number;
+    manualPaymentDenied24h: number;
+  };
+  configuration: {
+    environment: string;
+    criticalIssues: number;
+    totalIssues: number;
+    issues: SecurityConfigIssue[];
   };
   throttledBuckets: SecurityRateLimitBucket[];
   recentEvents: SecurityEventRow[];
@@ -983,6 +998,12 @@ export default function AdminPage() {
       admin_login_succeeded: { fr: 'Connexion admin réussie', en: 'Admin login succeeded' },
       admin_login_failed: { fr: 'Connexion admin échouée', en: 'Admin login failed' },
       admin_login_rate_limited: { fr: 'Connexion admin bloquée', en: 'Admin login blocked' },
+      webhook_processed: { fr: 'Webhook traité', en: 'Webhook processed' },
+      webhook_rejected: { fr: 'Webhook rejeté', en: 'Webhook rejected' },
+      manual_payment_confirmed: { fr: 'Confirmation manuelle', en: 'Manual confirmation' },
+      manual_payment_denied: { fr: 'Confirmation manuelle refusée', en: 'Manual confirmation denied' },
+      role_assignment_changed: { fr: 'Rôle modifié', en: 'Role changed' },
+      user_access_changed: { fr: 'Accès utilisateur modifié', en: 'User access changed' },
     };
     return labels[event.type]?.[lang] || event.type;
   };
@@ -2382,6 +2403,8 @@ export default function AdminPage() {
                   [t('OTP en erreur', 'OTP failures'), securitySummary?.authActivity.otpFailures24h ?? 0],
                   [t('Échecs admin', 'Admin failures'), securitySummary?.authActivity.adminFailures24h ?? 0],
                   [t('Succès admin', 'Admin successes'), securitySummary?.authActivity.adminSuccess24h ?? 0],
+                  [t('Webhooks rejetés', 'Rejected webhooks'), securitySummary?.authActivity.webhookRejected24h ?? 0],
+                  [t('Confirmations manuelles refusées', 'Rejected manual confirmations'), securitySummary?.authActivity.manualPaymentDenied24h ?? 0],
                 ].map(([label, value]) => (
                   <div key={String(label)} className="rounded-lg border border-slate-100 p-3">
                     <p className="text-xs text-slate-500">{label}</p>
@@ -2406,6 +2429,57 @@ export default function AdminPage() {
                   <p className="text-sm text-slate-500">{t('Aucun verrou actif.', 'No active throttle.')}</p>
                 )}
               </div>
+            </div>
+          </div>
+          <div className="mt-6 rounded-xl border border-slate-200 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-slate-900">{t('Hygiène de configuration', 'Configuration hygiene')}</h3>
+              <span className="text-xs text-slate-500">
+                {t('Environnement', 'Environment')}: {securitySummary?.configuration.environment || 'unknown'}
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="rounded-lg border border-slate-100 p-3">
+                <p className="text-xs text-slate-500">{t('Issues critiques', 'Critical issues')}</p>
+                <p className="mt-1 text-lg font-bold text-slate-900">
+                  {securitySummary?.configuration.criticalIssues ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-100 p-3">
+                <p className="text-xs text-slate-500">{t('Issues totales', 'Total issues')}</p>
+                <p className="mt-1 text-lg font-bold text-slate-900">
+                  {securitySummary?.configuration.totalIssues ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-100 p-3">
+                <p className="text-xs text-slate-500">{t('État', 'Status')}</p>
+                <p className="mt-1 text-lg font-bold text-slate-900">
+                  {(securitySummary?.configuration.totalIssues ?? 0) === 0
+                    ? t('Prêt', 'Ready')
+                    : t('À corriger', 'Action required')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              {securitySummary?.configuration.issues.length ? (
+                securitySummary.configuration.issues.map((issue) => (
+                  <div
+                    key={issue.id}
+                    className={`rounded-lg border p-3 text-sm ${
+                      issue.severity === 'critical'
+                        ? 'border-red-200 bg-red-50 text-red-800'
+                        : 'border-amber-200 bg-amber-50 text-amber-800'
+                    }`}
+                  >
+                    <p className="font-medium">{issue.message}</p>
+                    <p className="mt-1 text-xs uppercase tracking-wide opacity-80">{issue.area}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">
+                  {t('Aucun écart de configuration détecté.', 'No configuration drift detected.')}
+                </p>
+              )}
             </div>
           </div>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">

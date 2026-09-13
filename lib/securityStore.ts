@@ -10,7 +10,13 @@ export type SecurityEventType =
   | 'otp_verify_rate_limited'
   | 'admin_login_succeeded'
   | 'admin_login_failed'
-  | 'admin_login_rate_limited';
+  | 'admin_login_rate_limited'
+  | 'webhook_processed'
+  | 'webhook_rejected'
+  | 'manual_payment_confirmed'
+  | 'manual_payment_denied'
+  | 'role_assignment_changed'
+  | 'user_access_changed';
 
 export type SecurityEvent = {
   id: string;

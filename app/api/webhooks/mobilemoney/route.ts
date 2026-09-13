@@ -8,6 +8,7 @@ import {
   hasProcessedWebhookEvent,
   markWebhookEventProcessed,
 } from '@/lib/paymentStore';
+import { recordSecurityEvent } from '@/lib/securityStore';
 
 function safeEqual(a: string, b: string) {
   const hashA = createHash('sha256').update(a).digest();
@@ -77,6 +78,13 @@ export async function POST(request: NextRequest) {
     const providedSecret = extractSecret(request);
 
     if (!expectedSecret || !providedSecret || !safeEqual(providedSecret, expectedSecret)) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: expectedSecret ? 'warning' : 'critical',
+        identity: 'mobilemoney',
+        ip: request.headers.get('x-forwarded-for') || undefined,
+        detail: expectedSecret ? 'Webhook Mobile Money non autorisé' : 'MOBILE_MONEY_WEBHOOK_SECRET manquant',
+      });
       return NextResponse.json({ message: 'Webhook Mobile Money non autorisé' }, { status: 401 });
     }
 
@@ -84,15 +92,33 @@ export async function POST(request: NextRequest) {
     const data = asRecord(body.data);
     const eventId = resolveEventId(body, data);
     if (!eventId) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'mobilemoney',
+        detail: 'Événement Mobile Money sans identifiant',
+      });
       return NextResponse.json({ message: 'Événement Mobile Money sans identifiant' }, { status: 400 });
     }
 
     if (await hasProcessedWebhookEvent('mobilemoney', eventId)) {
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'mobilemoney',
+        detail: `Event dupliqué ${eventId}`,
+      });
       return NextResponse.json({ received: true, duplicate: true });
     }
 
     if (!isConfirmed(body, data)) {
       await markWebhookEventProcessed('mobilemoney', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'mobilemoney',
+        detail: `Event ignoré ${eventId}`,
+      });
       return NextResponse.json({ received: true, ignored: true });
     }
 
@@ -107,11 +133,23 @@ export async function POST(request: NextRequest) {
         amount: walletPayload.amount,
       });
       await markWebhookEventProcessed('mobilemoney', eventId);
+      await recordSecurityEvent({
+        type: 'webhook_processed',
+        severity: 'info',
+        identity: 'mobilemoney',
+        detail: `Recharge validée ${eventId}`,
+      });
       return NextResponse.json({ received: true, validated: true, wallet, alreadyConfirmed });
     }
 
     const invoicePayload = decodeInvoicePayload(encodedPayload);
     if (!invoicePayload) {
+      await recordSecurityEvent({
+        type: 'webhook_rejected',
+        severity: 'warning',
+        identity: 'mobilemoney',
+        detail: 'invoice_payload absent ou invalide',
+      });
       return NextResponse.json(
         { message: 'invoice_payload absent ou invalide dans le webhook Mobile Money' },
         { status: 400 }
@@ -120,6 +158,12 @@ export async function POST(request: NextRequest) {
 
     const result = await confirmPayment(invoicePayload);
     await markWebhookEventProcessed('mobilemoney', eventId);
+    await recordSecurityEvent({
+      type: 'webhook_processed',
+      severity: 'info',
+      identity: 'mobilemoney',
+      detail: `Event validé ${eventId}`,
+    });
     return NextResponse.json({ received: true, validated: true, ...result });
   } catch (error) {
     console.error('Erreur webhook Mobile Money:', error);

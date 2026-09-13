@@ -63,7 +63,10 @@ async function importPhoneSecurityModules() {
 
 async function importSecurityDashboardModule() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'monchantier-security-dashboard-'));
-  const dashboardSource = await read('lib/securityDashboard.ts');
+  const [dashboardSource, securityConfigSource] = await Promise.all([
+    read('lib/securityDashboard.ts'),
+    read('lib/securityConfig.ts'),
+  ]);
   const dashboardOutput = ts
     .transpileModule(dashboardSource, {
       compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
@@ -72,10 +75,15 @@ async function importSecurityDashboardModule() {
     .replace('@/lib/adminStore', './adminStore.mjs')
     .replace('@/lib/rateLimit', './rateLimit.mjs')
     .replace('@/lib/roleStore', './roleStore.mjs')
-    .replace('@/lib/securityStore', './securityStore.mjs');
+    .replace('@/lib/securityStore', './securityStore.mjs')
+    .replace('@/lib/securityConfig', './securityConfig.mjs');
+  const securityConfigOutput = ts.transpileModule(securityConfigSource, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
 
   await Promise.all([
     fs.writeFile(path.join(tempDir, 'securityDashboard.mjs'), dashboardOutput, 'utf8'),
+    fs.writeFile(path.join(tempDir, 'securityConfig.mjs'), securityConfigOutput, 'utf8'),
     fs.writeFile(
       path.join(tempDir, 'adminStore.mjs'),
       `let users = [];
@@ -235,6 +243,9 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
   assert.equal(summary.authActivity.otpFailures24h, 2);
   assert.equal(summary.authActivity.adminFailures24h, 1);
   assert.equal(summary.authActivity.adminSuccess24h, 1);
+  assert.equal(summary.authActivity.webhookRejected24h, 0);
+  assert.equal(summary.authActivity.manualPaymentDenied24h, 0);
+  assert.equal(summary.configuration.environment, process.env.NODE_ENV || 'unknown');
   assert.equal(summary.recentEvents.length, 30);
   assert.equal(summary.recentEvents[0].id, 'otp-0');
   assert.equal(summary.throttledBuckets.length, 1);
@@ -243,10 +254,16 @@ test('security dashboard aggregates full 24h telemetry and limits only displayed
 });
 
 test('authentication flows record security telemetry for the admin dashboard', async () => {
-  const [authSource, phoneAuthSource, phoneRequestRouteSource] = await Promise.all([
+  const [authSource, phoneAuthSource, phoneRequestRouteSource, confirmRouteSource, stripeWebhookSource, paypalWebhookSource, mobileMoneyWebhookSource, usersRouteSource, rolesRouteSource] = await Promise.all([
     read('lib/auth.ts'),
     read('lib/phoneAuth.ts'),
     read('app/api/auth/phone/request-code/route.ts'),
+    read('app/api/payments/confirm/route.ts'),
+    read('app/api/webhooks/stripe/route.ts'),
+    read('app/api/webhooks/paypal/route.ts'),
+    read('app/api/webhooks/mobilemoney/route.ts'),
+    read('app/api/admin/users/route.ts'),
+    read('app/api/admin/roles/route.ts'),
   ]);
 
   assert.match(authSource, /recordSecurityEvent/);
@@ -261,4 +278,82 @@ test('authentication flows record security telemetry for the admin dashboard', a
   assert.match(phoneRequestRouteSource, /otp_requested/);
   assert.match(phoneRequestRouteSource, /ALLOW_OTP_DEBUG_CODE/);
   assert.match(phoneRequestRouteSource, /Service OTP indisponible: configuration SMS requise/);
+  assert.match(confirmRouteSource, /manual_payment_denied/);
+  assert.match(confirmRouteSource, /manual_payment_confirmed/);
+  assert.match(confirmRouteSource, /admin-payment-confirm:/);
+  assert.match(stripeWebhookSource, /webhook_rejected/);
+  assert.match(stripeWebhookSource, /webhook_processed/);
+  assert.match(paypalWebhookSource, /webhook_rejected/);
+  assert.match(paypalWebhookSource, /webhook_processed/);
+  assert.match(mobileMoneyWebhookSource, /webhook_rejected/);
+  assert.match(mobileMoneyWebhookSource, /webhook_processed/);
+  assert.match(usersRouteSource, /role_assignment_changed/);
+  assert.match(usersRouteSource, /user_access_changed/);
+  assert.match(rolesRouteSource, /role_assignment_changed/);
+});
+
+test('security config summary flags missing secrets and risky sandbox toggles', async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'monchantier-security-config-'));
+  const source = await read('lib/securityConfig.ts');
+  const output = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  await fs.writeFile(path.join(tempDir, 'securityConfig.mjs'), output, 'utf8');
+  const keys = [
+    'NODE_ENV',
+    'ALLOW_OTP_DEBUG_CODE',
+    'ALLOW_SMS_SANDBOX',
+    'AFRICASTALKING_USERNAME',
+    'AFRICASTALKING_API_KEY',
+    'NEXTAUTH_SECRET',
+    'ADMIN_LOGIN_EMAIL',
+    'ADMIN_LOGIN_PASSWORD',
+    'ADMIN_TOTP_SECRET',
+    'ADMIN_API_SECRET',
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'PAYPAL_CLIENT_ID',
+    'PAYPAL_CLIENT_SECRET',
+    'PAYPAL_WEBHOOK_ID',
+    'PAYPAL_API_BASE',
+    'MOBILE_MONEY_API_KEY',
+    'MOBILE_MONEY_WEBHOOK_SECRET',
+  ];
+  const previousEnv = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  process.env.NODE_ENV = 'production';
+  process.env.ALLOW_OTP_DEBUG_CODE = 'true';
+  process.env.ALLOW_SMS_SANDBOX = 'true';
+  process.env.AFRICASTALKING_USERNAME = 'sandbox';
+  process.env.NEXTAUTH_SECRET = '';
+  process.env.ADMIN_LOGIN_EMAIL = '';
+  process.env.ADMIN_LOGIN_PASSWORD = '';
+  process.env.ADMIN_TOTP_SECRET = '';
+  process.env.ADMIN_API_SECRET = '';
+  process.env.STRIPE_SECRET_KEY = '';
+  process.env.STRIPE_WEBHOOK_SECRET = '';
+  process.env.PAYPAL_CLIENT_ID = '';
+  process.env.PAYPAL_CLIENT_SECRET = '';
+  process.env.PAYPAL_WEBHOOK_ID = '';
+  process.env.PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com';
+  process.env.MOBILE_MONEY_API_KEY = '';
+  process.env.MOBILE_MONEY_WEBHOOK_SECRET = '';
+  process.env.AFRICASTALKING_API_KEY = '';
+
+  try {
+    const { buildSecurityConfigSummary } = await import(`file://${path.join(tempDir, 'securityConfig.mjs')}`);
+    const summary = buildSecurityConfigSummary();
+    assert.equal(summary.environment, 'production');
+    assert.equal(summary.issues.some((issue) => issue.id === 'otp-debug-enabled'), true);
+    assert.equal(summary.issues.some((issue) => issue.id === 'sms-sandbox-enabled'), true);
+    assert.equal(summary.issues.some((issue) => issue.id === 'paypal-sandbox-base'), true);
+    assert.equal(summary.issues.some((issue) => issue.id === 'mobile-money-webhook-secret-missing'), true);
+  } finally {
+    for (const key of keys) {
+      if (previousEnv[key] === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = previousEnv[key];
+      }
+    }
+  }
 });

@@ -112,6 +112,7 @@ Notes d'intégration:
 - Mobile Money: transmettre `invoicePayload` (provider générique) ou `meta.invoice_payload` (Flutterwave-like) pour les confirmations serveur.
 - Le serveur valide les webhooks/signatures partagées, puis confirme le paiement et émet la facture normalisée.
 - Si les secrets provider sont absents, les routes de paiement répondent désormais `503` au lieu d'utiliser un fallback local.
+- Les webhooks invalides, refusés, dupliqués ou traités sont journalisés dans la télémétrie sécurité admin.
 
 Commandes de test Stripe CLI (local):
 
@@ -200,6 +201,12 @@ Route: `POST /api/auth/phone/request-code` avec `{ "phone": "+243..." }`.
 - Le retour du code n'est autorisé qu'en développement local explicite avec `ALLOW_OTP_DEBUG_CODE=true`.
 - Sans transport SMS valide, la route OTP échoue désormais au lieu de laisser un mode dégradé silencieux.
 - Les OTP sont persistés côté serveur dans la base SQLite applicative (codes expirés nettoyés automatiquement).
+
+### Contrôles sécurité phase 2
+
+- `POST /api/payments/confirm` est maintenant limité par IP et journalise les refus/succès dans la télémétrie sécurité.
+- Les changements de rôles et activations/désactivations de comptes alimentent aussi le flux sécurité admin.
+- `/dashboard/admin#securite` affiche désormais les écarts de configuration (secrets manquants, sandbox/debug actifs, webhooks incomplets).
 
 ### Envoi SMS du code OTP (Africa's Talking)
 

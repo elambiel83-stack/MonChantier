@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/requireAdmin';
 import { isAppRole } from '@/lib/roles';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { setIdentityActive, setStoredRole } from '@/lib/roleStore';
+import { recordSecurityEvent } from '@/lib/securityStore';
 
 export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
@@ -38,6 +39,14 @@ export async function POST(request: NextRequest) {
 
   const created = addUser({ name, email, role });
   await setStoredRole({ identity: email, role, actor: actor.identity });
+  await recordSecurityEvent({
+    type: 'role_assignment_changed',
+    severity: ['admin', 'director', 'accountant', 'credit-agent', 'credit-committee'].includes(role)
+      ? 'critical'
+      : 'warning',
+    identity: email,
+    detail: `Utilisateur créé avec rôle ${role} par ${actor.identity}`,
+  });
   return NextResponse.json({ success: true, user: created });
 }
 
@@ -64,6 +73,14 @@ export async function PATCH(request: NextRequest) {
     );
   }
   if (actor) await setIdentityActive({ identity: updated.email, active: updated.active, actor: actor.identity });
+  if (actor) {
+    await recordSecurityEvent({
+      type: 'user_access_changed',
+      severity: updated.active ? 'warning' : 'critical',
+      identity: updated.email,
+      detail: `Compte ${updated.active ? 'réactivé' : 'désactivé'} par ${actor.identity}`,
+    });
+  }
 
   return NextResponse.json({ success: true, user: updated });
 }
