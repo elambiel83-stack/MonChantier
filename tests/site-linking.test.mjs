@@ -38,6 +38,7 @@ function createSiteLinkingHarness(source) {
 }
 
 function createPaymentConfirmationHarness(source, overrides = {}) {
+  let inMemoryStatus = null;
   const runtimeSource = source
     .slice(source.indexOf('function sanitizeCurrency'))
     .replace('function sanitizeCurrency(value: unknown)', 'function sanitizeCurrency(value)')
@@ -47,6 +48,7 @@ function createPaymentConfirmationHarness(source, overrides = {}) {
       'function isSupportedMethod(value)'
     )
     .replace('export function generatePaymentReference(prefix: string): string', 'function generatePaymentReference(prefix)')
+    .replace('function buildSkippedReconciliation(): PaymentReconciliation', 'function buildSkippedReconciliation()')
     .replace('function isReconciliationComplete(status: StoredPaymentStatus | null)', 'function isReconciliationComplete(status)')
     .replace(
       /function updateReconciliationStep\(status: StoredPaymentStatus, step: 'delivery' \| 'orderLink' \| 'deliveryLink', patch: \{\s*state: 'pending' \| 'completed' \| 'failed' \| 'skipped';\s*reference\?: string;\s*siteId\?: string;\s*detail\?: string;\s*\}\)/,
@@ -92,8 +94,12 @@ function createPaymentConfirmationHarness(source, overrides = {}) {
       orderLink: { state: 'pending', updatedAt: new Date().toISOString() },
       deliveryLink: { state: 'pending', updatedAt: new Date().toISOString() },
     })),
-    overrides.getStoredPaymentStatus || (async () => null),
-    overrides.setStoredPaymentStatus || (async () => undefined),
+    overrides.getStoredPaymentStatus ||
+      (async (reference) => (inMemoryStatus?.reference === reference ? inMemoryStatus : null)),
+    overrides.setStoredPaymentStatus ||
+      (async (nextStatus) => {
+        inMemoryStatus = nextStatus;
+      }),
     overrides.createDeliveryFromPayment || (async (payload) => payload),
     overrides.autoLinkDeliveryReferenceToSite || (async () => null),
     overrides.autoLinkOrderReferenceToSite || (async () => null),

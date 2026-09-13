@@ -6,6 +6,7 @@ import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 import {
   buildPendingPaymentReconciliation,
   getStoredPaymentStatus,
+  PaymentReconciliation,
   setStoredPaymentStatus,
   StoredPaymentStatus,
   StoredInvoice,
@@ -57,12 +58,12 @@ export function generatePaymentReference(prefix: string): string {
   return `${prefix}-${Date.now()}-${randomBytes(9).toString('base64url')}`;
 }
 
-function buildSkippedReconciliation() {
+function buildSkippedReconciliation(): PaymentReconciliation {
   const updatedAt = new Date().toISOString();
   return {
-    delivery: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
-    orderLink: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
-    deliveryLink: { state: 'skipped' as const, updatedAt, detail: 'Adresse ou identité client manquante' },
+    delivery: { state: 'skipped', updatedAt, detail: 'Adresse ou identité client manquante' },
+    orderLink: { state: 'skipped', updatedAt, detail: 'Adresse ou identité client manquante' },
+    deliveryLink: { state: 'skipped', updatedAt, detail: 'Adresse ou identité client manquante' },
   };
 }
 
