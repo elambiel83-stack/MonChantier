@@ -43,6 +43,17 @@ export default function DashboardSidebar({ sessionRole }: { sessionRole: AppRole
         >
           Tableau de bord
         </Link>
+        {displayRole === "admin" ? (
+          <Link
+            href="/dashboard/admin/demo"
+            className="mt-2 flex items-center justify-between rounded-md border border-[#e6a748]/40 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+          >
+            Prototype multi-rôle
+            <span className="rounded-full bg-[#ff6333] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+              Démo
+            </span>
+          </Link>
+        ) : null}
         {menu.map((item) =>
           item.anchor ? (
             <Link
