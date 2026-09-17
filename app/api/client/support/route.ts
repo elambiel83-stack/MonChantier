@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createTicket, listTicketsByIdentity } from '@/lib/supportStore';
 import { getSessionActor } from '@/lib/sessionIdentity';
+import { isMailerConfigured, sendContactEmail } from '@/lib/mailer';
 
 export async function GET() {
   const actor = await getSessionActor();
@@ -22,5 +23,20 @@ export async function POST(request: Request) {
   }
 
   const ticket = await createTicket({ identity: actor.identity, subject, message });
+
+  const notifyTo = process.env.SUPPORT_NOTIFICATION_EMAIL || process.env.SMTP_TO;
+  if (notifyTo && isMailerConfigured()) {
+    try {
+      await sendContactEmail({
+        to: notifyTo,
+        subject: `Nouveau ticket support: ${subject}`,
+        text: `De: ${actor.identity}\nSujet: ${subject}\n\n${message}`,
+        replyTo: actor.identity.includes('@') ? actor.identity : undefined,
+      });
+    } catch (mailError) {
+      console.error('Erreur notification nouveau ticket support:', mailError);
+    }
+  }
+
   return NextResponse.json({ success: true, ticket });
 }
