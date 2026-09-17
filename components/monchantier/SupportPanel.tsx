@@ -2,7 +2,35 @@
 
 import { useEffect, useState } from "react";
 
-type SupportTicket = { id: string; subject: string; message: string; status: "open" | "closed"; createdAt: string };
+type SupportMessage = {
+  id: string;
+  from: "client" | "staff";
+  message: string;
+  createdAt: string;
+};
+
+type SupportTicketStatus = "open" | "pending" | "closed";
+
+type SupportTicket = {
+  id: string;
+  subject: string;
+  message: string;
+  status: SupportTicketStatus;
+  messages: SupportMessage[];
+  createdAt: string;
+};
+
+const STATUS_LABEL: Record<SupportTicketStatus, string> = {
+  open: "Ouvert",
+  pending: "En attente de votre réponse",
+  closed: "Fermé",
+};
+
+const STATUS_STYLE: Record<SupportTicketStatus, string> = {
+  open: "bg-amber-100 text-amber-700",
+  pending: "bg-blue-100 text-blue-700",
+  closed: "bg-slate-200 text-slate-700",
+};
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString("fr-FR");
@@ -14,6 +42,9 @@ export default function SupportPanel() {
   const [saving, setSaving] = useState(false);
   const [banner, setBanner] = useState("");
   const [newTicket, setNewTicket] = useState({ subject: "", message: "" });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [replying, setReplying] = useState(false);
 
   const load = async () => {
     try {
@@ -50,6 +81,26 @@ export default function SupportPanel() {
       setBanner(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const sendReply = async (ticketId: string) => {
+    if (!replyDraft.trim()) return;
+    try {
+      setReplying(true);
+      const res = await fetch(`/api/client/support/${ticketId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: replyDraft }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Erreur envoi");
+      setReplyDraft("");
+      await load();
+    } catch (err) {
+      setBanner(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setReplying(false);
     }
   };
 
@@ -93,22 +144,65 @@ export default function SupportPanel() {
         ) : tickets.length === 0 ? (
           <li className="text-sm text-slate-500">Aucune demande envoyée.</li>
         ) : (
-          tickets.map((ticket) => (
-            <li key={ticket.id} className="rounded-lg border border-slate-200 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">{ticket.subject}</p>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    ticket.status === "open" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-700"
-                  }`}
+          tickets.map((ticket) => {
+            const expanded = expandedId === ticket.id;
+            return (
+              <li key={ticket.id} className="rounded-lg border border-slate-200 p-3">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                  onClick={() => {
+                    setExpandedId(expanded ? null : ticket.id);
+                    setReplyDraft("");
+                  }}
                 >
-                  {ticket.status === "open" ? "Ouvert" : "Fermé"}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500 whitespace-pre-line">{ticket.message}</p>
-              <p className="mt-1 text-xs text-slate-400">{formatDate(ticket.createdAt)}</p>
-            </li>
-          ))
+                  <div>
+                    <p className="text-sm font-medium">{ticket.subject}</p>
+                    <p className="mt-1 text-xs text-slate-400">{formatDate(ticket.createdAt)}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[ticket.status]}`}
+                  >
+                    {STATUS_LABEL[ticket.status]}
+                  </span>
+                </button>
+
+                {expanded && (
+                  <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                    {(ticket.messages || []).map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`rounded-lg p-2 text-xs ${
+                          msg.from === "staff" ? "bg-blue-50 text-blue-900" : "bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <p className="font-semibold">{msg.from === "staff" ? "Support MonChantier" : "Vous"}</p>
+                        <p className="mt-1 whitespace-pre-line">{msg.message}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">{formatDate(msg.createdAt)}</p>
+                      </div>
+                    ))}
+
+                    <div className="flex gap-2 pt-1">
+                      <input
+                        value={replyDraft}
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        placeholder="Répondre…"
+                        className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => sendReply(ticket.id)}
+                        disabled={replying || !replyDraft.trim()}
+                        className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 text-sm font-medium disabled:opacity-60"
+                      >
+                        {replying ? "…" : "Envoyer"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })
         )}
       </ul>
     </div>

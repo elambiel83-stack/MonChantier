@@ -6,5 +6,5 @@ export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
-  return NextResponse.json(getAdminStats());
+  return NextResponse.json(await getAdminStats());
 }

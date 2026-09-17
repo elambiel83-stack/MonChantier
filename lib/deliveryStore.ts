@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { getCity } from '@/lib/drcCities';
+import { readStore, withStore } from './storeDb';
 
 export type DeliveryStatus =
   | 'pending'
@@ -44,44 +43,9 @@ export type Delivery = {
 
 type DeliveryStoreModel = { deliveries: Delivery[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'delivery-store.json');
-const INITIAL_STORE: DeliveryStoreModel = { deliveries: [] };
+const STORE_KEY = 'delivery-store';
+const buildInitialStore = (): DeliveryStoreModel => ({ deliveries: [] });
 const MAX_POSITION_HISTORY = 200;
-
-let storeMutex: Promise<void> = Promise.resolve();
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
-
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
-}
-
-async function readStore(): Promise<DeliveryStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-  try {
-    const parsed = JSON.parse(raw) as Partial<DeliveryStoreModel>;
-    return { deliveries: Array.isArray(parsed.deliveries) ? parsed.deliveries : [] };
-  } catch {
-    return { deliveries: [] };
-  }
-}
-
-async function writeStore(store: DeliveryStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
 
 function normalizeIdentity(identity: string): string {
   return identity.trim().toLowerCase();
@@ -120,9 +84,7 @@ export function createDeliveryFromPayment(args: {
   deliveryAddress: string;
   location?: { lat?: number; lng?: number } | null;
 }): Promise<Delivery> {
-  return withLock(async () => {
-    const store = await readStore();
-
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const alreadyExists = store.deliveries.some((delivery) => delivery.reference === args.reference);
     if (alreadyExists) {
       return store.deliveries.find((delivery) => delivery.reference === args.reference)!;
@@ -151,46 +113,35 @@ export function createDeliveryFromPayment(args: {
     };
 
     store.deliveries.unshift(delivery);
-    await writeStore(store);
     return delivery;
   });
 }
 
-export function listDeliveriesByClient(identity: string): Promise<Delivery[]> {
+export async function listDeliveriesByClient(identity: string): Promise<Delivery[]> {
   const normalized = normalizeIdentity(identity);
-  return withLock(async () => {
-    const store = await readStore();
-    return store.deliveries.filter((delivery) => delivery.clientIdentity === normalized);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.deliveries.filter((delivery) => delivery.clientIdentity === normalized);
 }
 
-export function listDeliveriesByDriver(identity: string): Promise<Delivery[]> {
+export async function listDeliveriesByDriver(identity: string): Promise<Delivery[]> {
   const normalized = normalizeIdentity(identity);
-  return withLock(async () => {
-    const store = await readStore();
-    return store.deliveries.filter((delivery) => delivery.driverIdentity === normalized);
-  });
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.deliveries.filter((delivery) => delivery.driverIdentity === normalized);
 }
 
-export function listUnassignedDeliveries(): Promise<Delivery[]> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.deliveries.filter((delivery) => delivery.status === 'pending' && !delivery.driverIdentity);
-  });
+export async function listUnassignedDeliveries(): Promise<Delivery[]> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.deliveries.filter((delivery) => delivery.status === 'pending' && !delivery.driverIdentity);
 }
 
-export function listAllDeliveries(): Promise<Delivery[]> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.deliveries;
-  });
+export async function listAllDeliveries(): Promise<Delivery[]> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.deliveries;
 }
 
-export function getDeliveryById(id: string): Promise<Delivery | null> {
-  return withLock(async () => {
-    const store = await readStore();
-    return store.deliveries.find((delivery) => delivery.id === id) || null;
-  });
+export async function getDeliveryById(id: string): Promise<Delivery | null> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.deliveries.find((delivery) => delivery.id === id) || null;
 }
 
 export type AssignDriverResult =
@@ -202,8 +153,7 @@ export function assignDriver(args: {
   driverIdentity: string;
   assignedBy: string;
 }): Promise<AssignDriverResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const delivery = store.deliveries.find((item) => item.id === args.id);
     if (!delivery) return { success: false as const, error: 'not_found' as const };
     if (delivery.driverIdentity) return { success: false as const, error: 'already_assigned' as const };
@@ -218,7 +168,6 @@ export function assignDriver(args: {
       note: delivery.driverIdentity,
     });
 
-    await writeStore(store);
     return { success: true as const, delivery };
   });
 }
@@ -234,8 +183,7 @@ export function updateDeliveryStatus(args: {
   requireDriverIdentity?: string;
   note?: string;
 }): Promise<UpdateStatusResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const delivery = store.deliveries.find((item) => item.id === args.id);
     if (!delivery) return { success: false as const, error: 'not_found' as const };
 
@@ -259,7 +207,6 @@ export function updateDeliveryStatus(args: {
       note: args.note,
     });
 
-    await writeStore(store);
     return { success: true as const, delivery };
   });
 }
@@ -274,8 +221,7 @@ export function reportDeliveryPosition(args: {
   lat: number;
   lng: number;
 }): Promise<ReportPositionResult> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const delivery = store.deliveries.find((item) => item.id === args.id);
     if (!delivery) return { success: false as const, error: 'not_found' as const };
     if (delivery.driverIdentity !== normalizeIdentity(args.driverIdentity)) {
@@ -292,7 +238,6 @@ export function reportDeliveryPosition(args: {
       delivery.positionHistory = delivery.positionHistory.slice(-MAX_POSITION_HISTORY);
     }
 
-    await writeStore(store);
     return { success: true as const, delivery };
   });
 }

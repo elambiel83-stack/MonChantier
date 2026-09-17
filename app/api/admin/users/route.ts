@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
-  return NextResponse.json({ users: listUsers() });
+  return NextResponse.json({ users: await listUsers() });
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const created = addUser({ name, email, role });
+  const created = await addUser({ name, email, role });
   await setStoredRole({ identity: email, role, actor: actor.identity });
   return NextResponse.json({ success: true, user: created });
 }
@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const updated = toggleUserActive(userId);
+  const updated = await toggleUserActive(userId);
   if (!updated) {
     return NextResponse.json(
       { message: 'Utilisateur introuvable' },

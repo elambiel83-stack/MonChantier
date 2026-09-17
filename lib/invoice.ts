@@ -1,6 +1,10 @@
 export type InvoicePaymentMethod = 'mobilemoney' | 'card' | 'paypal';
 
 export type InvoiceLineItem = {
+  // Présent quand l'article référence un produit du catalogue MonChantier
+  // (permet le décrément de stock atomique à la confirmation du paiement) ;
+  // absent pour un article libre/manuel.
+  productId?: number;
   productName: string;
   quantity: number;
   unitPrice?: number;
@@ -112,6 +116,7 @@ export function createInvoice(input: CreateInvoiceInput): InvoiceData {
     const lineTotal = unitPrice !== undefined ? unitPrice * quantity : 0;
 
     return {
+      productId: item.productId,
       productName: item.productName || 'Produit',
       quantity,
       unitPrice,

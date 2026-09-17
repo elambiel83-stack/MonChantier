@@ -64,6 +64,32 @@ const ORDER_STATUS_NEXT: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 };
 
+type SupportTicketStatus = 'open' | 'pending' | 'closed';
+
+type SupportMessage = {
+  id: string;
+  from: 'client' | 'staff';
+  authorIdentity: string;
+  message: string;
+  createdAt: string;
+};
+
+type SupportTicket = {
+  id: string;
+  identity: string;
+  subject: string;
+  status: SupportTicketStatus;
+  messages: SupportMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+const SUPPORT_STATUS_LABELS: Record<SupportTicketStatus, { fr: string; en: string }> = {
+  open: { fr: 'Ouvert', en: 'Open' },
+  pending: { fr: 'En attente du client', en: 'Waiting on client' },
+  closed: { fr: 'Fermé', en: 'Closed' },
+};
+
 type TaxTotals = { ht: number; tva: number; ttc: number; count: number };
 
 type TaxSummary = {
@@ -252,6 +278,11 @@ export default function AdminPage() {
 
   const [orders, setOrders] = useState<StoredOrder[]>([]);
   const [busyOrderRef, setBusyOrderRef] = useState<string | null>(null);
+
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
+  const [ticketReplyDraft, setTicketReplyDraft] = useState('');
+  const [busyTicketId, setBusyTicketId] = useState<string | null>(null);
 
   const t = (fr: string, en: string) => (lang === 'fr' ? fr : en);
   const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
@@ -549,6 +580,55 @@ export default function AdminPage() {
     }
   };
 
+  const loadTickets = async () => {
+    try {
+      const response = await fetch('/api/admin/support', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Impossible de charger les tickets');
+      const data = (await response.json()) as { tickets?: SupportTicket[] };
+      setTickets(Array.isArray(data.tickets) ? data.tickets : []);
+    } catch {
+      setTickets([]);
+    }
+  };
+
+  const replyToTicket = async (ticketId: string) => {
+    if (!ticketReplyDraft.trim()) return;
+    try {
+      setBusyTicketId(ticketId);
+      const response = await fetch(`/api/admin/support/${ticketId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: ticketReplyDraft }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Erreur envoi réponse');
+      }
+      setTicketReplyDraft('');
+      await loadTickets();
+    } finally {
+      setBusyTicketId(null);
+    }
+  };
+
+  const changeTicketStatus = async (ticketId: string, status: SupportTicketStatus) => {
+    try {
+      setBusyTicketId(ticketId);
+      const response = await fetch(`/api/admin/support/${ticketId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Erreur mise à jour statut');
+      }
+      await loadTickets();
+    } finally {
+      setBusyTicketId(null);
+    }
+  };
+
   const loadPlatformRoles = async () => {
     try {
       const response = await fetch('/api/admin/roles', { cache: 'no-store' });
@@ -622,6 +702,7 @@ export default function AdminPage() {
         loadServices(),
         loadTaxes(),
         loadOrders(),
+        loadTickets(),
       ]);
     })();
   }, []);
@@ -988,6 +1069,104 @@ export default function AdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">{t('Support', 'Support')}</h2>
+          <div className="mt-4 space-y-3">
+            {tickets.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('Aucun ticket pour le moment.', 'No ticket yet.')}</p>
+            ) : (
+              tickets.map((ticket) => {
+                const expanded = expandedTicketId === ticket.id;
+                const style =
+                  ticket.status === 'open'
+                    ? 'bg-amber-100 text-amber-700'
+                    : ticket.status === 'pending'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-slate-200 text-slate-700';
+                return (
+                  <div key={ticket.id} className="rounded-lg border border-slate-200 p-3">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 text-left"
+                      onClick={() => {
+                        setExpandedTicketId(expanded ? null : ticket.id);
+                        setTicketReplyDraft('');
+                      }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{ticket.subject}</p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {ticket.identity} · {new Date(ticket.createdAt).toLocaleString(locale)}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${style}`}>
+                        {t(SUPPORT_STATUS_LABELS[ticket.status].fr, SUPPORT_STATUS_LABELS[ticket.status].en)}
+                      </span>
+                    </button>
+
+                    {expanded && (
+                      <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                        {ticket.messages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`rounded-lg p-2 text-xs ${
+                              msg.from === 'staff' ? 'bg-orange-50 text-orange-900' : 'bg-slate-50 text-slate-700'
+                            }`}
+                          >
+                            <p className="font-semibold">
+                              {msg.from === 'staff' ? t('Vous (support)', 'You (support)') : msg.authorIdentity}
+                            </p>
+                            <p className="mt-1 whitespace-pre-line">{msg.message}</p>
+                            <p className="mt-1 text-[10px] text-slate-400">
+                              {new Date(msg.createdAt).toLocaleString(locale)}
+                            </p>
+                          </div>
+                        ))}
+
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <input
+                            value={ticketReplyDraft}
+                            onChange={(e) => setTicketReplyDraft(e.target.value)}
+                            placeholder={t('Répondre au client…', 'Reply to the customer…')}
+                            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => replyToTicket(ticket.id)}
+                            disabled={busyTicketId === ticket.id || !ticketReplyDraft.trim()}
+                            className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 text-sm font-medium disabled:opacity-60"
+                          >
+                            {t('Répondre', 'Reply')}
+                          </button>
+                          {ticket.status !== 'closed' ? (
+                            <button
+                              type="button"
+                              onClick={() => changeTicketStatus(ticket.id, 'closed')}
+                              disabled={busyTicketId === ticket.id}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-60"
+                            >
+                              {t('Fermer', 'Close')}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => changeTicketStatus(ticket.id, 'open')}
+                              disabled={busyTicketId === ticket.id}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-60"
+                            >
+                              {t('Rouvrir', 'Reopen')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 

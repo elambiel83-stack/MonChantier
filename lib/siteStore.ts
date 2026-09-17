@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readStore, withStore } from './storeDb';
 
 export type SiteStatus = 'planning' | 'active' | 'paused' | 'completed';
 export type IncidentSeverity = 'low' | 'medium' | 'high';
@@ -32,59 +31,27 @@ export type Site = {
 
 type SiteStoreModel = { sites: Site[] };
 
-const STORE_PATH = path.join(process.cwd(), 'data', 'site-store.json');
-const INITIAL_STORE: SiteStoreModel = { sites: [] };
-
-let storeMutex: Promise<void> = Promise.resolve();
-
-function withLock<T>(task: () => Promise<T>): Promise<T> {
-  const run = storeMutex.then(task, task);
-  storeMutex = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
-}
+const STORE_KEY = 'site-store';
+const buildInitialStore = (): SiteStoreModel => ({ sites: [] });
 
 function generateId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function ensureStoreFile() {
-  await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-  try {
-    await fs.access(STORE_PATH);
-  } catch {
-    await fs.writeFile(STORE_PATH, JSON.stringify(INITIAL_STORE, null, 2), 'utf8');
-  }
+export async function listAllSites(): Promise<Site[]> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.sites;
 }
 
-async function readStore(): Promise<SiteStoreModel> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(STORE_PATH, 'utf8');
-  try {
-    const parsed = JSON.parse(raw) as Partial<SiteStoreModel>;
-    return { sites: Array.isArray(parsed.sites) ? parsed.sites : [] };
-  } catch {
-    return { ...INITIAL_STORE };
-  }
-}
-
-async function writeStore(store: SiteStoreModel) {
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-}
-
-export function listAllSites(): Promise<Site[]> {
-  return withLock(async () => (await readStore()).sites);
-}
-
-export function listSitesByManager(siteManagerIdentity: string): Promise<Site[]> {
+export async function listSitesByManager(siteManagerIdentity: string): Promise<Site[]> {
   const normalized = siteManagerIdentity.trim().toLowerCase();
-  return withLock(async () => (await readStore()).sites.filter((s) => s.siteManagerIdentity === normalized));
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.sites.filter((s) => s.siteManagerIdentity === normalized);
 }
 
-export function getSiteById(id: string): Promise<Site | null> {
-  return withLock(async () => (await readStore()).sites.find((s) => s.id === id) || null);
+export async function getSiteById(id: string): Promise<Site | null> {
+  const store = await readStore(STORE_KEY, buildInitialStore);
+  return store.sites.find((s) => s.id === id) || null;
 }
 
 export function createSite(input: {
@@ -95,8 +62,7 @@ export function createSite(input: {
   budget?: number;
   currency?: 'USD' | 'CDF';
 }): Promise<Site> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const now = new Date().toISOString();
     const site: Site = {
       id: generateId('SITE'),
@@ -114,7 +80,6 @@ export function createSite(input: {
       updatedAt: now,
     };
     store.sites.push(site);
-    await writeStore(store);
     return site;
   });
 }
@@ -122,45 +87,38 @@ export function createSite(input: {
 export type UpdateSitePatch = Partial<Pick<Site, 'name' | 'address' | 'status' | 'budget' | 'currency' | 'team'>>;
 
 export function updateSite(id: string, patch: UpdateSitePatch): Promise<Site | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const site = store.sites.find((s) => s.id === id);
     if (!site) return null;
     Object.assign(site, patch, { updatedAt: new Date().toISOString() });
-    await writeStore(store);
     return site;
   });
 }
 
 export function addSiteTask(siteId: string, label: string, dueDate?: string): Promise<Site | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const site = store.sites.find((s) => s.id === siteId);
     if (!site) return null;
     site.tasks.push({ id: generateId('TASK'), label, done: false, dueDate, createdAt: new Date().toISOString() });
     site.updatedAt = new Date().toISOString();
-    await writeStore(store);
     return site;
   });
 }
 
 export function setSiteTaskDone(siteId: string, taskId: string, done: boolean): Promise<Site | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const site = store.sites.find((s) => s.id === siteId);
     if (!site) return null;
     const task = site.tasks.find((t) => t.id === taskId);
     if (!task) return null;
     task.done = done;
     site.updatedAt = new Date().toISOString();
-    await writeStore(store);
     return site;
   });
 }
 
 export function addSiteIncident(siteId: string, label: string, severity: IncidentSeverity): Promise<Site | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const site = store.sites.find((s) => s.id === siteId);
     if (!site) return null;
     site.incidents.push({
@@ -171,21 +129,18 @@ export function addSiteIncident(siteId: string, label: string, severity: Inciden
       createdAt: new Date().toISOString(),
     });
     site.updatedAt = new Date().toISOString();
-    await writeStore(store);
     return site;
   });
 }
 
 export function resolveSiteIncident(siteId: string, incidentId: string): Promise<Site | null> {
-  return withLock(async () => {
-    const store = await readStore();
+  return withStore(STORE_KEY, buildInitialStore, (store) => {
     const site = store.sites.find((s) => s.id === siteId);
     if (!site) return null;
     const incident = site.incidents.find((i) => i.id === incidentId);
     if (!incident) return null;
     incident.resolved = true;
     site.updatedAt = new Date().toISOString();
-    await writeStore(store);
     return site;
   });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createPhoneOtp } from "@/lib/phoneAuth";
 import { isSmsConfigured, sendSms } from "@/lib/sms";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export async function POST(req: Request) {
   try {
@@ -13,14 +14,19 @@ export async function POST(req: Request) {
     }
 
     const ip = getClientIp(req);
-    const byPhone = checkRateLimit(`otp-request:phone:${phone.trim()}`, { max: 3, windowMs: 10 * 60 * 1000 });
-    const byIp = checkRateLimit(`otp-request:ip:${ip}`, { max: 10, windowMs: 10 * 60 * 1000 });
+    const byPhone = await checkRateLimit(`otp-request:phone:${phone.trim()}`, { max: 3, windowMs: 10 * 60 * 1000 });
+    const byIp = await checkRateLimit(`otp-request:ip:${ip}`, { max: 10, windowMs: 10 * 60 * 1000 });
     if (!byPhone.allowed || !byIp.allowed) {
       const retryAfterSec = Math.ceil(Math.max(byPhone.retryAfterMs, byIp.retryAfterMs) / 1000);
       return NextResponse.json(
         { message: `Trop de demandes. Réessayez dans ${retryAfterSec}s.` },
         { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
       );
+    }
+
+    const captchaOk = await verifyTurnstileToken(body?.turnstileToken, ip);
+    if (!captchaOk) {
+      return NextResponse.json({ message: "Vérification anti-robot invalide." }, { status: 400 });
     }
 
     const { code, expiresAt, phone: normalizedPhone } = await createPhoneOtp(phone);
