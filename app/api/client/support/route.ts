@@ -29,7 +29,10 @@ export async function POST(request: Request) {
     try {
       await sendContactEmail({
         to: notifyTo,
-        subject: `Nouveau ticket support: ${subject}`,
+        // Le tag [TCK-xxx] est préservé si le staff répond directement à cet
+        // email : voir lib/inboundMail.ts, qui l'utilise pour rattacher la
+        // réponse au bon ticket plutôt que d'en créer un nouveau.
+        subject: `Nouveau ticket support: ${subject} [${ticket.id}]`,
         text: `De: ${actor.identity}\nSujet: ${subject}\n\n${message}`,
         replyTo: actor.identity.includes('@') ? actor.identity : undefined,
       });

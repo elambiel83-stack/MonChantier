@@ -36,7 +36,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     try {
       await sendContactEmail({
         to: notifyTo,
-        subject: `Nouveau message sur le ticket support: ${ticket.subject}`,
+        // Tag préservé si le staff répond directement à cet email — voir
+        // lib/inboundMail.ts.
+        subject: `Nouveau message sur le ticket support: ${ticket.subject} [${ticket.id}]`,
         text: `De: ${actor.identity}\nTicket: ${ticket.subject} (${ticket.id})\n\n${message}`,
         replyTo: actor.identity.includes('@') ? actor.identity : undefined,
       });

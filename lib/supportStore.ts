@@ -5,9 +5,10 @@ import { readStore, withStore } from './storeDb';
 // message du client le rouvre automatiquement en 'open'.
 export type SupportTicketStatus = 'open' | 'pending' | 'closed';
 
-// Canal d'origine du ticket. Un seul canal réel aujourd'hui (formulaire web
-// authentifié) ; le type reste extensible pour une future ingestion email.
-export type SupportChannel = 'web';
+// Canal d'origine du ticket : formulaire web authentifié, ou email entrant
+// (voir lib/inboundMail.ts) — un client peut aussi simplement écrire à
+// l'adresse support sans jamais se connecter au site.
+export type SupportChannel = 'web' | 'email';
 
 export type SupportMessageAuthor = 'client' | 'staff';
 

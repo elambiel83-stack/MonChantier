@@ -329,6 +329,29 @@ En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Admini
 2. Appeler la route avec l'en-tête `Authorization: Bearer <ADMIN_API_SECRET>`.
 3. Sans secret configuré ou avec une valeur incorrecte, la route renvoie `401`.
 
+### Support client (tickets multicanal : web + email)
+
+Le support fonctionne par tickets threadés (client ↔ staff), gérés depuis `/dashboard/client` (section Support) côté client et `/dashboard/admin` (section Support) côté staff : réponse, fermeture/réouverture. Chaque réponse déclenche une notification email best-effort (no-op sans SMTP configuré) — au staff (`SUPPORT_NOTIFICATION_EMAIL` ou `SMTP_TO`) à la création d'un ticket ou d'un nouveau message client, au client quand le staff répond.
+
+**Ingestion email** (`lib/inboundMail.ts`) : un client peut aussi écrire directement à l'adresse support, sans jamais se connecter au site — ça crée un ticket automatiquement (canal `email`). Une réponse à un email de notification (qui inclut toujours un tag `[TCK-xxx]` dans son sujet) est rattachée au bon ticket au lieu d'en créer un nouveau ; un email du staff dont l'adresse figure dans `ADMIN_EMAILS` est traité comme une réponse staff.
+
+Fonctionne par polling IMAP (compatible avec n'importe quelle boîte mail générique) plutôt que par un webhook de prestataire spécifique :
+
+1. Configurer `SUPPORT_IMAP_HOST/PORT/USER/PASSWORD` dans `.env.local` (ou rien : par défaut réutilise `SMTP_HOST/SMTP_USER/SMTP_PASS`, la même boîte servant à l'envoi et à la réception).
+2. Définir `SUPPORT_INBOUND_SECRET` (une valeur aléatoire longue).
+3. Planifier un appel périodique (ex: toutes les 5 minutes) à `POST /api/support/inbound-poll` avec l'en-tête `Authorization: Bearer <SUPPORT_INBOUND_SECRET>` — via un cron système (`curl`), une Vercel Cron Job (`vercel.json`), ou tout planificateur externe (cron-job.org, GitHub Actions `schedule`...).
+4. Sans `SUPPORT_IMAP_HOST`/`SMTP_HOST` ni `SUPPORT_INBOUND_SECRET` configurés, la route renvoie respectivement `503` ou `401` — le support reste utilisable via le formulaire web dans tous les cas.
+
+Exemple de configuration Vercel Cron (`vercel.json` à la racine) :
+
+```json
+{
+  "crons": [{ "path": "/api/support/inbound-poll", "schedule": "*/5 * * * *" }]
+}
+```
+
+Chaque email est traité une seule fois (marqué lu immédiatement après traitement, y compris s'il est ignoré) : les accusés de réception, rebonds et réponses automatiques (`Auto-Submitted`, absence du bureau...) sont filtrés pour éviter qu'une notification sortante ne revienne créer un ticket en boucle.
+
 ### Suivi de livraison
 
 Une livraison est créée automatiquement dès qu'un paiement est confirmé avec une adresse de livraison (`deliveryAddress` + `location` déjà capturées au checkout). Statuts : `pending → assigned → picked_up → in_transit → delivered` (ou `cancelled` à tout moment sauf depuis `delivered`), transitions validées côté serveur (`lib/deliveryStore.ts`) — impossible de sauter une étape.

@@ -37,7 +37,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     try {
       await sendContactEmail({
         to: result.ticket.identity,
-        subject: `Réponse à votre ticket support: ${result.ticket.subject}`,
+        // Tag préservé si le client répond directement à cet email — voir
+        // lib/inboundMail.ts.
+        subject: `Réponse à votre ticket support: ${result.ticket.subject} [${result.ticket.id}]`,
         text: `Bonjour,\n\nNotre équipe a répondu à votre ticket "${result.ticket.subject}":\n\n${message}\n\nMonChantier`,
       });
     } catch (mailError) {
