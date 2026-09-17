@@ -6,6 +6,17 @@ import { getPool } from './db';
 // verrouille la ligne le temps de la transaction, ce qui sérialise les
 // lecture-modification-écriture concurrentes même entre plusieurs instances.
 
+/**
+ * Construit une clé kv_store isolée par tenant (organisation cliente du
+ * SaaS) : chaque tenant obtient sa propre ligne pour un même domaine
+ * métier, au lieu de partager une ligne globale entre tous les tenants.
+ * Utilisé par les stores migrés vers le multi-tenant (voir README) ; les
+ * stores pas encore migrés continuent d'utiliser une clé fixe globale.
+ */
+export function tenantKey(tenantId: string, base: string): string {
+  return `${tenantId}:${base}`;
+}
+
 export async function readStore<TStore>(key: string, seed: () => TStore): Promise<TStore> {
   const { rows } = await getPool().query<{ value: TStore }>('SELECT value FROM kv_store WHERE key = $1', [key]);
   if (rows.length === 0) return seed();

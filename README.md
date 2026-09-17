@@ -382,3 +382,23 @@ Chaque produit/service porte un `ownerIdentity` optionnel : absent pour le catal
 - **Technicien** (`/dashboard/technician`) : publie ses propres services et fixe leurs prix (optionnels — laisser vide pour "sur devis").
 - Routes dédiées (hors `/api/admin/*`, permissions vérifiées par requête via `lib/sessionIdentity.ts`) : `GET/POST /api/partner/products`, `PATCH /api/partner/products/<id>` (rôle `supplier`, propriétaire uniquement) ; mêmes routes sous `/api/partner/services` pour le rôle `technician`.
 - L'admin garde une visibilité et un contrôle total sur tous les articles, y compris ceux des partenaires, via `/api/admin/products` et `/api/admin/services`.
+
+## Multi-tenant (SaaS)
+
+Une couche additive et distincte de l'app mono-tenant MonChantier décrite ci-dessus : chaque **tenant** (organisation cliente qui souscrit à MonChantier comme logiciel) obtient son propre espace isolé — création en self-service, catalogue produit, abonnement payant, console d'exploitation pour l'éditeur de la plateforme. Elle ne modifie ni ne remplace rien du RBAC, du catalogue, des paiements, du crédit ou des livraisons de l'app existante : les deux coexistent dans la même base de code.
+
+**Modèle de données** — chaque domaine tenant-scoped vit dans `kv_store` sous une clé préfixée par l'id du tenant (`lib/storeDb.ts::tenantKey`), une ligne isolée par tenant et par domaine :
+
+- `lib/tenantStore.ts` — la fiche tenant (nom, identifiant `slug`, statut actif/suspendu, plan, identité fiscale propre — remplace les variables d'env globales `BILLING_COMPANY_*` de l'app mono-tenant pour ce qui concerne un tenant).
+- `lib/tenantRoleStore.ts` — rôles `owner`/`admin`/`member` au sein d'un tenant, indépendants du RBAC global (`lib/roleStore.ts`). **Limite MVP assumée** : une identité n'appartient qu'à un seul tenant actif à la fois (index `identity → tenantId`, pas de multi-organisation par utilisateur — à faire évoluer vers une vraie table relationnelle si ça devient un vrai besoin produit).
+- `lib/tenantCatalogStore.ts` — catalogue produit du tenant (nom, prix, devise, stock). Volontairement simplifié par rapport à `lib/productStore.ts` (pas de fournisseurs partenaires, devise unique par article).
+
+**Résolution par requête** — `tenantId`/`tenantRole` sont ajoutés au JWT NextAuth de façon additive (`lib/auth.ts`, callback `jwt`), sans toucher au `role` global existant. `lib/tenantSessionIdentity.ts::getTenantActor()` est l'équivalent tenant-scoped de `lib/sessionIdentity.ts::getSessionActor()`, et vérifie aussi que le tenant est actif (une suspension prend effet immédiatement, sans attendre l'expiration de session).
+
+**Parcours** :
+1. `/org/signup` (`POST /api/tenants/signup`) — n'importe quel compte connecté (Google/Facebook/téléphone) crée son organisation et en devient `owner`.
+2. `/org` — tableau de bord du tenant : catalogue produit (`GET/POST /api/tenants/me/products`, `PATCH/DELETE .../products/<id>`), lecture seule pour le rôle `member`.
+3. `/org/billing` — abonnement Stripe Billing (`lib/tenantBilling.ts`) : plans `starter` (gratuit, 20 produits max), `pro` (500), `enterprise` (illimité). `POST /api/tenants/me/billing/checkout` crée une session Stripe en mode `subscription` ; `POST /api/webhooks/stripe-billing` (secret `STRIPE_BILLING_WEBHOOK_SECRET`, **distinct** de `STRIPE_WEBHOOK_SECRET` utilisé par les paiements de commandes) active/désactive l'abonnement. La limite de produits est appliquée à la création (`assertWithinProductLimit`), un dépassement renvoie `402`.
+4. `/platform` (`PLATFORM_ADMIN_EMAILS`) — console de l'éditeur de la plateforme : liste des tenants, plan, statut d'abonnement, suspension/réactivation (`GET /api/platform/tenants`, `PATCH /api/platform/tenants/<id>`).
+
+**Ce qui n'est PAS migré vers le multi-tenant** (reste global, propre à l'app mono-tenant MonChantier existante) : le crédit immobilier, le porte-monnaie, les livraisons, les chantiers, les dépenses, le catalogue produits/services historique (`lib/productStore.ts`/`lib/serviceStore.ts`, avec fournisseurs partenaires), le système de tickets support, et le RBAC global (`ADMIN_EMAILS`, `lib/roleStore.ts`). Migrer un de ces domaines suivrait le même schéma que le catalogue tenant (clé `tenantKey`, vérification `getTenantActor()`), mais représente un chantier à part pour chacun — voir les fonctions déjà tenant-scoped comme modèle.

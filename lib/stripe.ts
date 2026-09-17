@@ -1,6 +1,27 @@
+import crypto from 'crypto';
 import Stripe from 'stripe';
 
 let client: Stripe | null = null;
+
+/** Vérification manuelle de signature webhook Stripe (HMAC-SHA256, tolère un léger décalage d'horloge implicite via le timestamp signé). */
+export function verifyStripeSignature(payload: string, signatureHeader: string, secret: string): boolean {
+  const chunks = signatureHeader.split(',');
+  const timestamp = chunks.find((part) => part.startsWith('t='))?.slice(2);
+  const signature = chunks.find((part) => part.startsWith('v1='))?.slice(3);
+
+  if (!timestamp || !signature) return false;
+
+  const signedPayload = `${timestamp}.${payload}`;
+  const expected = crypto.createHmac('sha256', secret).update(signedPayload, 'utf8').digest('hex');
+
+  if (!/^[a-f0-9]+$/i.test(signature)) return false;
+
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  if (expectedBuffer.length !== signatureBuffer.length) return false;
+
+  return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+}
 
 export function isStripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
@@ -58,4 +79,40 @@ export async function createStripeCheckoutSession(args: {
   }
 
   return { sessionId: session.id, url: session.url };
+}
+
+/**
+ * Abonnement récurrent (Stripe Billing) pour la facturation SaaS d'un
+ * tenant — distinct de createStripeCheckoutSession ci-dessus (paiement
+ * ponctuel d'une commande client). Le prix référencé (`priceId`) doit être
+ * un Price Stripe pré-créé (mode "subscription" ne supporte pas price_data
+ * ad-hoc pour un prix récurrent réutilisable).
+ */
+export async function createSubscriptionCheckoutSession(args: {
+  priceId: string;
+  tenantId: string;
+  plan: string;
+  customerEmail?: string;
+  existingCustomerId?: string;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  const stripe = getClient();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: args.priceId, quantity: 1 }],
+    customer: args.existingCustomerId,
+    customer_email: args.existingCustomerId ? undefined : args.customerEmail,
+    client_reference_id: args.tenantId,
+    metadata: { tenantId: args.tenantId, plan: args.plan },
+    subscription_data: { metadata: { tenantId: args.tenantId, plan: args.plan } },
+    success_url: args.successUrl,
+    cancel_url: args.cancelUrl,
+  });
+
+  if (!session.url) {
+    throw new Error('Stripe: URL de session absente');
+  }
+
+  return { url: session.url };
 }

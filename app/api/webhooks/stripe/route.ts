@@ -1,32 +1,10 @@
-import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { confirmPayment } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { confirmDeposit } from '@/lib/walletStore';
 import { claimWebhookEvent, unclaimWebhookEvent } from '@/lib/paymentStore';
-
-function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
-  const chunks = signatureHeader.split(',');
-  const timestamp = chunks.find((part) => part.startsWith('t='))?.slice(2);
-  const signature = chunks.find((part) => part.startsWith('v1='))?.slice(3);
-
-  if (!timestamp || !signature) return false;
-
-  const signedPayload = `${timestamp}.${payload}`;
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload, 'utf8')
-    .digest('hex');
-
-  if (!/^[a-f0-9]+$/i.test(signature)) return false;
-
-  const expectedBuffer = Buffer.from(expected, 'hex');
-  const signatureBuffer = Buffer.from(signature, 'hex');
-  if (expectedBuffer.length !== signatureBuffer.length) return false;
-
-  return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
-}
+import { verifyStripeSignature } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {

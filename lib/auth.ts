@@ -11,6 +11,7 @@ import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
 import { verifyAdminTotp } from './totp';
 import { verifyTurnstileToken } from './turnstile';
+import { getTenantIdForIdentity, getTenantRole } from './tenantRoleStore';
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
@@ -51,6 +52,16 @@ export async function resolveRole(identity: string | null): Promise<AppRole> {
 
   const stored = await getStoredRole(identity);
   return stored || DEFAULT_ROLE;
+}
+
+// Couche SaaS additive (voir lib/tenantRoleStore.ts) : indépendante du RBAC
+// global ci-dessus, ne modifie ni n'affecte la résolution de `role`.
+async function resolveTenantMembership(identity: string | null) {
+  if (!identity) return { tenantId: null, tenantRole: null };
+  const tenantId = await getTenantIdForIdentity(identity);
+  if (!tenantId) return { tenantId: null, tenantRole: null };
+  const tenantRole = await getTenantRole(tenantId, identity);
+  return { tenantId, tenantRole };
 }
 
 type TikTokProfile = {
@@ -232,12 +243,17 @@ export const authOptions: NextAuthOptions = {
 
       token.identity = identity || undefined;
       token.role = await resolveRole(identity);
+      const membership = await resolveTenantMembership(identity);
+      token.tenantId = membership.tenantId;
+      token.tenantRole = membership.tenantRole;
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.identity = token.identity || session.user.email || undefined;
         session.user.role = token.role;
+        session.user.tenantId = token.tenantId ?? null;
+        session.user.tenantRole = token.tenantRole ?? null;
       }
       return session;
     },
