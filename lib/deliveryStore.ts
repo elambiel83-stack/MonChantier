@@ -146,7 +146,7 @@ export async function getDeliveryById(id: string): Promise<Delivery | null> {
 
 export type AssignDriverResult =
   | { success: true; delivery: Delivery }
-  | { success: false; error: 'not_found' | 'already_assigned' };
+  | { success: false; error: 'not_found' | 'already_assigned' | 'invalid_status' };
 
 export function assignDriver(args: {
   id: string;
@@ -157,8 +157,11 @@ export function assignDriver(args: {
     const delivery = store.deliveries.find((item) => item.id === args.id);
     if (!delivery) return { success: false as const, error: 'not_found' as const };
     if (delivery.driverIdentity) return { success: false as const, error: 'already_assigned' as const };
+    if (delivery.status !== 'pending') return { success: false as const, error: 'invalid_status' as const };
 
-    delivery.driverIdentity = normalizeIdentity(args.driverIdentity);
+    const driverIdentity = normalizeIdentity(args.driverIdentity);
+    if (!driverIdentity) return { success: false as const, error: 'invalid_status' as const };
+    delivery.driverIdentity = driverIdentity;
     delivery.status = 'assigned';
     delivery.statusHistory.push({
       id: makeEntryId(),
@@ -213,7 +216,7 @@ export function updateDeliveryStatus(args: {
 
 export type ReportPositionResult =
   | { success: true; delivery: Delivery }
-  | { success: false; error: 'not_found' | 'forbidden' | 'not_active' };
+  | { success: false; error: 'not_found' | 'forbidden' | 'not_active' | 'invalid_position' };
 
 export function reportDeliveryPosition(args: {
   id: string;
@@ -229,6 +232,16 @@ export function reportDeliveryPosition(args: {
     }
     if (delivery.status !== 'picked_up' && delivery.status !== 'in_transit') {
       return { success: false as const, error: 'not_active' as const };
+    }
+    if (
+      !Number.isFinite(args.lat) ||
+      !Number.isFinite(args.lng) ||
+      args.lat < -90 ||
+      args.lat > 90 ||
+      args.lng < -180 ||
+      args.lng > 180
+    ) {
+      return { success: false as const, error: 'invalid_position' as const };
     }
 
     const ping: DeliveryPositionPing = { lat: args.lat, lng: args.lng, at: new Date().toISOString() };
