@@ -7,8 +7,9 @@ import { getLoanById } from '@/lib/loanStore';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string; documentId: string } }
+  props: { params: Promise<{ id: string; documentId: string }> }
 ) {
+  const params = await props.params;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
 

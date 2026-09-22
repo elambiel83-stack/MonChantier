@@ -10,7 +10,8 @@ const ERROR_MESSAGES: Record<string, { message: string; status: number }> = {
   insufficient_balance: { message: "Solde du porte-monnaie insuffisant pour cette échéance", status: 400 },
 };
 
-export async function POST(_request: Request, { params }: { params: { id: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const identity = await getWalletIdentity();
     if (!identity) {

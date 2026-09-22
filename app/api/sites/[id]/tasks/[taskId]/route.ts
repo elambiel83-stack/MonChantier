@@ -3,7 +3,11 @@ import { getSiteById, setSiteTaskDone } from '@/lib/siteStore';
 import { canManageSite } from '@/lib/sitePermissions';
 import { getSessionActor } from '@/lib/sessionIdentity';
 
-export async function PATCH(request: Request, { params }: { params: { id: string; taskId: string } }) {
+export async function PATCH(
+  request: Request,
+  props: { params: Promise<{ id: string; taskId: string }> }
+) {
+  const params = await props.params;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 

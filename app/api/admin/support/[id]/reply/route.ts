@@ -4,7 +4,8 @@ import { requireAdmin } from '@/lib/requireAdmin';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { isMailerConfigured, sendContactEmail } from '@/lib/mailer';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

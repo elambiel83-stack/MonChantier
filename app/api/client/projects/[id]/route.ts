@@ -4,7 +4,8 @@ import { getSessionActor } from '@/lib/sessionIdentity';
 
 const VALID_STATUSES = ['planning', 'in_progress', 'completed'] as const;
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 
@@ -17,7 +18,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   return NextResponse.json({ success: true, projects });
 }
 
-export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 

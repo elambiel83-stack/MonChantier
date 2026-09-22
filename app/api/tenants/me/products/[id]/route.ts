@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { getTenantActor } from '@/lib/tenantSessionIdentity';
 import { deleteTenantProduct, updateTenantProduct, UpdateTenantProductPatch } from '@/lib/tenantCatalogStore';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const actor = await getTenantActor();
   if (!actor) return NextResponse.json({ message: 'Aucun tenant associé à ce compte' }, { status: 401 });
   if (actor.tenantRole === 'member') {
@@ -44,7 +45,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   return NextResponse.json({ success: true, product });
 }
 
-export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const actor = await getTenantActor();
   if (!actor) return NextResponse.json({ message: 'Aucun tenant associé à ce compte' }, { status: 401 });
   if (actor.tenantRole === 'member') {

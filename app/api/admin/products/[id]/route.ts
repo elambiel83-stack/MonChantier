@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteProduct, updateProduct, UpdateProductPatch } from '@/lib/productStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
@@ -53,7 +54,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

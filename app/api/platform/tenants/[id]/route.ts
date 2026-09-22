@@ -4,7 +4,8 @@ import { setTenantStatus, TenantStatus } from '@/lib/tenantStore';
 
 const VALID_STATUSES: TenantStatus[] = ['active', 'suspended'];
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await requirePlatformAdmin();
   if (!admin) return NextResponse.json({ message: 'Accès plateforme refusé' }, { status: 403 });
 

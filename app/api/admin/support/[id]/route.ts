@@ -4,7 +4,8 @@ import { requireAdmin } from '@/lib/requireAdmin';
 
 const VALID_STATUSES: SupportTicketStatus[] = ['open', 'pending', 'closed'];
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

@@ -32,18 +32,18 @@ let inboxMessages: FakeMessage[] = [];
 const flaggedSeen: number[] = [];
 
 vi.mock('imapflow', () => ({
-  ImapFlow: vi.fn().mockImplementation(() => ({
-    connect: vi.fn(async () => {}),
-    logout: vi.fn(async () => {}),
-    getMailboxLock: vi.fn(async () => ({ release: vi.fn() })),
-    fetch: vi.fn(function* () {
+  ImapFlow: class FakeImapFlow {
+    connect = vi.fn(async () => {});
+    logout = vi.fn(async () => {});
+    getMailboxLock = vi.fn(async () => ({ release: vi.fn() }));
+    fetch = vi.fn(function* () {
       for (const message of inboxMessages) yield message;
-    }),
-    messageFlagsAdd: vi.fn(async (uid: number) => {
+    });
+    messageFlagsAdd = vi.fn(async (uid: number) => {
       flaggedSeen.push(uid);
       return true;
-    }),
-  })),
+    });
+  },
 }));
 
 let pollInboundSupportMail: typeof import('./inboundMail').pollInboundSupportMail;

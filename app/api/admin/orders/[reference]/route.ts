@@ -5,7 +5,8 @@ import { restockItems } from '@/lib/productStore';
 
 const VALID_STATUSES: OrderStatus[] = ['processing', 'shipped', 'delivered', 'cancelled'];
 
-export async function PATCH(request: NextRequest, { params }: { params: { reference: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ reference: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

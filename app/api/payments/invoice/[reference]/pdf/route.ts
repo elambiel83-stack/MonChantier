@@ -4,10 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { getStoredPaymentStatus } from '@/lib/paymentStore';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { reference: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ reference: string }> }) {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ message: 'Authentification requise' }, { status: 401 });

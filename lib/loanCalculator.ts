@@ -79,8 +79,10 @@ export function buildAmortizationSchedule(args: {
 
     remaining = round2(remaining - principalPortion);
 
+    // Utiliser exclusivement UTC : l'échéancier ne doit pas changer selon
+    // le fuseau horaire du serveur ou du runner CI.
     const dueDate = new Date(startDate);
-    dueDate.setMonth(dueDate.getMonth() + index);
+    dueDate.setUTCMonth(dueDate.getUTCMonth() + index);
 
     installments.push({
       index,
