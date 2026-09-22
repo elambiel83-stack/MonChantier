@@ -53,6 +53,9 @@ jobs:
       - name: Apply database schema
         run: npm run db:migrate
 
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+
       - name: Typecheck
         run: npx tsc --noEmit
 
