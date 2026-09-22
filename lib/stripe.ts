@@ -3,24 +3,29 @@ import Stripe from 'stripe';
 
 let client: Stripe | null = null;
 
-/** Vérification manuelle de signature webhook Stripe (HMAC-SHA256, tolère un léger décalage d'horloge implicite via le timestamp signé). */
+/** Vérifie le HMAC Stripe et refuse les signatures rejouées après 5 minutes. */
 export function verifyStripeSignature(payload: string, signatureHeader: string, secret: string): boolean {
   const chunks = signatureHeader.split(',');
   const timestamp = chunks.find((part) => part.startsWith('t='))?.slice(2);
-  const signature = chunks.find((part) => part.startsWith('v1='))?.slice(3);
+  const signatures = chunks.filter((part) => part.startsWith('v1=')).map((part) => part.slice(3));
+  if (!timestamp || signatures.length === 0) return false;
 
-  if (!timestamp || !signature) return false;
+  const timestampSeconds = Number(timestamp);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(nowSeconds - timestampSeconds) > 300) return false;
 
-  const signedPayload = `${timestamp}.${payload}`;
-  const expected = crypto.createHmac('sha256', secret).update(signedPayload, 'utf8').digest('hex');
-
-  if (!/^[a-f0-9]+$/i.test(signature)) return false;
-
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${timestamp}.${payload}`, 'utf8')
+    .digest('hex');
   const expectedBuffer = Buffer.from(expected, 'hex');
-  const signatureBuffer = Buffer.from(signature, 'hex');
-  if (expectedBuffer.length !== signatureBuffer.length) return false;
 
-  return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+  return signatures.some((signature) => {
+    if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    return signatureBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+  });
 }
 
 export function isStripeConfigured() {
