@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isMobileMoneyConfigured, initiateMobileMoneyCharge } from '@/lib/mobileMoney';
 import { confirmPayment, generatePaymentReference, registerPendingPayment } from '@/lib/paymentConfirmation';
 import { OrderPricingError, priceOrderFromCatalog } from '@/lib/orderPricing';
+import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 export async function POST(request: NextRequest) {
+  if (!isLivePaymentEnabled('mobilemoney')) return NextResponse.json({ message: paymentDisabledResponseMessage('mobilemoney') }, { status: 503 });
   try {
     const body = await request.json();
     const { currency, phone, network, fullname, email, customerName, customerEmail, metadata } = body;

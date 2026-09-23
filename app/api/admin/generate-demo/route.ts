@@ -10,6 +10,9 @@ const demoRows = [
 ];
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ message: 'Génération de données de démonstration désactivée en production.' }, { status: 404 });
+  }
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

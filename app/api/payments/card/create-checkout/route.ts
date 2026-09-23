@@ -3,8 +3,10 @@ import { createStripeCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { confirmPayment, generatePaymentReference, registerPendingPayment } from '@/lib/paymentConfirmation';
 import { OrderPricingError, priceOrderFromCatalog } from '@/lib/orderPricing';
+import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 export async function POST(request: NextRequest) {
+  if (!isLivePaymentEnabled('card')) return NextResponse.json({ message: paymentDisabledResponseMessage('card') }, { status: 503 });
   try {
     const body = await request.json();
     const { items, currency, deliveryAddress, location, successUrl, cancelUrl, customerName, customerEmail } = body;
