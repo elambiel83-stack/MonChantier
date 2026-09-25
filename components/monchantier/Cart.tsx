@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { CartItem, Currency, Language } from "./types";
+import { cartWhatsAppUrl } from "@/lib/socialCommerce";
 
 interface CartProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export function Cart({
   onUpdateQuantity,
   onRemoveItem,
   onCheckout,
+  lang,
   t,
   currency,
   fxRateUSDCDF,
@@ -149,6 +151,14 @@ export function Cart({
             >
               {t("Procéder au paiement", "Proceed to checkout")}
             </button>
+            <a
+              href={cartWhatsAppUrl(cartItems, currency, lang, fxRateUSDCDF)}
+              target="_blank"
+              rel="noreferrer"
+              className="block w-full bg-green-700 hover:bg-green-800 text-center text-white font-semibold px-5 py-3 rounded-xl shadow"
+            >
+              {t("Commander le panier sur WhatsApp", "Order cart on WhatsApp")}
+            </a>
             <button
               onClick={onClose}
               className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-5 py-3 rounded-xl"

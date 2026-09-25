@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { PRODUCTS_BANNER_URL } from "./constants";
 import { Language, Product } from "./types";
+import { facebookShareUrl, productShareUrl, productWhatsAppUrl } from "@/lib/socialCommerce";
 
 interface ProductsProps {
   lang: Language;
@@ -65,6 +66,13 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
   const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
+  const [copiedProductId, setCopiedProductId] = useState<number | null>(null);
+
+  const copyTikTokLink = async (product: Product) => {
+    await navigator.clipboard.writeText(productShareUrl(product.id, "tiktok", window.location.origin));
+    setCopiedProductId(product.id);
+    window.setTimeout(() => setCopiedProductId(null), 1800);
+  };
 
   useEffect(() => {
     fetch("/api/catalog/products", { cache: "no-store" })
@@ -170,13 +178,30 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                 <span className="text-slate-900 font-bold whitespace-nowrap">{p.price}</span>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
                   <a
-                    href={`https://wa.me/243999972466?text=${encodeURIComponent(`Bonjour MonChantier, je souhaite un devis pour: ${lang === 'fr' ? p.fr : p.en}`)}`}
+                    href={productWhatsAppUrl(p, lang, typeof window === "undefined" ? undefined : window.location.origin)}
                     target="_blank"
-                    className="text-sm font-semibold text-orange-600 hover:text-orange-700"
+                    className="text-sm font-semibold text-green-700 hover:text-green-800"
                     rel="noreferrer"
                   >
-                    {t("Devis", "Quote")}
+                    WhatsApp
                   </a>
+                  <a
+                    href={facebookShareUrl(p, typeof window === "undefined" ? undefined : window.location.origin)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+                    aria-label={t(`Partager ${p.fr} sur Facebook`, `Share ${p.en} on Facebook`)}
+                  >
+                    Facebook
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => void copyTikTokLink(p)}
+                    className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                    title={t("Copier le lien pour TikTok", "Copy link for TikTok")}
+                  >
+                    {copiedProductId === p.id ? t("Lien copié", "Link copied") : "TikTok"}
+                  </button>
                   {hasPrice && (
                     <button
                       type="button"
