@@ -3,6 +3,7 @@ import { getWalletIdentity } from '@/lib/walletAuth';
 import { confirmDeposit, registerPendingDeposit } from '@/lib/walletStore';
 import { WalletCurrency } from '@/lib/walletExchange';
 import { isMobileMoneyConfigured, initiateMobileMoneyCharge } from '@/lib/mobileMoney';
+import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -14,6 +15,7 @@ function sanitizeCurrency(value: unknown): WalletCurrency {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isLivePaymentEnabled('mobilemoney')) return NextResponse.json({ message: paymentDisabledResponseMessage('mobilemoney') }, { status: 503 });
   try {
     const identity = await getWalletIdentity();
     if (!identity) {

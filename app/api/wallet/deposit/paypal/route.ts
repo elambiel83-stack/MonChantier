@@ -4,6 +4,7 @@ import { confirmDeposit, registerPendingDeposit } from '@/lib/walletStore';
 import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
 import { encodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { WalletCurrency } from '@/lib/walletExchange';
+import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 function parsePositiveAmount(value: unknown) {
   const amount = Number(value);
@@ -15,6 +16,7 @@ function sanitizeCurrency(value: unknown): WalletCurrency {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isLivePaymentEnabled('paypal')) return NextResponse.json({ message: paymentDisabledResponseMessage('paypal') }, { status: 503 });
   try {
     const identity = await getWalletIdentity();
     if (!identity) {

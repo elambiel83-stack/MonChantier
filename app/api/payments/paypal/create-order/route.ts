@@ -3,8 +3,10 @@ import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
 import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { confirmPayment, generatePaymentReference, registerPendingPayment } from '@/lib/paymentConfirmation';
 import { OrderPricingError, priceOrderFromCatalog } from '@/lib/orderPricing';
+import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 export async function POST(request: NextRequest) {
+  if (!isLivePaymentEnabled('paypal')) return NextResponse.json({ message: paymentDisabledResponseMessage('paypal') }, { status: 503 });
   try {
     const body = await request.json();
     const { items, currency, deliveryAddress, location, returnUrl, cancelUrl, customerName, customerEmail } = body;
