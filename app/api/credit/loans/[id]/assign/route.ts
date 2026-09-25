@@ -3,7 +3,8 @@ import { getSessionActor } from '@/lib/sessionIdentity';
 import { canAssignAgent } from '@/lib/loanPermissions';
 import { assignAgent } from '@/lib/loanStore';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const actor = await getSessionActor();
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });

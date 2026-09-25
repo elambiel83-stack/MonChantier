@@ -11,3 +11,4 @@ coverage/
 .vscode/
 cookies.txt
 tsconfig.tsbuildinfo
+data/

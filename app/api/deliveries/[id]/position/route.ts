@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { reportDeliveryPosition } from '@/lib/deliveryStore';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const actor = await getSessionActor();
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });

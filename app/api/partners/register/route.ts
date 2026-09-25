@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Simuler un délai de traitement
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    recordPartner({ type, company, fullname });
+    await recordPartner({ type, company, fullname });
 
     // En production: envoyer notification WhatsApp/Email à l'équipe
     return NextResponse.json({ 

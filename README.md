@@ -1,14 +1,17 @@
 # MonChantier Livraison
 
-## Démarrage rapide (après redémarrage du PC)
+## Démarrage rapide
 
-1. Ouvrir un terminal dans le dossier du projet :
-   - `/home/erick-lambi/Musique/MonChantier_Livraison`
-2. Installer les dépendances (si nécessaire) :
+1. Installer les dépendances :
    - `npm install`
-3. Lancer le serveur de développement :
+2. Démarrer une base PostgreSQL locale (Docker) :
+   - `docker compose up -d db`
+3. Copier `.env.example` vers `.env.local` et renseigner au minimum `DATABASE_URL` (voir `docker-compose.yml` pour les identifiants par défaut).
+4. Appliquer le schéma (idempotent, à rejouer à chaque déploiement) :
+   - `npm run db:migrate`
+5. Lancer le serveur de développement :
    - `npm run dev`
-4. Ouvrir l’application dans le navigateur :
+6. Ouvrir l'application dans le navigateur :
    - `http://localhost:3000`
 
 ## Commandes utiles
@@ -17,6 +20,28 @@
 - Rebuild production : `npm run build`
 - Démarrer en production : `npm run start`
 - Linter : `npm run lint`
+- Tests : `npm test`
+
+## Base de données
+
+Toute la persistance applicative (produits, commandes, prêts, wallet, rôles,
+livraisons, etc.) vit dans PostgreSQL (`DATABASE_URL`), voir `db/schema.sql`.
+Ce fichier est idempotent et doit être rejoué à chaque déploiement (comme
+`backend/schema.sql` dans le dépôt Chantier) : `npm run db:migrate`.
+
+Chaque domaine métier est stocké comme un document JSON dans la table
+`kv_store` (une ligne par store, verrouillée avec `SELECT ... FOR UPDATE`
+pendant les écritures — voir `lib/storeDb.ts`), ce qui conserve la même
+forme de données que l'ancien système de fichiers `data/*.json` tout en la
+rendant compatible avec un déploiement serverless ou multi-instance : les
+fichiers JSON ne survivaient pas à un redémarrage à froid en serverless et
+divergeaient entre plusieurs instances du serveur.
+
+**Note sur le reste de ce document** : les sections ci-dessous mentionnent
+encore par endroits `data/<nom>.json` pour décrire où vit chaque donnée —
+lire cela comme le nom du store correspondant dans `kv_store` (ex.
+`data/wallet-store.json` → clé `wallet-store`), la logique métier étant
+inchangée.
 
 ## Authentification (Google, Facebook, TikTok, Téléphone)
 
@@ -288,10 +313,13 @@ En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Admini
 
 - Configurer dans `.env.local` :
   - `ADMIN_LOGIN_EMAIL=admin@monchantier.net`
-  - `ADMIN_LOGIN_PASSWORD=<mot de passe>`
+  - `ADMIN_LOGIN_PASSWORD_HASH=<hash Argon2id>` (recommandé en production) ou `ADMIN_LOGIN_PASSWORD=<mot de passe en clair>` (dev uniquement)
+  - `ADMIN_TOTP_SECRET=<secret Base32>` (MFA, obligatoire en production)
   - Ajouter aussi cet email dans `ADMIN_EMAILS` pour qu'il obtienne le rôle `admin`.
-- Sans ces deux variables, le formulaire reste affiché mais refuse toute connexion (comportement sûr par défaut).
-- Le mot de passe est comparé par hash SHA-256 en temps constant (`lib/auth.ts`) pour limiter les attaques par mesure de temps ; il n'est jamais stocké ailleurs que dans `.env.local` (non versionné).
+- Sans identifiants configurés, le formulaire reste affiché mais refuse toute connexion (comportement sûr par défaut).
+- Le mot de passe est vérifié par Argon2id (`ADMIN_LOGIN_PASSWORD_HASH`) quand disponible, sinon comparé en clair par hash SHA-256 en temps constant (dev uniquement) ; il n'est jamais stocké ailleurs que dans `.env.local` (non versionné).
+- Deux compartiments de rate limiting (par email, par IP) protègent contre le brute-force, partagés entre toutes les instances du serveur si `REDIS_URL` est configuré (repli en mémoire locale sinon).
+- Si `TURNSTILE_SECRET_KEY` est configuré, un CAPTCHA Cloudflare Turnstile est aussi requis (no-op sinon).
 
 ### Confirmation manuelle de paiement (ops)
 
@@ -300,6 +328,29 @@ En plus de Google/Facebook, `/auth/signin` propose un formulaire dédié "Admini
 1. Définir `ADMIN_API_SECRET` dans `.env.local` (une valeur aléatoire longue).
 2. Appeler la route avec l'en-tête `Authorization: Bearer <ADMIN_API_SECRET>`.
 3. Sans secret configuré ou avec une valeur incorrecte, la route renvoie `401`.
+
+### Support client (tickets multicanal : web + email)
+
+Le support fonctionne par tickets threadés (client ↔ staff), gérés depuis `/dashboard/client` (section Support) côté client et `/dashboard/admin` (section Support) côté staff : réponse, fermeture/réouverture. Chaque réponse déclenche une notification email best-effort (no-op sans SMTP configuré) — au staff (`SUPPORT_NOTIFICATION_EMAIL` ou `SMTP_TO`) à la création d'un ticket ou d'un nouveau message client, au client quand le staff répond.
+
+**Ingestion email** (`lib/inboundMail.ts`) : un client peut aussi écrire directement à l'adresse support, sans jamais se connecter au site — ça crée un ticket automatiquement (canal `email`). Une réponse à un email de notification (qui inclut toujours un tag `[TCK-xxx]` dans son sujet) est rattachée au bon ticket au lieu d'en créer un nouveau ; un email du staff dont l'adresse figure dans `ADMIN_EMAILS` est traité comme une réponse staff.
+
+Fonctionne par polling IMAP (compatible avec n'importe quelle boîte mail générique) plutôt que par un webhook de prestataire spécifique :
+
+1. Configurer `SUPPORT_IMAP_HOST/PORT/USER/PASSWORD` dans `.env.local` (ou rien : par défaut réutilise `SMTP_HOST/SMTP_USER/SMTP_PASS`, la même boîte servant à l'envoi et à la réception).
+2. Définir `SUPPORT_INBOUND_SECRET` (une valeur aléatoire longue).
+3. Planifier un appel périodique (ex: toutes les 5 minutes) à `POST /api/support/inbound-poll` avec l'en-tête `Authorization: Bearer <SUPPORT_INBOUND_SECRET>` — via un cron système (`curl`), une Vercel Cron Job (`vercel.json`), ou tout planificateur externe (cron-job.org, GitHub Actions `schedule`...).
+4. Sans `SUPPORT_IMAP_HOST`/`SMTP_HOST` ni `SUPPORT_INBOUND_SECRET` configurés, la route renvoie respectivement `503` ou `401` — le support reste utilisable via le formulaire web dans tous les cas.
+
+Exemple de configuration Vercel Cron (`vercel.json` à la racine) :
+
+```json
+{
+  "crons": [{ "path": "/api/support/inbound-poll", "schedule": "*/5 * * * *" }]
+}
+```
+
+Chaque email est traité une seule fois (marqué lu immédiatement après traitement, y compris s'il est ignoré) : les accusés de réception, rebonds et réponses automatiques (`Auto-Submitted`, absence du bureau...) sont filtrés pour éviter qu'une notification sortante ne revienne créer un ticket en boucle.
 
 ### Suivi de livraison
 
@@ -331,3 +382,23 @@ Chaque produit/service porte un `ownerIdentity` optionnel : absent pour le catal
 - **Technicien** (`/dashboard/technician`) : publie ses propres services et fixe leurs prix (optionnels — laisser vide pour "sur devis").
 - Routes dédiées (hors `/api/admin/*`, permissions vérifiées par requête via `lib/sessionIdentity.ts`) : `GET/POST /api/partner/products`, `PATCH /api/partner/products/<id>` (rôle `supplier`, propriétaire uniquement) ; mêmes routes sous `/api/partner/services` pour le rôle `technician`.
 - L'admin garde une visibilité et un contrôle total sur tous les articles, y compris ceux des partenaires, via `/api/admin/products` et `/api/admin/services`.
+
+## Multi-tenant (SaaS)
+
+Une couche additive et distincte de l'app mono-tenant MonChantier décrite ci-dessus : chaque **tenant** (organisation cliente qui souscrit à MonChantier comme logiciel) obtient son propre espace isolé — création en self-service, catalogue produit, abonnement payant, console d'exploitation pour l'éditeur de la plateforme. Elle ne modifie ni ne remplace rien du RBAC, du catalogue, des paiements, du crédit ou des livraisons de l'app existante : les deux coexistent dans la même base de code.
+
+**Modèle de données** — chaque domaine tenant-scoped vit dans `kv_store` sous une clé préfixée par l'id du tenant (`lib/storeDb.ts::tenantKey`), une ligne isolée par tenant et par domaine :
+
+- `lib/tenantStore.ts` — la fiche tenant (nom, identifiant `slug`, statut actif/suspendu, plan, identité fiscale propre — remplace les variables d'env globales `BILLING_COMPANY_*` de l'app mono-tenant pour ce qui concerne un tenant).
+- `lib/tenantRoleStore.ts` — rôles `owner`/`admin`/`member` au sein d'un tenant, indépendants du RBAC global (`lib/roleStore.ts`). **Limite MVP assumée** : une identité n'appartient qu'à un seul tenant actif à la fois (index `identity → tenantId`, pas de multi-organisation par utilisateur — à faire évoluer vers une vraie table relationnelle si ça devient un vrai besoin produit).
+- `lib/tenantCatalogStore.ts` — catalogue produit du tenant (nom, prix, devise, stock). Volontairement simplifié par rapport à `lib/productStore.ts` (pas de fournisseurs partenaires, devise unique par article).
+
+**Résolution par requête** — `tenantId`/`tenantRole` sont ajoutés au JWT NextAuth de façon additive (`lib/auth.ts`, callback `jwt`), sans toucher au `role` global existant. `lib/tenantSessionIdentity.ts::getTenantActor()` est l'équivalent tenant-scoped de `lib/sessionIdentity.ts::getSessionActor()`, et vérifie aussi que le tenant est actif (une suspension prend effet immédiatement, sans attendre l'expiration de session).
+
+**Parcours** :
+1. `/org/signup` (`POST /api/tenants/signup`) — n'importe quel compte connecté (Google/Facebook/téléphone) crée son organisation et en devient `owner`.
+2. `/org` — tableau de bord du tenant : catalogue produit (`GET/POST /api/tenants/me/products`, `PATCH/DELETE .../products/<id>`), lecture seule pour le rôle `member`.
+3. `/org/billing` — abonnement Stripe Billing (`lib/tenantBilling.ts`) : plans `starter` (gratuit, 20 produits max), `pro` (500), `enterprise` (illimité). `POST /api/tenants/me/billing/checkout` crée une session Stripe en mode `subscription` ; `POST /api/webhooks/stripe-billing` (secret `STRIPE_BILLING_WEBHOOK_SECRET`, **distinct** de `STRIPE_WEBHOOK_SECRET` utilisé par les paiements de commandes) active/désactive l'abonnement. La limite de produits est appliquée à la création (`assertWithinProductLimit`), un dépassement renvoie `402`.
+4. `/platform` (`PLATFORM_ADMIN_EMAILS`) — console de l'éditeur de la plateforme : liste des tenants, plan, statut d'abonnement, suspension/réactivation (`GET /api/platform/tenants`, `PATCH /api/platform/tenants/<id>`).
+
+**Ce qui n'est PAS migré vers le multi-tenant** (reste global, propre à l'app mono-tenant MonChantier existante) : le crédit immobilier, le porte-monnaie, les livraisons, les chantiers, les dépenses, le catalogue produits/services historique (`lib/productStore.ts`/`lib/serviceStore.ts`, avec fournisseurs partenaires), le système de tickets support, et le RBAC global (`ADMIN_EMAILS`, `lib/roleStore.ts`). Migrer un de ces domaines suivrait le même schéma que le catalogue tenant (clé `tenantKey`, vérification `getTenantActor()`), mais représente un chantier à part pour chacun — voir les fonctions déjà tenant-scoped comme modèle.

@@ -1,6 +1,32 @@
+import crypto from 'crypto';
 import Stripe from 'stripe';
 
 let client: Stripe | null = null;
+
+/** Vérifie le HMAC Stripe et refuse les signatures rejouées après 5 minutes. */
+export function verifyStripeSignature(payload: string, signatureHeader: string, secret: string): boolean {
+  const chunks = signatureHeader.split(',');
+  const timestamp = chunks.find((part) => part.startsWith('t='))?.slice(2);
+  const signatures = chunks.filter((part) => part.startsWith('v1=')).map((part) => part.slice(3));
+  if (!timestamp || signatures.length === 0) return false;
+
+  const timestampSeconds = Number(timestamp);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(nowSeconds - timestampSeconds) > 300) return false;
+
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${timestamp}.${payload}`, 'utf8')
+    .digest('hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+
+  return signatures.some((signature) => {
+    if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    return signatureBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+  });
+}
 
 export function isStripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
@@ -58,4 +84,40 @@ export async function createStripeCheckoutSession(args: {
   }
 
   return { sessionId: session.id, url: session.url };
+}
+
+/**
+ * Abonnement récurrent (Stripe Billing) pour la facturation SaaS d'un
+ * tenant — distinct de createStripeCheckoutSession ci-dessus (paiement
+ * ponctuel d'une commande client). Le prix référencé (`priceId`) doit être
+ * un Price Stripe pré-créé (mode "subscription" ne supporte pas price_data
+ * ad-hoc pour un prix récurrent réutilisable).
+ */
+export async function createSubscriptionCheckoutSession(args: {
+  priceId: string;
+  tenantId: string;
+  plan: string;
+  customerEmail?: string;
+  existingCustomerId?: string;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  const stripe = getClient();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: args.priceId, quantity: 1 }],
+    customer: args.existingCustomerId,
+    customer_email: args.existingCustomerId ? undefined : args.customerEmail,
+    client_reference_id: args.tenantId,
+    metadata: { tenantId: args.tenantId, plan: args.plan },
+    subscription_data: { metadata: { tenantId: args.tenantId, plan: args.plan } },
+    success_url: args.successUrl,
+    cancel_url: args.cancelUrl,
+  });
+
+  if (!session.url) {
+    throw new Error('Stripe: URL de session absente');
+  }
+
+  return { url: session.url };
 }

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrderStatus, updateOrderStatus } from '@/lib/paymentStore';
 import { requireAdmin } from '@/lib/requireAdmin';
+import { restockItems } from '@/lib/productStore';
 
 const VALID_STATUSES: OrderStatus[] = ['processing', 'shipped', 'delivered', 'cancelled'];
 
-export async function PATCH(request: NextRequest, { params }: { params: { reference: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ reference: string }> }) {
+  const params = await props.params;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
@@ -20,6 +22,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { refere
     const result = await updateOrderStatus(decodeURIComponent(params.reference), nextStatus, cancelReason);
     if ('error' in result) {
       return NextResponse.json({ message: result.error }, { status: 400 });
+    }
+
+    if (nextStatus === 'cancelled') {
+      const stockItems = (result.status.fullInvoice?.items || [])
+        .filter((item) => item.productId !== undefined)
+        .map((item) => ({ productId: item.productId!, quantity: item.quantity }));
+      if (stockItems.length > 0) {
+        await restockItems(stockItems);
+      }
     }
 
     return NextResponse.json({ success: true, order: result.status });

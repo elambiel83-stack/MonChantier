@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteExpense, updateExpense, UpdateExpensePatch } from '@/lib/expenseStore';
 import { requireRole } from '@/lib/requireRole';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireRole(request, ['accountant']);
   if (denied) return denied;
 
@@ -39,7 +40,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const denied = await requireRole(request, ['accountant']);
   if (denied) return denied;
 

@@ -184,7 +184,7 @@ export const ROLE_MENUS: Record<AppRole, RoleMenuItem[]> = {
     { fr: "Livraisons", en: "Deliveries", anchor: "livraisons" },
     { fr: "Chantiers", en: "Sites" },
     { fr: "Promotions", en: "Promotions" },
-    { fr: "Support", en: "Support" },
+    { fr: "Support", en: "Support", anchor: "support" },
     { fr: "Sécurité", en: "Security" },
     { fr: "Logs", en: "Logs" },
     { fr: "Configuration", en: "Configuration" },
