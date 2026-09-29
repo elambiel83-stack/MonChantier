@@ -1,3 +1,19 @@
+// NextAuth parses NEXTAUTH_URL as soon as its client module is imported.
+// Vercel may define detected environment variables with an empty value, which
+// makes that import throw ERR_INVALID_URL during static page generation.
+const configuredSiteUrl = [
+  process.env.NEXTAUTH_URL,
+  process.env.NEXT_PUBLIC_SITE_URL,
+  process.env.NEXT_PUBLIC_APP_URL,
+]
+  .map((value) => value?.trim())
+  .find(Boolean)
+
+if (!process.env.NEXTAUTH_URL?.trim()) {
+  process.env.NEXTAUTH_URL = configuredSiteUrl
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
