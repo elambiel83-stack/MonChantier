@@ -12,6 +12,7 @@ import { checkRateLimit } from "./rateLimit";
 import { verifyAdminTotp } from './totp';
 import { verifyTurnstileToken } from './turnstile';
 import { getTenantIdForIdentity, getTenantRole } from './tenantRoleStore';
+import { findSaasMembership } from './saas/membership';
 
 function safeEqual(a: string, b: string): boolean {
   const hashA = createHash("sha256").update(a).digest();
@@ -58,6 +59,8 @@ export async function resolveRole(identity: string | null): Promise<AppRole> {
 // global ci-dessus, ne modifie ni n'affecte la résolution de `role`.
 async function resolveTenantMembership(identity: string | null) {
   if (!identity) return { tenantId: null, tenantRole: null };
+  const saasMembership = await findSaasMembership(identity);
+  if (saasMembership) return saasMembership;
   const tenantId = await getTenantIdForIdentity(identity);
   if (!tenantId) return { tenantId: null, tenantRole: null };
   const tenantRole = await getTenantRole(tenantId, identity);
