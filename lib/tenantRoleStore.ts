@@ -4,7 +4,7 @@ import { readStore, tenantKey, withStore } from './storeDb';
 // RBAC global historique de MonChantier (lib/roleStore.ts, qui reste
 // utilisé tel quel par l'app mono-tenant existante — voir README
 // "Multi-tenant (SaaS)" pour la portée de cette couche additive).
-export type TenantRole = 'owner' | 'admin' | 'member';
+export type TenantRole = 'owner' | 'admin' | 'accountant' | 'site_manager' | 'supplier' | 'carrier' | 'driver' | 'support' | 'member';
 
 export type TenantRoleAssignment = {
   tenantId: string;
