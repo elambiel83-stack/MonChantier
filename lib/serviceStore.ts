@@ -9,6 +9,7 @@ export type StoredService = {
   frDesc: string;
   enDesc: string;
   img: string;
+  category: string;
   priceUSD: number | null;
   priceCDF: number | null;
   active: boolean;
@@ -33,6 +34,7 @@ function buildSeedStore(): ServiceStoreModel {
     frDesc: s.frDesc,
     enDesc: s.enDesc,
     img: s.img,
+    category: s.category,
     priceUSD: null,
     priceCDF: null,
     active: true,
@@ -65,6 +67,7 @@ export function createService(input: {
   frDesc: string;
   enDesc: string;
   img: string;
+  category?: string;
   priceUSD: number | null;
   priceCDF: number | null;
   ownerIdentity?: string;
@@ -79,6 +82,7 @@ export function createService(input: {
       frDesc: input.frDesc,
       enDesc: input.enDesc,
       img: input.img,
+      category: input.category || 'autres',
       priceUSD: input.priceUSD,
       priceCDF: input.priceCDF,
       ownerIdentity: input.ownerIdentity?.trim().toLowerCase(),
@@ -93,7 +97,7 @@ export function createService(input: {
 }
 
 export type UpdateServicePatch = Partial<
-  Pick<StoredService, 'icon' | 'fr' | 'en' | 'frDesc' | 'enDesc' | 'img' | 'priceUSD' | 'priceCDF' | 'active'>
+  Pick<StoredService, 'icon' | 'fr' | 'en' | 'frDesc' | 'enDesc' | 'img' | 'category' | 'priceUSD' | 'priceCDF' | 'active'>
 >;
 
 export function updateService(id: number, patch: UpdateServicePatch): Promise<StoredService | null> {
