@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteProduct, updateProduct, UpdateProductPatch } from '@/lib/productStore';
+import { deleteProduct, getProduct, updateProduct, UpdateProductPatch } from '@/lib/productStore';
 import { requireAdmin } from '@/lib/requireAdmin';
+import { calculateSellingPrice, validateFeePercent } from '@/lib/partnerPricing';
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -15,6 +16,8 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
 
     const body = await request.json();
     const patch: UpdateProductPatch = {};
+    const existing = await getProduct(id);
+    if (!existing) return NextResponse.json({ message: 'Produit introuvable' }, { status: 404 });
 
     if (typeof body?.fr === 'string') patch.fr = body.fr.trim();
     if (typeof body?.en === 'string') patch.en = body.en.trim();
@@ -40,6 +43,20 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       if (patch.stock !== null && (!Number.isFinite(patch.stock) || patch.stock < 0)) {
         return NextResponse.json({ message: 'Stock invalide' }, { status: 400 });
       }
+    }
+    if (body?.pricingStatus !== undefined) {
+      if (!existing.ownerIdentity || !['approved', 'rejected', 'pending'].includes(body.pricingStatus)) {
+        return NextResponse.json({ message: 'Décision de tarification invalide' }, { status: 400 });
+      }
+      const fee = validateFeePercent(body.platformFeePercent);
+      if (body.pricingStatus === 'approved' && fee === null) {
+        return NextResponse.json({ message: 'Pourcentage MonChantier requis entre 0 et 100' }, { status: 400 });
+      }
+      patch.pricingStatus = body.pricingStatus;
+      patch.platformFeePercent = fee ?? existing.platformFeePercent;
+      patch.active = body.pricingStatus === 'approved';
+      patch.priceUSD = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceUSD, fee!) : null;
+      patch.priceCDF = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceCDF, fee!) : null;
     }
 
     const product = await updateProduct(id, patch);

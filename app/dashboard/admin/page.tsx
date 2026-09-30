@@ -18,6 +18,11 @@ type StoredProduct = {
   priceCDF: number | null;
   img: string;
   active: boolean;
+  ownerIdentity?: string;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: 'platform' | 'pending' | 'approved' | 'rejected';
 };
 
 type StoredService = {
@@ -31,6 +36,11 @@ type StoredService = {
   priceUSD: number | null;
   priceCDF: number | null;
   active: boolean;
+  ownerIdentity?: string;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: 'platform' | 'pending' | 'approved' | 'rejected';
 };
 
 type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -246,7 +256,7 @@ export default function AdminPage() {
   const [busyDeliveryId, setBusyDeliveryId] = useState<string | null>(null);
   const [driverAssignInput, setDriverAssignInput] = useState<Record<string, string>>({});
   const [products, setProducts] = useState<StoredProduct[]>([]);
-  const [productEdits, setProductEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
+  const [productEdits, setProductEdits] = useState<Record<number, { priceUSD: string; priceCDF: string; feePercent: string }>>({});
   const [busyProductId, setBusyProductId] = useState<number | null>(null);
   const [newProduct, setNewProduct] = useState({
     fr: '',
@@ -260,7 +270,7 @@ export default function AdminPage() {
   const [savingProduct, setSavingProduct] = useState(false);
 
   const [services, setServices] = useState<StoredService[]>([]);
-  const [serviceEdits, setServiceEdits] = useState<Record<number, { priceUSD: string; priceCDF: string }>>({});
+  const [serviceEdits, setServiceEdits] = useState<Record<number, { priceUSD: string; priceCDF: string; feePercent: string }>>({});
   const [busyServiceId, setBusyServiceId] = useState<number | null>(null);
   const [newService, setNewService] = useState({
     icon: '🔧',
@@ -420,6 +430,22 @@ export default function AdminPage() {
     }
   };
 
+  const reviewProductPrice = async (id: number, pricingStatus: 'approved' | 'rejected') => {
+    const edit = productEdits[id];
+    try {
+      setBusyProductId(id);
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricingStatus, platformFeePercent: edit?.feePercent || '0' }),
+      });
+      if (!response.ok) throw new Error('Erreur validation prix partenaire');
+      await loadProducts();
+    } finally {
+      setBusyProductId(null);
+    }
+  };
+
   const toggleProductActive = async (product: StoredProduct) => {
     try {
       setBusyProductId(product.id);
@@ -502,6 +528,22 @@ export default function AdminPage() {
         delete next[id];
         return next;
       });
+      await loadServices();
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const reviewServicePrice = async (id: number, pricingStatus: 'approved' | 'rejected') => {
+    const edit = serviceEdits[id];
+    try {
+      setBusyServiceId(id);
+      const response = await fetch(`/api/admin/services/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricingStatus, platformFeePercent: edit?.feePercent || '0' }),
+      });
+      if (!response.ok) throw new Error('Erreur validation prix prestataire');
       await loadServices();
     } finally {
       setBusyServiceId(null);
@@ -1647,8 +1689,8 @@ export default function AdminPage() {
                 <tr className="border-b border-slate-200 text-left text-slate-500">
                   <th className="py-2 pr-4 font-medium">{t('Nom', 'Name')}</th>
                   <th className="py-2 pr-4 font-medium">{t('Unité', 'Unit')}</th>
-                  <th className="py-2 pr-4 font-medium">Prix USD</th>
-                  <th className="py-2 pr-4 font-medium">Prix CDF</th>
+                  <th className="py-2 pr-4 font-medium">{t('Prix proposé', 'Submitted price')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('Commission', 'Fee')}</th>
                   <th className="py-2 pr-4 font-medium">{t('Statut', 'Status')}</th>
                   <th className="py-2 pr-4 font-medium">{t('Action', 'Action')}</th>
                 </tr>
@@ -1665,6 +1707,7 @@ export default function AdminPage() {
                     const edit = productEdits[product.id] || {
                       priceUSD: product.priceUSD?.toString() || '',
                       priceCDF: product.priceCDF?.toString() || '',
+                      feePercent: product.platformFeePercent?.toString() || '0',
                     };
                     return (
                       <tr key={product.id} className="border-b border-slate-100 last:border-b-0">
@@ -1698,8 +1741,17 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3 pr-4">
                           <span className={product.active ? 'text-emerald-700' : 'text-slate-400'}>
-                            {product.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
+                            {product.ownerIdentity ? product.pricingStatus : product.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
                           </span>
+                          {product.ownerIdentity && (
+                            <div className="mt-2 space-y-1 text-xs">
+                              <div>{t('Base partenaire', 'Partner base')}: {product.submittedPriceUSD ?? '—'} USD / {product.submittedPriceCDF ?? '—'} CDF</div>
+                              <label className="flex items-center gap-1">
+                                <span>{t('Commission', 'Fee')} %</span>
+                                <input type="number" min="0" max="100" value={edit.feePercent} onChange={(e) => setProductEdits((prev) => ({ ...prev, [product.id]: { ...edit, feePercent: e.target.value } }))} className="w-16 rounded border px-1 py-0.5" />
+                              </label>
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 pr-4">
                           <div className="flex flex-wrap gap-2">
@@ -1711,6 +1763,12 @@ export default function AdminPage() {
                             >
                               {t('Enregistrer', 'Save')}
                             </button>
+                            {product.ownerIdentity && (
+                              <>
+                                <button type="button" onClick={() => reviewProductPrice(product.id, 'approved')} disabled={busyProductId === product.id} className="rounded-lg bg-emerald-600 text-white px-2 py-1 text-xs font-medium disabled:opacity-60">{t('Approuver', 'Approve')}</button>
+                                <button type="button" onClick={() => reviewProductPrice(product.id, 'rejected')} disabled={busyProductId === product.id} className="rounded-lg border border-red-300 text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60">{t('Rejeter', 'Reject')}</button>
+                              </>
+                            )}
                             <button
                               type="button"
                               onClick={() => toggleProductActive(product)}
@@ -1831,6 +1889,7 @@ export default function AdminPage() {
                     const edit = serviceEdits[service.id] || {
                       priceUSD: service.priceUSD?.toString() || '',
                       priceCDF: service.priceCDF?.toString() || '',
+                      feePercent: service.platformFeePercent?.toString() || '0',
                     };
                     return (
                       <tr key={service.id} className="border-b border-slate-100 last:border-b-0">
@@ -1838,46 +1897,54 @@ export default function AdminPage() {
                           {service.icon} {lang === 'fr' ? service.fr : service.en}
                         </td>
                         <td className="py-3 pr-4">
-                          <input
-                            type="number"
-                            value={edit.priceUSD}
-                            onChange={(e) =>
-                              setServiceEdits((prev) => ({
-                                ...prev,
-                                [service.id]: { ...edit, priceUSD: e.target.value },
-                              }))
-                            }
-                            className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-xs"
-                          />
+                          {service.ownerIdentity ? (
+                            <div className="text-xs">
+                              <div>{service.submittedPriceUSD ?? '-'} USD</div>
+                              <div>{service.submittedPriceCDF ?? '-'} CDF</div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1">
+                              <input type="number" value={edit.priceUSD} onChange={(e) => setServiceEdits((prev) => ({ ...prev, [service.id]: { ...edit, priceUSD: e.target.value } }))} className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-xs" />
+                              <input type="number" value={edit.priceCDF} onChange={(e) => setServiceEdits((prev) => ({ ...prev, [service.id]: { ...edit, priceCDF: e.target.value } }))} className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-xs" />
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 pr-4">
                           <input
                             type="number"
-                            value={edit.priceCDF}
+                            min="0"
+                            max="100"
+                            value={edit.feePercent}
                             onChange={(e) =>
                               setServiceEdits((prev) => ({
                                 ...prev,
-                                [service.id]: { ...edit, priceCDF: e.target.value },
+                                [service.id]: { ...edit, feePercent: e.target.value },
                               }))
                             }
-                            className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                            disabled={!service.ownerIdentity}
+                            className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-100"
                           />
+                          <span className="ml-1 text-xs">%</span>
                         </td>
                         <td className="py-3 pr-4">
-                          <span className={service.active ? 'text-emerald-700' : 'text-slate-400'}>
-                            {service.active ? t('Actif', 'Active') : t('Inactif', 'Inactive')}
+                          <span className={service.pricingStatus === 'approved' ? 'text-emerald-700' : service.pricingStatus === 'rejected' ? 'text-red-600' : 'text-amber-700'}>
+                            {service.pricingStatus === 'pending' ? t('À valider', 'Pending') : service.pricingStatus === 'approved' ? t('Approuvé', 'Approved') : service.pricingStatus === 'rejected' ? t('Rejeté', 'Rejected') : (service.active ? t('Actif', 'Active') : t('Inactif', 'Inactive'))}
                           </span>
                         </td>
                         <td className="py-3 pr-4">
                           <div className="flex flex-wrap gap-2">
-                            <button
+                            {!service.ownerIdentity && <button
                               type="button"
                               onClick={() => saveServicePrice(service.id)}
                               disabled={busyServiceId === service.id}
                               className="rounded-lg bg-slate-900 text-white px-2 py-1 text-xs font-medium disabled:opacity-60"
                             >
                               {t('Enregistrer', 'Save')}
-                            </button>
+                            </button>}
+                            {service.ownerIdentity && <>
+                              <button type="button" onClick={() => reviewServicePrice(service.id, 'approved')} disabled={busyServiceId === service.id} className="rounded-lg bg-emerald-600 text-white px-2 py-1 text-xs font-medium disabled:opacity-60">{t('Approuver', 'Approve')}</button>
+                              <button type="button" onClick={() => reviewServicePrice(service.id, 'rejected')} disabled={busyServiceId === service.id} className="rounded-lg border border-red-300 text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60">{t('Rejeter', 'Reject')}</button>
+                            </>}
                             <button
                               type="button"
                               onClick={() => toggleServiceActive(service)}

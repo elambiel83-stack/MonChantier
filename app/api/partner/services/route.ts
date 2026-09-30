@@ -48,8 +48,12 @@ export async function POST(request: NextRequest) {
       frDesc,
       enDesc: enDesc || frDesc,
       img,
-      priceUSD,
-      priceCDF,
+      priceUSD: null,
+      priceCDF: null,
+      submittedPriceUSD: priceUSD,
+      submittedPriceCDF: priceCDF,
+      pricingStatus: 'pending',
+      active: false,
       ownerIdentity: actor.identity,
     });
 

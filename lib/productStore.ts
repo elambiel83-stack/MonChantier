@@ -1,5 +1,6 @@
 import { products as seedProducts } from '@/components/monchantier/constants';
 import { readStore, withStore } from './storeDb';
+import { PricingStatus } from './partnerPricing';
 
 export type StoredProduct = {
   id: number;
@@ -9,6 +10,10 @@ export type StoredProduct = {
   unitEn: string;
   priceUSD: number | null;
   priceCDF: number | null;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: PricingStatus;
   img: string;
   fallback: string;
   category: string;
@@ -38,6 +43,10 @@ function buildSeedStore(): ProductStoreModel {
     unitEn: p.unitEn,
     priceUSD: p.prices.USD,
     priceCDF: p.prices.CDF,
+    submittedPriceUSD: p.prices.USD,
+    submittedPriceCDF: p.prices.CDF,
+    platformFeePercent: 0,
+    pricingStatus: 'platform',
     img: p.img,
     fallback: p.fallback,
     category: p.category,
@@ -77,6 +86,11 @@ export function createProduct(input: {
   fallback?: string;
   category?: string;
   ownerIdentity?: string;
+  submittedPriceUSD?: number | null;
+  submittedPriceCDF?: number | null;
+  platformFeePercent?: number;
+  pricingStatus?: PricingStatus;
+  active?: boolean;
   stock?: number | null;
 }): Promise<StoredProduct> {
   return withStore(STORE_KEY, buildSeedStore, (store) => {
@@ -89,10 +103,14 @@ export function createProduct(input: {
       unitEn: input.unitEn,
       priceUSD: input.priceUSD,
       priceCDF: input.priceCDF,
+      submittedPriceUSD: input.submittedPriceUSD ?? input.priceUSD,
+      submittedPriceCDF: input.submittedPriceCDF ?? input.priceCDF,
+      platformFeePercent: input.platformFeePercent ?? 0,
+      pricingStatus: input.pricingStatus ?? (input.ownerIdentity ? 'pending' : 'platform'),
       img: input.img,
       fallback: input.fallback || input.img,
       category: input.category || 'autres',
-      active: true,
+      active: input.active ?? !input.ownerIdentity,
       stock: input.stock ?? null,
       ownerIdentity: input.ownerIdentity?.trim().toLowerCase(),
       createdAt: now,
@@ -105,7 +123,7 @@ export function createProduct(input: {
 }
 
 export type UpdateProductPatch = Partial<
-  Pick<StoredProduct, 'fr' | 'en' | 'unitFr' | 'unitEn' | 'priceUSD' | 'priceCDF' | 'img' | 'fallback' | 'category' | 'active' | 'stock'>
+  Pick<StoredProduct, 'fr' | 'en' | 'unitFr' | 'unitEn' | 'priceUSD' | 'priceCDF' | 'submittedPriceUSD' | 'submittedPriceCDF' | 'platformFeePercent' | 'pricingStatus' | 'img' | 'fallback' | 'category' | 'active' | 'stock'>
 >;
 
 export function updateProduct(id: number, patch: UpdateProductPatch): Promise<StoredProduct | null> {

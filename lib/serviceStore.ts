@@ -1,5 +1,6 @@
 import { services as seedServices } from '@/components/monchantier/constants';
 import { readStore, withStore } from './storeDb';
+import { PricingStatus } from './partnerPricing';
 
 export type StoredService = {
   id: number;
@@ -12,6 +13,10 @@ export type StoredService = {
   category: string;
   priceUSD: number | null;
   priceCDF: number | null;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: PricingStatus;
   active: boolean;
   // Absent = service MonChantier (catalogue plateforme). Présent = service
   // apporté par un partenaire (rôle "technician"), identifié par son email.
@@ -37,6 +42,10 @@ function buildSeedStore(): ServiceStoreModel {
     category: s.category,
     priceUSD: null,
     priceCDF: null,
+    submittedPriceUSD: null,
+    submittedPriceCDF: null,
+    platformFeePercent: 0,
+    pricingStatus: 'platform',
     active: true,
     createdAt: now,
     updatedAt: now,
@@ -71,6 +80,11 @@ export function createService(input: {
   priceUSD: number | null;
   priceCDF: number | null;
   ownerIdentity?: string;
+  submittedPriceUSD?: number | null;
+  submittedPriceCDF?: number | null;
+  platformFeePercent?: number;
+  pricingStatus?: PricingStatus;
+  active?: boolean;
 }): Promise<StoredService> {
   return withStore(STORE_KEY, buildSeedStore, (store) => {
     const now = new Date().toISOString();
@@ -85,8 +99,12 @@ export function createService(input: {
       category: input.category || 'autres',
       priceUSD: input.priceUSD,
       priceCDF: input.priceCDF,
+      submittedPriceUSD: input.submittedPriceUSD ?? input.priceUSD,
+      submittedPriceCDF: input.submittedPriceCDF ?? input.priceCDF,
+      platformFeePercent: input.platformFeePercent ?? 0,
+      pricingStatus: input.pricingStatus ?? (input.ownerIdentity ? 'pending' : 'platform'),
       ownerIdentity: input.ownerIdentity?.trim().toLowerCase(),
-      active: true,
+      active: input.active ?? !input.ownerIdentity,
       createdAt: now,
       updatedAt: now,
     };
@@ -97,7 +115,7 @@ export function createService(input: {
 }
 
 export type UpdateServicePatch = Partial<
-  Pick<StoredService, 'icon' | 'fr' | 'en' | 'frDesc' | 'enDesc' | 'img' | 'category' | 'priceUSD' | 'priceCDF' | 'active'>
+  Pick<StoredService, 'icon' | 'fr' | 'en' | 'frDesc' | 'enDesc' | 'img' | 'category' | 'priceUSD' | 'priceCDF' | 'submittedPriceUSD' | 'submittedPriceCDF' | 'platformFeePercent' | 'pricingStatus' | 'active'>
 >;
 
 export function updateService(id: number, patch: UpdateServicePatch): Promise<StoredService | null> {

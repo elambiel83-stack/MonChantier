@@ -12,6 +12,10 @@ type StoredProduct = {
   priceCDF: number | null;
   img: string;
   active: boolean;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: 'pending' | 'approved' | 'rejected';
 };
 
 export default function SupplierProductsPanel() {
@@ -205,8 +209,8 @@ export default function SupplierProductsPanel() {
               ) : (
                 products.map((product) => {
                   const edit = edits[product.id] || {
-                    priceUSD: product.priceUSD?.toString() || "",
-                    priceCDF: product.priceCDF?.toString() || "",
+                    priceUSD: product.submittedPriceUSD?.toString() || "",
+                    priceCDF: product.submittedPriceCDF?.toString() || "",
                   };
                   return (
                     <tr key={product.id} className="border-b border-slate-100 last:border-b-0">
@@ -234,7 +238,7 @@ export default function SupplierProductsPanel() {
                       </td>
                       <td className="py-3 pr-4">
                         <span className={product.active ? "text-emerald-700" : "text-slate-400"}>
-                          {product.active ? "Actif" : "Inactif"}
+                          {product.pricingStatus === 'pending' ? 'En attente de validation' : product.pricingStatus === 'approved' ? `Approuvé · commission ${product.platformFeePercent}%` : 'Rejeté / à corriger'}
                         </span>
                       </td>
                       <td className="py-3 pr-4">
