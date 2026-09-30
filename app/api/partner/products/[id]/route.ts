@@ -32,19 +32,23 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     if (typeof body?.unitFr === 'string') patch.unitFr = body.unitFr.trim();
     if (typeof body?.unitEn === 'string') patch.unitEn = body.unitEn.trim();
     if (typeof body?.img === 'string') patch.img = body.img.trim();
-    if (typeof body?.active === 'boolean') patch.active = body.active;
     if (body?.priceUSD !== undefined) {
-      patch.priceUSD = body.priceUSD === null || body.priceUSD === '' ? null : Number(body.priceUSD);
-      if (patch.priceUSD !== null && !Number.isFinite(patch.priceUSD)) {
+      patch.submittedPriceUSD = body.priceUSD === null || body.priceUSD === '' ? null : Number(body.priceUSD);
+      if (patch.submittedPriceUSD !== null && !Number.isFinite(patch.submittedPriceUSD)) {
         return NextResponse.json({ message: 'Prix USD invalide' }, { status: 400 });
       }
     }
     if (body?.priceCDF !== undefined) {
-      patch.priceCDF = body.priceCDF === null || body.priceCDF === '' ? null : Number(body.priceCDF);
-      if (patch.priceCDF !== null && !Number.isFinite(patch.priceCDF)) {
+      patch.submittedPriceCDF = body.priceCDF === null || body.priceCDF === '' ? null : Number(body.priceCDF);
+      if (patch.submittedPriceCDF !== null && !Number.isFinite(patch.submittedPriceCDF)) {
         return NextResponse.json({ message: 'Prix CDF invalide' }, { status: 400 });
       }
     }
+    // Toute modification d'une offre partenaire repasse par la validation centrale.
+    patch.priceUSD = null;
+    patch.priceCDF = null;
+    patch.pricingStatus = 'pending';
+    patch.active = false;
 
     const product = await updateProduct(id, patch);
     return NextResponse.json({ success: true, product });
