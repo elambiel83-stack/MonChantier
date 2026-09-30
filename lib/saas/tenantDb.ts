@@ -1,7 +1,7 @@
 import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '@/lib/db';
 
-export type TenantContext = { tenantId: string; identity: string; role: string };
+export type TenantContext = { tenantId: string; identity: string };
 
 /** Toutes les requêtes métier SaaS doivent passer par cette transaction. */
 export async function withTenantTransaction<T>(context: TenantContext, task: (client: PoolClient) => Promise<T>): Promise<T> {
