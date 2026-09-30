@@ -11,6 +11,7 @@ export type StoredProduct = {
   priceCDF: number | null;
   img: string;
   fallback: string;
+  category: string;
   active: boolean;
   // null = stock non suivi (comportement historique, illimité). Un nombre
   // active le décrément atomique à la confirmation de paiement (voir
@@ -39,6 +40,7 @@ function buildSeedStore(): ProductStoreModel {
     priceCDF: p.prices.CDF,
     img: p.img,
     fallback: p.fallback,
+    category: p.category,
     active: true,
     stock: null,
     createdAt: now,
@@ -73,6 +75,7 @@ export function createProduct(input: {
   priceCDF: number | null;
   img: string;
   fallback?: string;
+  category?: string;
   ownerIdentity?: string;
   stock?: number | null;
 }): Promise<StoredProduct> {
@@ -88,6 +91,7 @@ export function createProduct(input: {
       priceCDF: input.priceCDF,
       img: input.img,
       fallback: input.fallback || input.img,
+      category: input.category || 'autres',
       active: true,
       stock: input.stock ?? null,
       ownerIdentity: input.ownerIdentity?.trim().toLowerCase(),
@@ -101,7 +105,7 @@ export function createProduct(input: {
 }
 
 export type UpdateProductPatch = Partial<
-  Pick<StoredProduct, 'fr' | 'en' | 'unitFr' | 'unitEn' | 'priceUSD' | 'priceCDF' | 'img' | 'fallback' | 'active' | 'stock'>
+  Pick<StoredProduct, 'fr' | 'en' | 'unitFr' | 'unitEn' | 'priceUSD' | 'priceCDF' | 'img' | 'fallback' | 'category' | 'active' | 'stock'>
 >;
 
 export function updateProduct(id: number, patch: UpdateProductPatch): Promise<StoredProduct | null> {
