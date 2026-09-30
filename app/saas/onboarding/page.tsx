@@ -9,8 +9,8 @@ export default function SaasOnboardingPage() {
     const response=await fetch('/api/saas/onboarding',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,slug})});
     const data=await response.json(); setBusy(false);
     if (!response.ok) return setMessage(data.message || 'Erreur');
-    window.location.assign('/api/auth/session?update=1');
-    setTimeout(()=>window.location.assign('/saas'),500);
+    await fetch('/api/auth/session', { cache:'no-store' });
+    window.location.assign('/saas');
   }
   return <main className="grid min-h-screen place-items-center bg-slate-50 p-6">
     <form onSubmit={submit} className="w-full max-w-lg rounded-2xl border bg-white p-7 shadow-sm">
