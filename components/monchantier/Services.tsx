@@ -21,6 +21,7 @@ type CatalogService = {
   img: string;
   priceUSD: number | null;
   priceCDF: number | null;
+  category: string;
 };
 
 // Services and products come from independent auto-increment id counters, so a
@@ -58,10 +59,20 @@ function normalize(value: string): string {
 
 type SortOption = "default" | "price-asc" | "price-desc";
 
+const SERVICE_CATEGORIES: Record<string, [string, string]> = {
+  etudes: ["Études et conception", "Studies and design"],
+  travaux: ["Travaux et installations", "Construction and installation"],
+  logistique: ["Logistique de chantier", "Site logistics"],
+  maintenance: ["Maintenance et rénovation", "Maintenance and renovation"],
+  numerique: ["Services numériques", "Digital services"],
+  metiers: ["Métiers spécialisés", "Skilled trades"],
+};
+
 export function Services({ lang, t, onAddToCart }: ServicesProps) {
   const [services, setServices] = useState<CatalogService[]>([]);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
+  const [category, setCategory] = useState("all");
   const deliveryMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CONTACT_INFO.address)}`;
 
   useEffect(() => {
@@ -73,6 +84,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
 
   const normalizedQuery = normalize(query.trim());
   const filteredServices = services
+    .filter((s) => category === "all" || s.category === category)
     .filter((s) => !normalizedQuery || normalize(lang === "fr" ? s.fr : s.en).includes(normalizedQuery))
     .sort((a, b) => {
       if (sort === "default") return 0;
@@ -97,7 +109,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
             "From design to finishing, we offer a complete range of services for your construction projects."
           )}
         </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto] gap-3 sm:items-center">
           <div className="relative flex-1 max-w-md">
             <input
               type="search"
@@ -109,6 +121,14 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
           </div>
           <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="all">{t("Toutes les catégories", "All categories")}</option>
+            {Object.entries(SERVICE_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{t(label[0], label[1])}</option>)}
+          </select>
+          <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -119,7 +139,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
           </select>
         </div>
 
-        {normalizedQuery && filteredServices.length === 0 && (
+        {(normalizedQuery || category !== "all") && filteredServices.length === 0 && (
           <p className="mt-6 text-sm text-slate-500">
             {t("Aucun service ne correspond à votre recherche.", "No service matches your search.")}
           </p>

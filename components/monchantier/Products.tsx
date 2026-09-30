@@ -23,6 +23,8 @@ type CatalogProduct = {
   priceCDF: number | null;
   img: string;
   fallback: string;
+  category: string;
+  stock: number | null;
 };
 
 function toProduct(p: CatalogProduct, lang: Language): Product {
@@ -56,6 +58,23 @@ function normalize(value: string): string {
 }
 
 type SortOption = "default" | "price-asc" | "price-desc";
+type AvailabilityOption = "all" | "priced" | "quote";
+
+const PRODUCT_CATEGORIES: Record<string, [string, string]> = {
+  aggregats: ["Agrégats et ciment", "Aggregates and cement"],
+  blocs_paves: ["Briques, blocs et pavés", "Bricks, blocks and pavers"],
+  acier_metaux: ["Acier et métaux", "Steel and metals"],
+  bois_menuiserie: ["Bois et menuiserie", "Timber and carpentry"],
+  toiture_etancheite: ["Toiture et étanchéité", "Roofing and waterproofing"],
+  revetements_finitions: ["Revêtements et finitions", "Finishes and coverings"],
+  plomberie_sanitaire: ["Plomberie et sanitaire", "Plumbing and sanitary"],
+  electricite_energie: ["Électricité et énergie", "Electrical and energy"],
+  securite: ["Sécurité et protection", "Safety and protection"],
+  routes_assainissement: ["Routes et assainissement", "Roads and sanitation"],
+  outillage_engins: ["Outillage et engins", "Tools and equipment"],
+};
+
+const PAGE_SIZE = 24;
 
 function productPriceValue(p: Product): number | null {
   return p.prices?.USD ?? p.prices?.CDF ?? null;
@@ -65,6 +84,9 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
+  const [category, setCategory] = useState("all");
+  const [availability, setAvailability] = useState<AvailabilityOption>("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null);
 
@@ -81,10 +103,13 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
       .catch(() => setCatalog([]));
   }, []);
 
-  const allProducts = catalog.map((p) => toProduct(p, lang));
   const normalizedQuery = normalize(query.trim());
-  const products = allProducts
-    .filter((p) => !normalizedQuery || normalize(t(p.fr, p.en)).includes(normalizedQuery))
+  const filteredCatalog = catalog
+    .filter((p) => category === "all" || p.category === category)
+    .filter((p) => availability === "all" || (availability === "priced" ? p.priceUSD !== null || p.priceCDF !== null : p.priceUSD === null && p.priceCDF === null))
+    .filter((p) => !normalizedQuery || normalize(t(p.fr, p.en)).includes(normalizedQuery));
+  const products = filteredCatalog
+    .map((p) => toProduct(p, lang))
     .sort((a, b) => {
       if (sort === "default") return 0;
       const priceA = productPriceValue(a);
@@ -94,6 +119,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
       if (priceB === null) return -1;
       return sort === "price-asc" ? priceA - priceB : priceB - priceA;
     });
+  const visibleProducts = products.slice(0, visibleCount);
 
   return (
     <section id="produits" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
@@ -124,7 +150,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-3 sm:items-center">
         <div className="relative flex-1 max-w-md">
           <input
             type="search"
@@ -136,6 +162,23 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
         </div>
         <select
+          value={category}
+          onChange={(e) => { setCategory(e.target.value); setVisibleCount(PAGE_SIZE); }}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="all">{t("Toutes les catégories", "All categories")}</option>
+          {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{t(label[0], label[1])}</option>)}
+        </select>
+        <select
+          value={availability}
+          onChange={(e) => { setAvailability(e.target.value as AvailabilityOption); setVisibleCount(PAGE_SIZE); }}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="all">{t("Toute disponibilité", "All availability")}</option>
+          <option value="priced">{t("Prix disponible", "Price available")}</option>
+          <option value="quote">{t("Sur devis", "Quote only")}</option>
+        </select>
+        <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -146,14 +189,14 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </select>
       </div>
 
-      {normalizedQuery && products.length === 0 && (
+      {(normalizedQuery || category !== "all" || availability !== "all") && products.length === 0 && (
         <p className="mt-6 text-sm text-slate-500">
           {t("Aucun produit ne correspond à votre recherche.", "No product matches your search.")}
         </p>
       )}
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((p) => {
+        {visibleProducts.map((p) => {
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
           return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
@@ -218,6 +261,13 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           );
         })}
       </div>
+      {visibleCount < products.length && (
+        <div className="mt-8 text-center">
+          <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="rounded-xl border border-orange-600 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50">
+            {t(`Afficher plus (${products.length - visibleCount})`, `Show more (${products.length - visibleCount})`)}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

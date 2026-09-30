@@ -14,8 +14,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 2,
@@ -29,8 +29,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 3,
@@ -44,8 +44,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 4,
@@ -59,8 +59,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 5,
@@ -74,8 +74,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 6,
@@ -89,8 +89,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 7,
@@ -104,8 +104,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 8,
@@ -119,8 +119,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 9,
@@ -134,8 +134,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 10,
@@ -149,8 +149,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 11,
@@ -164,8 +164,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 12,
@@ -179,8 +179,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 13,
@@ -194,8 +194,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 14,
@@ -209,8 +209,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 15,
@@ -224,8 +224,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 16,
@@ -239,8 +239,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 17,
@@ -254,8 +254,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 18,
@@ -269,8 +269,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 19,
@@ -284,8 +284,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 20,
@@ -299,8 +299,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 21,
@@ -314,8 +314,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 22,
@@ -329,8 +329,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 23,
@@ -344,8 +344,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 24,
@@ -359,8 +359,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/sable.svg",
+    "fallback": "/images/produits/sable.svg"
   },
   {
     "id": 25,
@@ -374,8 +374,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 26,
@@ -389,8 +389,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 27,
@@ -404,8 +404,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 28,
@@ -419,8 +419,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 29,
@@ -434,8 +434,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 30,
@@ -449,8 +449,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 31,
@@ -464,8 +464,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 32,
@@ -479,8 +479,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 33,
@@ -494,8 +494,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 34,
@@ -509,8 +509,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 35,
@@ -524,8 +524,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 36,
@@ -539,8 +539,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 37,
@@ -554,8 +554,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 38,
@@ -569,8 +569,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 39,
@@ -584,8 +584,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 40,
@@ -599,8 +599,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 41,
@@ -614,8 +614,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 42,
@@ -629,8 +629,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 43,
@@ -644,8 +644,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/paves.svg",
+    "fallback": "/images/produits/paves.svg"
   },
   {
     "id": 44,
@@ -659,8 +659,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 45,
@@ -674,8 +674,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 46,
@@ -689,8 +689,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 47,
@@ -704,8 +704,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 48,
@@ -719,8 +719,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 49,
@@ -734,8 +734,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 50,
@@ -749,8 +749,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 51,
@@ -764,8 +764,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 52,
@@ -779,8 +779,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 53,
@@ -794,8 +794,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 54,
@@ -809,8 +809,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 55,
@@ -824,8 +824,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 56,
@@ -839,8 +839,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 57,
@@ -854,8 +854,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 58,
@@ -869,8 +869,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 59,
@@ -884,8 +884,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 60,
@@ -899,8 +899,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 61,
@@ -914,8 +914,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 62,
@@ -929,8 +929,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 63,
@@ -944,8 +944,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 64,
@@ -959,8 +959,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 65,
@@ -974,8 +974,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 66,
@@ -989,8 +989,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 67,
@@ -1004,8 +1004,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 68,
@@ -1019,8 +1019,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 69,
@@ -1034,8 +1034,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 70,
@@ -1049,8 +1049,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 71,
@@ -1064,8 +1064,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 72,
@@ -1079,8 +1079,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 73,
@@ -1094,8 +1094,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 74,
@@ -1109,8 +1109,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 75,
@@ -1124,8 +1124,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 76,
@@ -1139,8 +1139,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 77,
@@ -1154,8 +1154,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 78,
@@ -1169,8 +1169,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 79,
@@ -1184,8 +1184,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 80,
@@ -1199,8 +1199,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 81,
@@ -1214,8 +1214,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 82,
@@ -1229,8 +1229,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 83,
@@ -1244,8 +1244,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 84,
@@ -1259,8 +1259,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 85,
@@ -1274,8 +1274,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 86,
@@ -1289,8 +1289,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 87,
@@ -1304,8 +1304,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 88,
@@ -1319,8 +1319,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 89,
@@ -1334,8 +1334,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 90,
@@ -1349,8 +1349,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 91,
@@ -1364,8 +1364,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 92,
@@ -1379,8 +1379,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/briques.svg",
+    "fallback": "/images/produits/briques.svg"
   },
   {
     "id": 93,
@@ -1394,8 +1394,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 94,
@@ -1409,8 +1409,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 95,
@@ -1424,8 +1424,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 96,
@@ -1439,8 +1439,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 97,
@@ -1454,8 +1454,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 98,
@@ -1469,8 +1469,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 99,
@@ -1484,8 +1484,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 100,
@@ -1499,8 +1499,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 101,
@@ -1514,8 +1514,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 102,
@@ -1529,8 +1529,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 103,
@@ -1544,8 +1544,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 104,
@@ -1559,8 +1559,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 105,
@@ -1574,8 +1574,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 106,
@@ -1589,8 +1589,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 107,
@@ -1604,8 +1604,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 108,
@@ -1619,8 +1619,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 109,
@@ -1634,8 +1634,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 110,
@@ -1649,8 +1649,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 111,
@@ -1664,8 +1664,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 112,
@@ -1679,8 +1679,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 113,
@@ -1694,8 +1694,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 114,
@@ -1709,8 +1709,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 115,
@@ -1724,8 +1724,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 116,
@@ -1739,8 +1739,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 117,
@@ -1754,8 +1754,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 118,
@@ -1769,8 +1769,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 119,
@@ -1784,8 +1784,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 120,
@@ -1799,8 +1799,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 121,
@@ -1814,8 +1814,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 122,
@@ -1829,8 +1829,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 123,
@@ -1844,8 +1844,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 124,
@@ -1859,8 +1859,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 125,
@@ -1874,8 +1874,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 126,
@@ -1889,8 +1889,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 127,
@@ -1904,8 +1904,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 128,
@@ -1919,8 +1919,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 129,
@@ -1934,8 +1934,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 130,
@@ -1949,8 +1949,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 131,
@@ -1964,8 +1964,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 132,
@@ -1979,8 +1979,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 133,
@@ -1994,8 +1994,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 134,
@@ -2009,8 +2009,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 135,
@@ -2024,8 +2024,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 136,
@@ -2039,8 +2039,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 137,
@@ -2054,8 +2054,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 138,
@@ -2069,8 +2069,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 139,
@@ -2084,8 +2084,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 140,
@@ -2099,8 +2099,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/carreaux.svg",
+    "fallback": "/images/produits/carreaux.svg"
   },
   {
     "id": 141,
@@ -2114,8 +2114,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 142,
@@ -2129,8 +2129,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 143,
@@ -2144,8 +2144,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 144,
@@ -2159,8 +2159,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 145,
@@ -2174,8 +2174,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 146,
@@ -2189,8 +2189,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 147,
@@ -2204,8 +2204,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 148,
@@ -2219,8 +2219,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 149,
@@ -2234,8 +2234,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 150,
@@ -2249,8 +2249,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 151,
@@ -2264,8 +2264,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 152,
@@ -2279,8 +2279,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 153,
@@ -2294,8 +2294,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 154,
@@ -2309,8 +2309,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 155,
@@ -2324,8 +2324,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 156,
@@ -2339,8 +2339,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 157,
@@ -2354,8 +2354,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 158,
@@ -2369,8 +2369,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 159,
@@ -2384,8 +2384,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 160,
@@ -2399,8 +2399,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 161,
@@ -2414,8 +2414,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 162,
@@ -2429,8 +2429,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 163,
@@ -2444,8 +2444,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 164,
@@ -2459,8 +2459,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 165,
@@ -2474,8 +2474,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bloc-ciment.svg",
+    "fallback": "/images/produits/bloc-ciment.svg"
   },
   {
     "id": 166,
@@ -2879,8 +2879,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 193,
@@ -2894,8 +2894,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 194,
@@ -2909,8 +2909,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 195,
@@ -2924,8 +2924,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 196,
@@ -2939,8 +2939,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 197,
@@ -2954,8 +2954,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 198,
@@ -2969,8 +2969,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 199,
@@ -2984,8 +2984,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 200,
@@ -2999,8 +2999,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 201,
@@ -3014,8 +3014,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 202,
@@ -3029,8 +3029,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 203,
@@ -3044,8 +3044,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 204,
@@ -3059,8 +3059,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 205,
@@ -3074,8 +3074,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 206,
@@ -3089,8 +3089,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 207,
@@ -3104,8 +3104,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 208,
@@ -3119,8 +3119,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 209,
@@ -3134,8 +3134,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 210,
@@ -3149,8 +3149,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 211,
@@ -3164,8 +3164,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/separateur-route.svg",
+    "fallback": "/images/produits/separateur-route.svg"
   },
   {
     "id": 212,
@@ -3179,8 +3179,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 213,
@@ -3194,8 +3194,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 214,
@@ -3209,8 +3209,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 215,
@@ -3224,8 +3224,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 216,
@@ -3239,8 +3239,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 217,
@@ -3254,8 +3254,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 218,
@@ -3269,8 +3269,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 219,
@@ -3284,8 +3284,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 220,
@@ -3299,8 +3299,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 221,
@@ -3314,8 +3314,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 222,
@@ -3329,8 +3329,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 223,
@@ -3344,8 +3344,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 224,
@@ -3359,8 +3359,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/bordure-route.svg",
+    "fallback": "/images/produits/bordure-route.svg"
   },
   {
     "id": 225,
@@ -3374,8 +3374,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 226,
@@ -3389,8 +3389,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 227,
@@ -3404,8 +3404,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 228,
@@ -3419,8 +3419,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 229,
@@ -3434,8 +3434,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 230,
@@ -3449,8 +3449,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 231,
@@ -3464,8 +3464,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 232,
@@ -3479,8 +3479,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 233,
@@ -3494,8 +3494,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 234,
@@ -3509,8 +3509,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 235,
@@ -3524,8 +3524,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 236,
@@ -3539,8 +3539,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 237,
@@ -3554,8 +3554,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 238,
@@ -3569,8 +3569,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 239,
@@ -3584,8 +3584,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 240,
@@ -3599,8 +3599,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 241,
@@ -3614,8 +3614,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 242,
@@ -3629,8 +3629,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 243,
@@ -3644,8 +3644,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 244,
@@ -3659,8 +3659,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 245,
@@ -3674,8 +3674,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 246,
@@ -3689,8 +3689,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 247,
@@ -3704,8 +3704,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 248,
@@ -3719,8 +3719,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 249,
@@ -3734,8 +3734,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 250,
@@ -3749,8 +3749,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 251,
@@ -3764,8 +3764,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 252,
@@ -3779,8 +3779,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 253,
@@ -3794,8 +3794,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 254,
@@ -3809,8 +3809,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 255,
@@ -3824,8 +3824,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 256,
@@ -3839,8 +3839,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   },
   {
     "id": 257,
@@ -3854,8 +3854,8 @@ export const constructionProducts: CatalogProduct[] = [
       "USD": null,
       "CDF": null
     },
-    "img": "/images/produits/ciment.svg",
-    "fallback": "/images/produits/ciment.svg"
+    "img": "/images/produits/moellons.svg",
+    "fallback": "/images/produits/moellons.svg"
   }
 ];
 
@@ -3866,7 +3866,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Technical site visit",
     "frDesc": "Visite technique par un professionnel qualifié et vérifié.",
     "enDesc": "Technical site visit by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3875,7 +3875,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Feasibility study",
     "frDesc": "Étude de faisabilité par un professionnel qualifié et vérifié.",
     "enDesc": "Feasibility study by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3884,7 +3884,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Architectural design",
     "frDesc": "Conception architecturale par un professionnel qualifié et vérifié.",
     "enDesc": "Architectural design by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3893,7 +3893,7 @@ export const constructionServices: CatalogService[] = [
     "en": "2D plans and 3D visualization",
     "frDesc": "Plans 2D et visualisation 3D par un professionnel qualifié et vérifié.",
     "enDesc": "2D plans and 3D visualization by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3902,7 +3902,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Geotechnical study",
     "frDesc": "Étude géotechnique par un professionnel qualifié et vérifié.",
     "enDesc": "Geotechnical study by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3911,7 +3911,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Topographic survey",
     "frDesc": "Levé topographique par un professionnel qualifié et vérifié.",
     "enDesc": "Topographic survey by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3920,7 +3920,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Quantity survey and estimate",
     "frDesc": "Métré et estimation par un professionnel qualifié et vérifié.",
     "enDesc": "Quantity survey and estimate by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3929,7 +3929,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Quotation and proforma",
     "frDesc": "Devis et proforma par un professionnel qualifié et vérifié.",
     "enDesc": "Quotation and proforma by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3938,7 +3938,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Construction planning",
     "frDesc": "Planification de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Construction planning by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3947,7 +3947,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Building permit assistance",
     "frDesc": "Assistance au permis de construire par un professionnel qualifié et vérifié.",
     "enDesc": "Building permit assistance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3956,7 +3956,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Contractor selection",
     "frDesc": "Sélection de prestataires par un professionnel qualifié et vérifié.",
     "enDesc": "Contractor selection by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3965,7 +3965,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Materials consulting",
     "frDesc": "Conseil en matériaux par un professionnel qualifié et vérifié.",
     "enDesc": "Materials consulting by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/bureau-etudes.svg",
     "category": "etudes"
   },
   {
@@ -3974,7 +3974,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Turnkey construction",
     "frDesc": "Construction clé en main par un professionnel qualifié et vérifié.",
     "enDesc": "Turnkey construction by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -3983,7 +3983,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Construction by trade packages",
     "frDesc": "Construction par lots par un professionnel qualifié et vérifié.",
     "enDesc": "Construction by trade packages by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -3992,7 +3992,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Foundations and earthworks",
     "frDesc": "Fondations et terrassement par un professionnel qualifié et vérifié.",
     "enDesc": "Foundations and earthworks by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4001,7 +4001,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Masonry and concrete works",
     "frDesc": "Maçonnerie et béton par un professionnel qualifié et vérifié.",
     "enDesc": "Masonry and concrete works by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4010,7 +4010,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Formwork and reinforcement",
     "frDesc": "Coffrage et ferraillage par un professionnel qualifié et vérifié.",
     "enDesc": "Formwork and reinforcement by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4019,7 +4019,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Roof framing and roofing",
     "frDesc": "Charpente et toiture par un professionnel qualifié et vérifié.",
     "enDesc": "Roof framing and roofing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4028,7 +4028,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Electrical installation",
     "frDesc": "Installation électrique par un professionnel qualifié et vérifié.",
     "enDesc": "Electrical installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4037,7 +4037,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Plumbing and sanitary installation",
     "frDesc": "Plomberie et sanitaire par un professionnel qualifié et vérifié.",
     "enDesc": "Plumbing and sanitary installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4046,7 +4046,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Air conditioning and ventilation",
     "frDesc": "Climatisation et ventilation par un professionnel qualifié et vérifié.",
     "enDesc": "Air conditioning and ventilation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4055,7 +4055,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Wood carpentry",
     "frDesc": "Menuiserie bois par un professionnel qualifié et vérifié.",
     "enDesc": "Wood carpentry by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4064,7 +4064,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Aluminium joinery",
     "frDesc": "Menuiserie aluminium par un professionnel qualifié et vérifié.",
     "enDesc": "Aluminium joinery by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4073,7 +4073,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Welding and metalwork",
     "frDesc": "Soudure et ferronnerie par un professionnel qualifié et vérifié.",
     "enDesc": "Welding and metalwork by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4082,7 +4082,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Tiling and floor coverings",
     "frDesc": "Carrelage et revêtements par un professionnel qualifié et vérifié.",
     "enDesc": "Tiling and floor coverings by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4091,7 +4091,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Painting and decoration",
     "frDesc": "Peinture et décoration par un professionnel qualifié et vérifié.",
     "enDesc": "Painting and decoration by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4100,7 +4100,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Waterproofing",
     "frDesc": "Étanchéité par un professionnel qualifié et vérifié.",
     "enDesc": "Waterproofing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4109,7 +4109,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Ceilings and plastering",
     "frDesc": "Faux plafonds et plâtrerie par un professionnel qualifié et vérifié.",
     "enDesc": "Ceilings and plastering by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4118,7 +4118,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Interior fit-out",
     "frDesc": "Aménagement intérieur par un professionnel qualifié et vérifié.",
     "enDesc": "Interior fit-out by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4127,7 +4127,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Exterior landscaping",
     "frDesc": "Aménagement extérieur par un professionnel qualifié et vérifié.",
     "enDesc": "Exterior landscaping by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4136,7 +4136,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Solar installation",
     "frDesc": "Installation solaire par un professionnel qualifié et vérifié.",
     "enDesc": "Solar installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4145,7 +4145,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Home automation and access control",
     "frDesc": "Domotique et contrôle d’accès par un professionnel qualifié et vérifié.",
     "enDesc": "Home automation and access control by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4154,7 +4154,7 @@ export const constructionServices: CatalogService[] = [
     "en": "CCTV and alarm installation",
     "frDesc": "CCTV et alarmes par un professionnel qualifié et vérifié.",
     "enDesc": "CCTV and alarm installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4163,7 +4163,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Fire protection installation",
     "frDesc": "Protection incendie par un professionnel qualifié et vérifié.",
     "enDesc": "Fire protection installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4172,7 +4172,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Road construction",
     "frDesc": "Construction routière par un professionnel qualifié et vérifié.",
     "enDesc": "Road construction by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4181,7 +4181,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Paving and curbs",
     "frDesc": "Pavage et bordures par un professionnel qualifié et vérifié.",
     "enDesc": "Paving and curbs by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4190,7 +4190,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Drainage and sanitation",
     "frDesc": "Drainage et assainissement par un professionnel qualifié et vérifié.",
     "enDesc": "Drainage and sanitation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4199,7 +4199,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Drilling and wells",
     "frDesc": "Forage et puits par un professionnel qualifié et vérifié.",
     "enDesc": "Drilling and wells by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4208,7 +4208,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Pump installation",
     "frDesc": "Installation de pompes par un professionnel qualifié et vérifié.",
     "enDesc": "Pump installation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4217,7 +4217,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Construction dewatering",
     "frDesc": "Exhaure de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Construction dewatering by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/maconnerie.svg",
     "category": "travaux"
   },
   {
@@ -4226,7 +4226,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Construction supervision",
     "frDesc": "Supervision de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Construction supervision by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4235,7 +4235,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Quality control",
     "frDesc": "Contrôle qualité par un professionnel qualifié et vérifié.",
     "enDesc": "Quality control by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4244,7 +4244,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Subcontractor coordination",
     "frDesc": "Coordination des sous-traitants par un professionnel qualifié et vérifié.",
     "enDesc": "Subcontractor coordination by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4253,7 +4253,7 @@ export const constructionServices: CatalogService[] = [
     "en": "HSE management",
     "frDesc": "Gestion HSE par un professionnel qualifié et vérifié.",
     "enDesc": "HSE management by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4262,7 +4262,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Site procurement",
     "frDesc": "Approvisionnement chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Site procurement by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4271,7 +4271,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Equipment rental with operator",
     "frDesc": "Location d’engins avec opérateur par un professionnel qualifié et vérifié.",
     "enDesc": "Equipment rental with operator by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4280,7 +4280,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Tool rental",
     "frDesc": "Location d’outillage par un professionnel qualifié et vérifié.",
     "enDesc": "Tool rental by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4289,7 +4289,7 @@ export const constructionServices: CatalogService[] = [
     "en": "GPS-tracked delivery",
     "frDesc": "Livraison avec suivi GPS par un professionnel qualifié et vérifié.",
     "enDesc": "GPS-tracked delivery by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4298,7 +4298,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Materials transport",
     "frDesc": "Transport de matériaux par un professionnel qualifié et vérifié.",
     "enDesc": "Materials transport by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4307,7 +4307,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Debris removal",
     "frDesc": "Évacuation des déblais par un professionnel qualifié et vérifié.",
     "enDesc": "Debris removal by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4316,7 +4316,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Site security",
     "frDesc": "Gardiennage de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Site security by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/livraison.svg",
     "category": "logistique"
   },
   {
@@ -4325,7 +4325,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Post-construction cleaning",
     "frDesc": "Nettoyage de fin de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Post-construction cleaning by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4334,7 +4334,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Technical handover",
     "frDesc": "Réception technique par un professionnel qualifié et vérifié.",
     "enDesc": "Technical handover by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4343,7 +4343,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Compliance report",
     "frDesc": "Rapport de conformité par un professionnel qualifié et vérifié.",
     "enDesc": "Compliance report by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4352,7 +4352,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Defect correction",
     "frDesc": "Correction des malfaçons par un professionnel qualifié et vérifié.",
     "enDesc": "Defect correction by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4361,7 +4361,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Preventive maintenance",
     "frDesc": "Maintenance préventive par un professionnel qualifié et vérifié.",
     "enDesc": "Preventive maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4370,7 +4370,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Emergency repair",
     "frDesc": "Dépannage urgent par un professionnel qualifié et vérifié.",
     "enDesc": "Emergency repair by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4379,7 +4379,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Building renovation",
     "frDesc": "Rénovation de bâtiment par un professionnel qualifié et vérifié.",
     "enDesc": "Building renovation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4388,7 +4388,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Property management",
     "frDesc": "Gestion immobilière par un professionnel qualifié et vérifié.",
     "enDesc": "Property management by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4397,7 +4397,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Electrical maintenance",
     "frDesc": "Entretien électrique par un professionnel qualifié et vérifié.",
     "enDesc": "Electrical maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4406,7 +4406,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Plumbing maintenance",
     "frDesc": "Entretien plomberie par un professionnel qualifié et vérifié.",
     "enDesc": "Plumbing maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4415,7 +4415,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Roof maintenance",
     "frDesc": "Entretien toiture par un professionnel qualifié et vérifié.",
     "enDesc": "Roof maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4424,7 +4424,7 @@ export const constructionServices: CatalogService[] = [
     "en": "HVAC maintenance",
     "frDesc": "Entretien climatisation par un professionnel qualifié et vérifié.",
     "enDesc": "HVAC maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4433,7 +4433,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Grounds maintenance",
     "frDesc": "Entretien espaces verts par un professionnel qualifié et vérifié.",
     "enDesc": "Grounds maintenance by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/controle-qualite.svg",
     "category": "maintenance"
   },
   {
@@ -4442,7 +4442,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Disinfection and pest control",
     "frDesc": "Désinfection et lutte antiparasitaire par un professionnel qualifié et vérifié.",
     "enDesc": "Disinfection and pest control by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4451,7 +4451,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Quantity calculator",
     "frDesc": "Calculateur de quantités par un professionnel qualifié et vérifié.",
     "enDesc": "Quantity calculator by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4460,7 +4460,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Price comparison",
     "frDesc": "Comparaison des prix par un professionnel qualifié et vérifié.",
     "enDesc": "Price comparison by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4469,7 +4469,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Multiple quote request",
     "frDesc": "Demande de devis multiple par un professionnel qualifié et vérifié.",
     "enDesc": "Multiple quote request by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4478,7 +4478,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Project cost simulation",
     "frDesc": "Simulation du coût du projet par un professionnel qualifié et vérifié.",
     "enDesc": "Project cost simulation by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4487,7 +4487,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Photo site monitoring",
     "frDesc": "Suivi photo de chantier par un professionnel qualifié et vérifié.",
     "enDesc": "Photo site monitoring by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4496,7 +4496,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Remote technical support",
     "frDesc": "Assistance technique à distance par un professionnel qualifié et vérifié.",
     "enDesc": "Remote technical support by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4505,7 +4505,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Tradesperson booking",
     "frDesc": "Réservation d’artisan par un professionnel qualifié et vérifié.",
     "enDesc": "Tradesperson booking by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/assistance-client.svg",
     "category": "numerique"
   },
   {
@@ -4514,7 +4514,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Tradesperson verification",
     "frDesc": "Vérification des artisans par un professionnel qualifié et vérifié.",
     "enDesc": "Tradesperson verification by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4523,7 +4523,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Architecture",
     "frDesc": "Architecture par un professionnel qualifié et vérifié.",
     "enDesc": "Architecture by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4532,7 +4532,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Civil engineering",
     "frDesc": "Ingénierie civile par un professionnel qualifié et vérifié.",
     "enDesc": "Civil engineering by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4541,7 +4541,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Land surveying",
     "frDesc": "Géomètre-topographe par un professionnel qualifié et vérifié.",
     "enDesc": "Land surveying by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4550,7 +4550,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Masonry",
     "frDesc": "Maçonnerie par un professionnel qualifié et vérifié.",
     "enDesc": "Masonry by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4559,7 +4559,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Formwork",
     "frDesc": "Coffrage par un professionnel qualifié et vérifié.",
     "enDesc": "Formwork by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4568,7 +4568,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Steel fixing",
     "frDesc": "Ferraillage par un professionnel qualifié et vérifié.",
     "enDesc": "Steel fixing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4577,7 +4577,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Plumbing",
     "frDesc": "Plomberie par un professionnel qualifié et vérifié.",
     "enDesc": "Plumbing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4586,7 +4586,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Building electrical work",
     "frDesc": "Électricité bâtiment par un professionnel qualifié et vérifié.",
     "enDesc": "Building electrical work by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4595,7 +4595,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Industrial electrical work",
     "frDesc": "Électricité industrielle par un professionnel qualifié et vérifié.",
     "enDesc": "Industrial electrical work by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4604,7 +4604,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Tiling",
     "frDesc": "Carrelage par un professionnel qualifié et vérifié.",
     "enDesc": "Tiling by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4613,7 +4613,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Painting",
     "frDesc": "Peinture par un professionnel qualifié et vérifié.",
     "enDesc": "Painting by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4622,7 +4622,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Plastering",
     "frDesc": "Plâtrerie par un professionnel qualifié et vérifié.",
     "enDesc": "Plastering by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4631,7 +4631,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Carpentry",
     "frDesc": "Menuiserie par un professionnel qualifié et vérifié.",
     "enDesc": "Carpentry by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4640,7 +4640,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Glazing",
     "frDesc": "Vitrerie par un professionnel qualifié et vérifié.",
     "enDesc": "Glazing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4649,7 +4649,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Locksmithing",
     "frDesc": "Serrurerie par un professionnel qualifié et vérifié.",
     "enDesc": "Locksmithing by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4658,7 +4658,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Boilermaking",
     "frDesc": "Chaudronnerie par un professionnel qualifié et vérifié.",
     "enDesc": "Boilermaking by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4667,7 +4667,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Pipefitting",
     "frDesc": "Tuyauterie par un professionnel qualifié et vérifié.",
     "enDesc": "Pipefitting by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4676,7 +4676,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Refrigeration and air conditioning",
     "frDesc": "Froid et climatisation par un professionnel qualifié et vérifié.",
     "enDesc": "Refrigeration and air conditioning by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4685,7 +4685,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Gardening and landscaping",
     "frDesc": "Jardinage et paysagisme par un professionnel qualifié et vérifié.",
     "enDesc": "Gardening and landscaping by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4694,7 +4694,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Heavy equipment mechanics",
     "frDesc": "Mécanique d’engins par un professionnel qualifié et vérifié.",
     "enDesc": "Heavy equipment mechanics by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   },
   {
@@ -4703,7 +4703,7 @@ export const constructionServices: CatalogService[] = [
     "en": "Electromechanics",
     "frDesc": "Électromécanique par un professionnel qualifié et vérifié.",
     "enDesc": "Electromechanics by a qualified, verified professional.",
-    "img": "/images/services/autres-services.svg",
+    "img": "/images/services/soudure.svg",
     "category": "metiers"
   }
 ];
