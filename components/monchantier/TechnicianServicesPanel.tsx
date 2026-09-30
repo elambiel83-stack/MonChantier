@@ -13,6 +13,10 @@ type StoredService = {
   priceUSD: number | null;
   priceCDF: number | null;
   active: boolean;
+  submittedPriceUSD: number | null;
+  submittedPriceCDF: number | null;
+  platformFeePercent: number;
+  pricingStatus: "platform" | "pending" | "approved" | "rejected";
 };
 
 export default function TechnicianServicesPanel() {
@@ -71,7 +75,7 @@ export default function TechnicianServicesPanel() {
         priceUSD: "",
         priceCDF: "",
       });
-      setBanner("Service ajouté au catalogue public.");
+      setBanner("Service soumis à l’administrateur pour validation du prix.");
       await load();
     } catch (err) {
       setBanner(err instanceof Error ? err.message : "Erreur inconnue");
@@ -99,25 +103,10 @@ export default function TechnicianServicesPanel() {
         delete next[id];
         return next;
       });
-      setBanner("Prix mis à jour.");
+      setBanner("Nouveau prix soumis à l’administrateur.");
       await load();
     } catch (err) {
       setBanner(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const toggleActive = async (service: StoredService) => {
-    try {
-      setBusyId(service.id);
-      const res = await fetch(`/api/partner/services/${service.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !service.active }),
-      });
-      if (!res.ok) throw new Error("Erreur mise à jour");
-      await load();
     } finally {
       setBusyId(null);
     }
@@ -137,7 +126,7 @@ export default function TechnicianServicesPanel() {
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Proposer un service</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Votre service apparaît immédiatement sur le catalogue public de MonChantier.
+          Proposez votre prix de base. Le service sera publié après validation et ajout de la commission MonChantier.
         </p>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -227,8 +216,8 @@ export default function TechnicianServicesPanel() {
               ) : (
                 services.map((service) => {
                   const edit = edits[service.id] || {
-                    priceUSD: service.priceUSD?.toString() || "",
-                    priceCDF: service.priceCDF?.toString() || "",
+                    priceUSD: service.submittedPriceUSD?.toString() || "",
+                    priceCDF: service.submittedPriceCDF?.toString() || "",
                   };
                   return (
                     <tr key={service.id} className="border-b border-slate-100 last:border-b-0">
@@ -256,8 +245,8 @@ export default function TechnicianServicesPanel() {
                         />
                       </td>
                       <td className="py-3 pr-4">
-                        <span className={service.active ? "text-emerald-700" : "text-slate-400"}>
-                          {service.active ? "Actif" : "Inactif"}
+                        <span className={service.pricingStatus === "approved" ? "text-emerald-700" : service.pricingStatus === "rejected" ? "text-red-600" : "text-amber-700"}>
+                          {service.pricingStatus === "pending" ? "En attente de validation" : service.pricingStatus === "approved" ? `Approuvé · commission ${service.platformFeePercent}%` : service.pricingStatus === "rejected" ? "Prix rejeté — à modifier" : service.active ? "Actif" : "Inactif"}
                         </span>
                       </td>
                       <td className="py-3 pr-4">
@@ -269,14 +258,6 @@ export default function TechnicianServicesPanel() {
                             className="rounded-lg bg-slate-900 text-white px-2 py-1 text-xs font-medium disabled:opacity-60"
                           >
                             Enregistrer
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleActive(service)}
-                            disabled={busyId === service.id}
-                            className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium disabled:opacity-60"
-                          >
-                            {service.active ? "Désactiver" : "Activer"}
                           </button>
                         </div>
                       </td>
