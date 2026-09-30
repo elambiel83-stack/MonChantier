@@ -28,6 +28,14 @@ CREATE TABLE IF NOT EXISTS saas.memberships (
   PRIMARY KEY (tenant_id, identity)
 );
 
+CREATE TABLE IF NOT EXISTS saas.identity_directory (
+  identity TEXT PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES saas.tenants(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('owner','admin','accountant','site_manager','supplier','carrier','driver','support','member')),
+  active BOOLEAN NOT NULL DEFAULT true,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS saas.customers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id UUID NOT NULL REFERENCES saas.tenants(id) ON DELETE CASCADE,
   identity TEXT, name TEXT NOT NULL, email TEXT, phone TEXT, address JSONB NOT NULL DEFAULT '{}'::jsonb,
