@@ -5,7 +5,7 @@ import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
-import { verifyPhoneOtp } from "./phoneAuth";
+import { normalizePhone, verifyPhoneOtp } from "./phoneAuth";
 import { AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
@@ -109,7 +109,7 @@ const buildProviders = (): NextAuthOptions["providers"] => {
         code: { label: "Code", type: "text" },
       },
       async authorize(credentials) {
-        const phone = credentials?.phone?.trim() || "";
+        const phone = normalizePhone(credentials?.phone || "");
         const code = credentials?.code?.trim() || "";
 
         if (!phone || !code) return null;
@@ -228,11 +228,20 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/auth/signin",
   },
   callbacks: {
+    async signIn({ account, profile }) {
+      // Un compte Google n'est créé/accepté que si Google confirme que
+      // l'adresse email appartient réellement à l'utilisateur.
+      if (account?.provider === 'google') {
+        return (profile as { email_verified?: boolean } | undefined)?.email_verified === true;
+      }
+      return true;
+    },
       async jwt({ token }) {
         const identity =
         typeof token.email === "string" && token.email

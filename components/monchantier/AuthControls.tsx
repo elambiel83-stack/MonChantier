@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { getProviders, signIn, useSession } from "next-auth/react";
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 interface AuthControlsProps {
   t: (fr: string, en: string) => string;
@@ -16,6 +17,8 @@ export function AuthControls({ t }: AuthControlsProps) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [enabledProviders, setEnabledProviders] = useState<Record<string, unknown>>({});
+  const [deliveryChannel, setDeliveryChannel] = useState<"sms" | "whatsapp">("sms");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   useEffect(() => {
     void getProviders().then((providers) => setEnabledProviders(providers || {}));
@@ -35,7 +38,7 @@ export function AuthControls({ t }: AuthControlsProps) {
       const res = await fetch("/api/auth/phone/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, channel: deliveryChannel, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Request failed");
@@ -139,6 +142,11 @@ export function AuthControls({ t }: AuthControlsProps) {
                 {t("Code", "Code")}
               </button>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setDeliveryChannel("sms")} className={`rounded-lg border px-2 py-1.5 text-[11px] font-semibold ${deliveryChannel === "sms" ? "border-orange-500 bg-orange-50" : "border-slate-300"}`}>SMS</button>
+              <button type="button" onClick={() => setDeliveryChannel("whatsapp")} className={`rounded-lg border px-2 py-1.5 text-[11px] font-semibold ${deliveryChannel === "whatsapp" ? "border-emerald-500 bg-emerald-50" : "border-slate-300"}`}>WhatsApp</button>
+            </div>
+            <TurnstileWidget onToken={setTurnstileToken} />
             <button
               type="submit"
               disabled={loading}
