@@ -8,5 +8,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const services = await listServices({ activeOnly: true });
-  return NextResponse.json({ services });
+  const publicServices = services.map(({ ownerIdentity: _ownerIdentity, submittedPriceUSD: _submittedPriceUSD, submittedPriceCDF: _submittedPriceCDF, platformFeePercent: _platformFeePercent, pricingStatus: _pricingStatus, ...service }) => service);
+  return NextResponse.json({ services: publicServices });
 }

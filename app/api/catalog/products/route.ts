@@ -8,5 +8,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const products = await listProducts({ activeOnly: true });
-  return NextResponse.json({ products });
+  const publicProducts = products.map(({ ownerIdentity: _ownerIdentity, submittedPriceUSD: _submittedPriceUSD, submittedPriceCDF: _submittedPriceCDF, platformFeePercent: _platformFeePercent, pricingStatus: _pricingStatus, ...product }) => product);
+  return NextResponse.json({ products: publicProducts });
 }
