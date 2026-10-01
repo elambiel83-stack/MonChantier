@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 function getCallbackUrl(value: string | null) {
   // The middleware supplies a relative path. Keep redirects on this site and
@@ -24,6 +25,8 @@ export default function SignInPage() {
   const [adminTotp, setAdminTotp] = useState("");
   const [adminSubmitting, setAdminSubmitting] = useState(false);
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
+  const [deliveryChannel, setDeliveryChannel] = useState<"sms" | "whatsapp">("sms");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -37,7 +40,7 @@ export default function SignInPage() {
   }, []);
 
   const oauthProviders = [
-    { id: "google", label: "Continuer avec Google" },
+    { id: "google", label: "Continuer avec Gmail / Google" },
     { id: "facebook", label: "Continuer avec Facebook" },
     { id: "tiktok", label: "Continuer avec TikTok" },
     { id: "apple", label: "Continuer avec Apple" },
@@ -48,7 +51,7 @@ export default function SignInPage() {
     const res = await fetch("/api/auth/phone/request-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone, channel: deliveryChannel, turnstileToken }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -110,7 +113,7 @@ export default function SignInPage() {
     <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <h1 className="text-2xl font-extrabold text-slate-900">Connexion</h1>
-        <p className="mt-1 text-sm text-slate-600">Choisissez une méthode d’authentification.</p>
+        <p className="mt-1 text-sm text-slate-600">Connexion et inscription sécurisées après vérification de votre identité.</p>
 
         {oauthProviders.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-2">
@@ -148,6 +151,12 @@ export default function SignInPage() {
               Envoyer
             </button>
           </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button type="button" onClick={() => setDeliveryChannel("sms")} className={`rounded-lg border px-3 py-2 font-semibold ${deliveryChannel === "sms" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-slate-300"}`}>Par SMS</button>
+            <button type="button" onClick={() => setDeliveryChannel("whatsapp")} className={`rounded-lg border px-3 py-2 font-semibold ${deliveryChannel === "whatsapp" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-300"}`}>Par WhatsApp</button>
+          </div>
+          <TurnstileWidget onToken={setTurnstileToken} />
+          <p className="text-xs text-slate-500">À votre première connexion vérifiée, votre compte est créé automatiquement. En continuant, vous acceptez les <a href="/cgv" className="underline">conditions générales</a> et la <a href="/confidentialite" className="underline">politique de confidentialité</a>.</p>
           <button
             type="submit"
             disabled={phoneSubmitting}
