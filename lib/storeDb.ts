@@ -23,10 +23,52 @@ export async function readStore<TStore>(key: string, seed: () => TStore): Promis
   return rows[0].value;
 }
 
+/**
+ * Charge un store et applique une migration idempotente sous verrou. Le store
+ * n'est réécrit que si la migration signale une modification.
+ */
+export async function migrateStore<TStore>(
+  key: string,
+  seed: () => TStore,
+  migrate: (store: TStore) => boolean
+): Promise<TStore> {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query<{ value: TStore }>(
+      'SELECT value FROM kv_store WHERE key = $1 FOR UPDATE',
+      [key]
+    );
+
+    if (rows.length === 0) {
+      const store = seed();
+      await client.query('INSERT INTO kv_store (key, value) VALUES ($1, $2::jsonb)', [key, JSON.stringify(store)]);
+      await client.query('COMMIT');
+      return store;
+    }
+
+    const store = rows[0].value;
+    if (migrate(store)) {
+      await client.query('UPDATE kv_store SET value = $2::jsonb, updated_at = now() WHERE key = $1', [
+        key,
+        JSON.stringify(store),
+      ]);
+    }
+    await client.query('COMMIT');
+    return store;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function withStore<TStore, TResult>(
   key: string,
   seed: () => TStore,
-  fn: (store: TStore) => Promise<TResult> | TResult
+  fn: (store: TStore) => Promise<TResult> | TResult,
+  migrate?: (store: TStore) => boolean
 ): Promise<TResult> {
   const client = await getPool().connect();
   try {
@@ -43,6 +85,8 @@ export async function withStore<TStore, TResult>(
     } else {
       store = rows[0].value;
     }
+
+    migrate?.(store);
 
     // `fn` mute `store` en place (comme le faisait l'ancien code sur l'objet
     // lu depuis le fichier JSON) : on réécrit son état final tel quel.

@@ -1,6 +1,7 @@
 import { products as seedProducts } from '@/components/monchantier/constants';
-import { readStore, withStore } from './storeDb';
+import { migrateStore, withStore } from './storeDb';
 import type { PricingStatus } from './partnerPricing';
+import { normalizeLegacyPricingStore } from './partnerPricingMigration';
 
 export type StoredProduct = {
   id: number;
@@ -33,6 +34,13 @@ type ProductStoreModel = { products: StoredProduct[]; nextId: number };
 
 const STORE_KEY = 'product-store';
 
+function normalizeProductStore(store: ProductStoreModel): boolean {
+  const normalized = { items: store.products, nextId: store.nextId };
+  const changed = normalizeLegacyPricingStore(normalized);
+  if (store.nextId !== normalized.nextId) store.nextId = normalized.nextId;
+  return changed;
+}
+
 function buildSeedStore(): ProductStoreModel {
   const now = new Date().toISOString();
   const seeded: StoredProduct[] = seedProducts.map((p) => ({
@@ -60,18 +68,18 @@ function buildSeedStore(): ProductStoreModel {
 }
 
 export async function listProducts(options?: { activeOnly?: boolean }): Promise<StoredProduct[]> {
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeProductStore);
   return options?.activeOnly ? store.products.filter((p) => p.active) : store.products;
 }
 
 export async function getProduct(id: number): Promise<StoredProduct | null> {
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeProductStore);
   return store.products.find((p) => p.id === id) || null;
 }
 
 export async function listProductsByOwner(ownerIdentity: string): Promise<StoredProduct[]> {
   const normalized = ownerIdentity.trim().toLowerCase();
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeProductStore);
   return store.products.filter((p) => p.ownerIdentity === normalized);
 }
 
@@ -119,7 +127,7 @@ export function createProduct(input: {
     store.products.push(product);
     store.nextId += 1;
     return product;
-  });
+  }, normalizeProductStore);
 }
 
 export type UpdateProductPatch = Partial<
@@ -132,7 +140,7 @@ export function updateProduct(id: number, patch: UpdateProductPatch): Promise<St
     if (!product) return null;
     Object.assign(product, patch, { updatedAt: new Date().toISOString() });
     return product;
-  });
+  }, normalizeProductStore);
 }
 
 export function deleteProduct(id: number): Promise<boolean> {
@@ -141,7 +149,7 @@ export function deleteProduct(id: number): Promise<boolean> {
     if (index === -1) return false;
     store.products.splice(index, 1);
     return true;
-  });
+  }, normalizeProductStore);
 }
 
 export type StockShortfall = { productId: number; requested: number; available: number };
@@ -177,7 +185,7 @@ export function decrementStock(
       product.updatedAt = new Date().toISOString();
     }
     return { success: true as const };
-  });
+  }, normalizeProductStore);
 }
 
 /** Restitue le stock d'une commande annulée (voir decrementStock). */
@@ -189,5 +197,5 @@ export function restockItems(items: Array<{ productId: number; quantity: number 
       product.stock += item.quantity;
       product.updatedAt = new Date().toISOString();
     }
-  });
+  }, normalizeProductStore);
 }

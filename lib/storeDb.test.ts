@@ -18,10 +18,11 @@ vi.mock('pg', () => ({ Pool }));
 process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
 
 let readStore: typeof import('./storeDb').readStore;
+let migrateStore: typeof import('./storeDb').migrateStore;
 let withStore: typeof import('./storeDb').withStore;
 
 beforeAll(async () => {
-  ({ readStore, withStore } = await import('./storeDb'));
+  ({ readStore, migrateStore, withStore } = await import('./storeDb'));
 });
 
 type Counter = { value: number };
@@ -44,6 +45,21 @@ describe('storeDb', () => {
 
     const result = await readStore<Counter>(key, () => ({ value: -1 }));
     expect(result.value).toBe(2);
+  });
+
+  it('migrateStore persists an idempotent legacy migration', async () => {
+    const key = `test-counter-${Math.random()}`;
+    await withStore<Counter, void>(key, () => ({ value: 1 }), () => {});
+
+    const migrated = await migrateStore<Counter>(key, () => ({ value: 0 }), (store) => {
+      if (store.value >= 10) return false;
+      store.value = 10;
+      return true;
+    });
+    expect(migrated.value).toBe(10);
+    expect((await readStore<Counter>(key, () => ({ value: -1 }))).value).toBe(10);
+
+    expect(await migrateStore<Counter>(key, () => ({ value: 0 }), () => false)).toEqual({ value: 10 });
   });
 
   it('rolls back the transaction when fn throws, leaving state untouched', async () => {
