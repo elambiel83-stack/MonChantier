@@ -1,6 +1,6 @@
 import { services as seedServices } from '@/components/monchantier/constants';
 import { readStore, withStore } from './storeDb';
-import { PricingStatus } from './partnerPricing';
+import type { PricingStatus } from './partnerPricing';
 
 export type StoredService = {
   id: number;
