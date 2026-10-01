@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { getService, updateService, UpdateServicePatch } from '@/lib/serviceStore';
+import { validateSubmittedPrice } from '@/lib/partnerPricing';
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -34,16 +35,21 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     if (typeof body?.enDesc === 'string') patch.enDesc = body.enDesc.trim();
     if (typeof body?.img === 'string') patch.img = body.img.trim();
     if (body?.priceUSD !== undefined) {
-      patch.submittedPriceUSD = body.priceUSD === null || body.priceUSD === '' ? null : Number(body.priceUSD);
-      if (patch.submittedPriceUSD !== null && !Number.isFinite(patch.submittedPriceUSD)) {
+      patch.submittedPriceUSD = validateSubmittedPrice(body.priceUSD);
+      if (body.priceUSD !== null && body.priceUSD !== '' && patch.submittedPriceUSD === null) {
         return NextResponse.json({ message: 'Prix USD invalide' }, { status: 400 });
       }
     }
     if (body?.priceCDF !== undefined) {
-      patch.submittedPriceCDF = body.priceCDF === null || body.priceCDF === '' ? null : Number(body.priceCDF);
-      if (patch.submittedPriceCDF !== null && !Number.isFinite(patch.submittedPriceCDF)) {
+      patch.submittedPriceCDF = validateSubmittedPrice(body.priceCDF);
+      if (body.priceCDF !== null && body.priceCDF !== '' && patch.submittedPriceCDF === null) {
         return NextResponse.json({ message: 'Prix CDF invalide' }, { status: 400 });
       }
+    }
+    const nextUSD = patch.submittedPriceUSD === undefined ? existing.submittedPriceUSD : patch.submittedPriceUSD;
+    const nextCDF = patch.submittedPriceCDF === undefined ? existing.submittedPriceCDF : patch.submittedPriceCDF;
+    if (nextUSD === null && nextCDF === null) {
+      return NextResponse.json({ message: 'Au moins un prix positif est requis' }, { status: 400 });
     }
     patch.priceUSD = null;
     patch.priceCDF = null;
