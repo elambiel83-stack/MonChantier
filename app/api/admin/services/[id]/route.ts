@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteService, getService, updateService, UpdateServicePatch } from '@/lib/serviceStore';
 import { requireAdmin } from '@/lib/requireAdmin';
-import { calculateSellingPrice, validateFeePercent } from '@/lib/partnerPricing';
+import { calculateSellingPrice, hasSubmittedPrice, validateFeePercent } from '@/lib/partnerPricing';
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -25,7 +25,12 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     if (typeof body?.frDesc === 'string') patch.frDesc = body.frDesc.trim();
     if (typeof body?.enDesc === 'string') patch.enDesc = body.enDesc.trim();
     if (typeof body?.img === 'string') patch.img = body.img.trim();
-    if (typeof body?.active === 'boolean') patch.active = body.active;
+    if (typeof body?.active === 'boolean') {
+      if (existing.ownerIdentity && body.active && existing.pricingStatus !== 'approved') {
+        return NextResponse.json({ message: 'Une offre partenaire doit être approuvée avant activation' }, { status: 400 });
+      }
+      patch.active = body.active;
+    }
     if (body?.priceUSD !== undefined) {
       patch.priceUSD = body.priceUSD === null || body.priceUSD === '' ? null : Number(body.priceUSD);
       if (patch.priceUSD !== null && !Number.isFinite(patch.priceUSD)) {
@@ -45,6 +50,9 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       const fee = validateFeePercent(body.platformFeePercent);
       if (body.pricingStatus === 'approved' && fee === null) {
         return NextResponse.json({ message: 'Pourcentage MonChantier requis entre 0 et 100' }, { status: 400 });
+      }
+      if (body.pricingStatus === 'approved' && !hasSubmittedPrice(existing.submittedPriceUSD, existing.submittedPriceCDF)) {
+        return NextResponse.json({ message: 'Au moins un prix partenaire positif est requis' }, { status: 400 });
       }
       patch.pricingStatus = body.pricingStatus;
       patch.platformFeePercent = fee ?? existing.platformFeePercent;
