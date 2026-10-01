@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { createService, listServicesByOwner } from '@/lib/serviceStore';
+import { validateSubmittedPrice } from '@/lib/partnerPricing';
 
 export async function GET() {
   const actor = await getSessionActor();
@@ -28,17 +29,20 @@ export async function POST(request: NextRequest) {
     const frDesc = String(body?.frDesc || '').trim();
     const enDesc = String(body?.enDesc || '').trim();
     const img = String(body?.img || '/images/services/autres-services.svg').trim();
-    const priceUSD = body?.priceUSD !== undefined && body.priceUSD !== '' ? Number(body.priceUSD) : null;
-    const priceCDF = body?.priceCDF !== undefined && body.priceCDF !== '' ? Number(body.priceCDF) : null;
+    const priceUSD = validateSubmittedPrice(body?.priceUSD);
+    const priceCDF = validateSubmittedPrice(body?.priceCDF);
 
     if (!fr || !frDesc) {
       return NextResponse.json({ message: 'Nom (FR) et description (FR) sont requis' }, { status: 400 });
     }
-    if (priceUSD !== null && !Number.isFinite(priceUSD)) {
+    if (body?.priceUSD !== undefined && body.priceUSD !== '' && priceUSD === null) {
       return NextResponse.json({ message: 'Prix USD invalide' }, { status: 400 });
     }
-    if (priceCDF !== null && !Number.isFinite(priceCDF)) {
+    if (body?.priceCDF !== undefined && body.priceCDF !== '' && priceCDF === null) {
       return NextResponse.json({ message: 'Prix CDF invalide' }, { status: 400 });
+    }
+    if (priceUSD === null && priceCDF === null) {
+      return NextResponse.json({ message: 'Au moins un prix positif est requis' }, { status: 400 });
     }
 
     const service = await createService({
