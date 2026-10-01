@@ -1,6 +1,7 @@
 import { services as seedServices } from '@/components/monchantier/constants';
-import { readStore, withStore } from './storeDb';
+import { migrateStore, withStore } from './storeDb';
 import type { PricingStatus } from './partnerPricing';
+import { normalizeLegacyPricingStore } from './partnerPricingMigration';
 
 export type StoredService = {
   id: number;
@@ -29,6 +30,13 @@ type ServiceStoreModel = { services: StoredService[]; nextId: number };
 
 const STORE_KEY = 'service-store';
 
+function normalizeServiceStore(store: ServiceStoreModel): boolean {
+  const normalized = { items: store.services, nextId: store.nextId };
+  const changed = normalizeLegacyPricingStore(normalized);
+  if (store.nextId !== normalized.nextId) store.nextId = normalized.nextId;
+  return changed;
+}
+
 function buildSeedStore(): ServiceStoreModel {
   const now = new Date().toISOString();
   const seeded: StoredService[] = seedServices.map((s, index) => ({
@@ -54,18 +62,18 @@ function buildSeedStore(): ServiceStoreModel {
 }
 
 export async function listServices(options?: { activeOnly?: boolean }): Promise<StoredService[]> {
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeServiceStore);
   return options?.activeOnly ? store.services.filter((s) => s.active) : store.services;
 }
 
 export async function getService(id: number): Promise<StoredService | null> {
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeServiceStore);
   return store.services.find((s) => s.id === id) || null;
 }
 
 export async function listServicesByOwner(ownerIdentity: string): Promise<StoredService[]> {
   const normalized = ownerIdentity.trim().toLowerCase();
-  const store = await readStore(STORE_KEY, buildSeedStore);
+  const store = await migrateStore(STORE_KEY, buildSeedStore, normalizeServiceStore);
   return store.services.filter((s) => s.ownerIdentity === normalized);
 }
 
@@ -111,7 +119,7 @@ export function createService(input: {
     store.services.push(service);
     store.nextId += 1;
     return service;
-  });
+  }, normalizeServiceStore);
 }
 
 export type UpdateServicePatch = Partial<
@@ -124,7 +132,7 @@ export function updateService(id: number, patch: UpdateServicePatch): Promise<St
     if (!service) return null;
     Object.assign(service, patch, { updatedAt: new Date().toISOString() });
     return service;
-  });
+  }, normalizeServiceStore);
 }
 
 export function deleteService(id: number): Promise<boolean> {
@@ -133,5 +141,5 @@ export function deleteService(id: number): Promise<boolean> {
     if (index === -1) return false;
     store.services.splice(index, 1);
     return true;
-  });
+  }, normalizeServiceStore);
 }
