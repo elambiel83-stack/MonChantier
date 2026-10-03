@@ -50,13 +50,6 @@ function toProduct(p: CatalogProduct, lang: Language): Product {
   };
 }
 
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-}
-
 type SortOption = "default" | "price-asc" | "price-desc";
 type AvailabilityOption = "all" | "priced" | "quote";
 
@@ -76,17 +69,17 @@ const PRODUCT_CATEGORIES: Record<string, [string, string]> = {
 
 const PAGE_SIZE = 24;
 
-function productPriceValue(p: Product): number | null {
-  return p.prices?.USD ?? p.prices?.CDF ?? null;
-}
-
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
   const [category, setCategory] = useState("all");
   const [availability, setAvailability] = useState<AvailabilityOption>("all");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [imgFailed, setImgFailed] = useState<Record<number, boolean>>({});
   const [copiedProductId, setCopiedProductId] = useState<number | null>(null);
 
@@ -97,29 +90,51 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
   };
 
   useEffect(() => {
-    fetch("/api/catalog/products", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => setCatalog(Array.isArray(data.products) ? data.products : []))
-      .catch(() => setCatalog([]));
-  }, []);
+    const timeout = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(1);
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
-  const normalizedQuery = normalize(query.trim());
-  const filteredCatalog = catalog
-    .filter((p) => category === "all" || p.category === category)
-    .filter((p) => availability === "all" || (availability === "priced" ? p.priceUSD !== null || p.priceCDF !== null : p.priceUSD === null && p.priceCDF === null))
-    .filter((p) => !normalizedQuery || normalize(t(p.fr, p.en)).includes(normalizedQuery));
-  const products = filteredCatalog
-    .map((p) => toProduct(p, lang))
-    .sort((a, b) => {
-      if (sort === "default") return 0;
-      const priceA = productPriceValue(a);
-      const priceB = productPriceValue(b);
-      if (priceA === null && priceB === null) return 0;
-      if (priceA === null) return 1;
-      if (priceB === null) return -1;
-      return sort === "price-asc" ? priceA - priceB : priceB - priceA;
-    });
-  const visibleProducts = products.slice(0, visibleCount);
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadCatalog() {
+      setLoading(true);
+      setError("");
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+        category,
+        availability,
+        sort,
+      });
+      if (debouncedQuery) params.set("q", debouncedQuery);
+
+      try {
+        const response = await fetch(`/api/catalog/products?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || t("Chargement impossible.", "Unable to load products."));
+        setCatalog(Array.isArray(data.products) ? data.products : []);
+        if (data.pagination) setPagination(data.pagination);
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        setCatalog([]);
+        setError(requestError instanceof Error ? requestError.message : t("Chargement impossible.", "Unable to load products."));
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+
+    void loadCatalog();
+    return () => controller.abort();
+  }, [debouncedQuery, category, availability, sort, page, t]);
+
+  const products = catalog.map((p) => toProduct(p, lang));
 
   return (
     <section id="produits" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
@@ -163,7 +178,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </div>
         <select
           value={category}
-          onChange={(e) => { setCategory(e.target.value); setVisibleCount(PAGE_SIZE); }}
+          onChange={(e) => { setCategory(e.target.value); setPage(1); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           <option value="all">{t("Toutes les catégories", "All categories")}</option>
@@ -171,7 +186,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </select>
         <select
           value={availability}
-          onChange={(e) => { setAvailability(e.target.value as AvailabilityOption); setVisibleCount(PAGE_SIZE); }}
+          onChange={(e) => { setAvailability(e.target.value as AvailabilityOption); setPage(1); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           <option value="all">{t("Toute disponibilité", "All availability")}</option>
@@ -180,7 +195,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </select>
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value as SortOption)}
+          onChange={(e) => { setSort(e.target.value as SortOption); setPage(1); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           <option value="default">{t("Tri par défaut", "Default sort")}</option>
@@ -189,14 +204,16 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </select>
       </div>
 
-      {(normalizedQuery || category !== "all" || availability !== "all") && products.length === 0 && (
+      {loading && <p className="mt-6 text-sm text-slate-500">{t("Chargement des produits…", "Loading products…")}</p>}
+      {error && <p role="alert" className="mt-6 text-sm text-red-700">{error}</p>}
+      {!loading && !error && products.length === 0 && (
         <p className="mt-6 text-sm text-slate-500">
           {t("Aucun produit ne correspond à votre recherche.", "No product matches your search.")}
         </p>
       )}
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {visibleProducts.map((p) => {
+        {products.map((p) => {
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
           return (
           <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
@@ -261,10 +278,26 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           );
         })}
       </div>
-      {visibleCount < products.length && (
-        <div className="mt-8 text-center">
-          <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="rounded-xl border border-orange-600 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50">
-            {t(`Afficher plus (${products.length - visibleCount})`, `Show more (${products.length - visibleCount})`)}
+      {pagination.total > 0 && (
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            disabled={loading || pagination.page <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            className="rounded-xl border border-orange-600 px-4 py-2 text-sm font-semibold text-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t("Précédent", "Previous")}
+          </button>
+          <span className="text-sm text-slate-600">
+            {t(`Page ${pagination.page} sur ${pagination.totalPages}`, `Page ${pagination.page} of ${pagination.totalPages}`)}
+          </span>
+          <button
+            type="button"
+            disabled={loading || pagination.page >= pagination.totalPages}
+            onClick={() => setPage((current) => current + 1)}
+            className="rounded-xl border border-orange-600 px-4 py-2 text-sm font-semibold text-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t("Suivant", "Next")}
           </button>
         </div>
       )}
