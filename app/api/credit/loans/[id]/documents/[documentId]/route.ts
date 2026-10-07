@@ -6,9 +6,8 @@ import { canAccessLoan } from '@/lib/loanPermissions';
 import { getLoanById } from '@/lib/loanStore';
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { id: string; documentId: string } }
-) {
+  _request: Request, { params: paramsPromise }: { params: Promise<{ id: string; documentId: string }> }) {
+  const params = await paramsPromise;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
 

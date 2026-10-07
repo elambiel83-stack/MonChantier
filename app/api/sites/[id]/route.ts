@@ -3,7 +3,8 @@ import { getSiteById, updateSite, UpdateSitePatch } from '@/lib/siteStore';
 import { canManageSite } from '@/lib/sitePermissions';
 import { getSessionActor } from '@/lib/sessionIdentity';
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 
@@ -16,7 +17,8 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   return NextResponse.json({ site });
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 

@@ -5,7 +5,8 @@ import { canManageSite } from '@/lib/sitePermissions';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { getSiteById } from '@/lib/siteStore';
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = await paramsPromise;
   const actor = await getSessionActor();
   if (!actor) return NextResponse.json({ message: 'Accès non autorisé' }, { status: 401 });
 

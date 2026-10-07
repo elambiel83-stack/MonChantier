@@ -5,9 +5,8 @@ import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { getStoredPaymentStatus } from '@/lib/paymentStore';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { reference: string } }
-) {
+  request: NextRequest, { params: paramsPromise }: { params: Promise<{ reference: string }> }) {
+  const params = await paramsPromise;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ message: 'Authentification requise' }, { status: 401 });

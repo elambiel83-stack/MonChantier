@@ -4,7 +4,8 @@ import { requireAdmin } from '@/lib/requireAdmin';
 
 const VALID_STATUSES: OrderStatus[] = ['processing', 'shipped', 'delivered', 'cancelled'];
 
-export async function PATCH(request: NextRequest, { params }: { params: { reference: string } }) {
+export async function PATCH(request: NextRequest, { params: paramsPromise }: { params: Promise<{ reference: string }> }) {
+  const params = await paramsPromise;
   const denied = await requireAdmin(request);
   if (denied) return denied;
 

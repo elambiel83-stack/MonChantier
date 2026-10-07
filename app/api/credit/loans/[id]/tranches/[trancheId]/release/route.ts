@@ -12,9 +12,8 @@ const ERROR_MESSAGES: Record<string, { message: string; status: number }> = {
 };
 
 export async function POST(
-  _request: Request,
-  { params }: { params: { id: string; trancheId: string } }
-) {
+  _request: Request, { params: paramsPromise }: { params: Promise<{ id: string; trancheId: string }> }) {
+  const params = await paramsPromise;
   try {
     const actor = await getSessionActor();
     if (!actor) return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
