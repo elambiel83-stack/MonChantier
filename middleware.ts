@@ -10,7 +10,13 @@ function getAdminEmails() {
 }
 
 async function resolveRoleFromToken(request: NextRequest): Promise<AppRole | null> {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  let token;
+  try {
+    token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  } catch (error) {
+    console.warn('Impossible de lire le jeton middleware:', error);
+    return null;
+  }
   if (!token) return null;
 
   if (isAppRole(token.role)) return token.role;
