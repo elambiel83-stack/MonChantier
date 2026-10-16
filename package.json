@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql",
     "prod:check": "node scripts/check-production-env.mjs"
