@@ -96,12 +96,12 @@ export default async function ClientDashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
-          <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
             <p className="text-sm text-slate-500">{card.title}</p>
             <p className="mt-1 text-2xl font-bold">{card.value}</p>
           </div>
         ))}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2 lg:col-span-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:col-span-2 lg:col-span-4">
           <p className="text-sm text-slate-500">Total dépensé (commandes confirmées)</p>
           <p className="mt-1 text-lg font-semibold">
             {Object.keys(totalsByCurrency).length === 0
@@ -117,7 +117,7 @@ export default async function ClientDashboardPage() {
       <LoanPanel />
       <DeliveryTrackingPanel />
 
-      <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes commandes</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -180,7 +180,7 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div id="factures" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="factures" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes factures</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -223,7 +223,7 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes paiements</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -267,7 +267,7 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div id="devis" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="devis" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes devis</h2>
         <ul className="mt-4 space-y-3">
           {quotes.length === 0 ? (

@@ -7,7 +7,7 @@ export default function RoleComingSoon({ role, note }: { role: AppRole; note?: s
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1b3027]">{ROLE_LABELS[role].fr}</h1>
       <p className="mt-2 max-w-2xl text-slate-600">{ROLE_OBJECTIVES[role].fr}</p>
 
-      <div className="mt-8 border border-[#d9e2da] border-l-4 border-l-[#e6a748] bg-white p-6 shadow-sm sm:p-8">
+      <div className="mt-8 border border-[#d9e2da] border-l-4 border-l-[#e6a748] bg-white p-6 shadow-xs sm:p-8">
         <p className="text-sm font-semibold text-[#1b3027]">
           Ce tableau de bord est en cours de construction.
         </p>

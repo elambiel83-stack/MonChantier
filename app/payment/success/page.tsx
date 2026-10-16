@@ -101,7 +101,7 @@ function SuccessContent() {
   }, [reference]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-b from-emerald-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-4xl">✓</span>
@@ -135,7 +135,7 @@ function SuccessContent() {
         )}
         <Link 
           href="/"
-          className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
+          className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm"
         >
           Retour à l&apos;accueil
         </Link>
@@ -150,7 +150,7 @@ function SuccessContent() {
 export default function PaymentSuccess() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-b from-emerald-50 to-white flex items-center justify-center">
         <div className="text-slate-600">Chargement...</div>
       </div>
     }>

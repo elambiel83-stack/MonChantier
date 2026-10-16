@@ -72,7 +72,7 @@ export default function FavoritesPanel() {
   );
 
   return (
-    <div id="favoris" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="favoris" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 className="text-lg font-semibold">Favoris</h2>
 
       <div className="mt-3 flex gap-2">
@@ -82,86 +82,130 @@ export default function FavoritesPanel() {
             type="button"
             onClick={() => setTab(key)}
             className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${
-              tab === key ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white"
-            }`}
+              tab ==…46872 tokens truncated…    />
+          <input
+            value={newProduct.unitFr}
+            onChange={(e) => setNewProduct((prev) => ({ ...prev, unitFr: e.target.value }))}
+            placeholder="Unité (ex: m³, sac, unité)"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            value={newProduct.img}
+            onChange={(e) => setNewProduct((prev) => ({ ...prev, img: e.target.value }))}
+            placeholder="Chemin image"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            value={newProduct.priceUSD}
+            onChange={(e) => setNewProduct((prev) => ({ ...prev, priceUSD: e.target.value }))}
+            placeholder="Prix USD"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            value={newProduct.priceCDF}
+            onChange={(e) => setNewProduct((prev) => ({ ...prev, priceCDF: e.target.value }))}
+            placeholder="Prix CDF"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            onClick={createProduct}
+            disabled={saving}
+            className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 text-sm font-medium disabled:opacity-60 md:col-span-2"
           >
-            {key === "favoris" ? "Mes favoris" : key === "produits" ? "Parcourir les produits" : "Parcourir les services"}
+            {saving ? "Ajout…" : "+ Publier ce produit"}
           </button>
-        ))}
+        </div>
       </div>
 
-      {loading ? (
-        <p className="mt-4 text-sm text-slate-500">Chargement…</p>
-      ) : tab === "favoris" ? (
-        favoriteProducts.length === 0 && favoriteServices.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">Aucun favori pour le moment.</p>
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {favoriteProducts.map((p) => (
-              <li key={`p-${p.id}`} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm">
-                <span>{p.fr}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleFavorite("product", p.id)}
-                  disabled={busy === `product-${p.id}`}
-                  className="rounded-lg border border-red-300 bg-white text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60"
-                >
-                  Retirer
-                </button>
-              </li>
-            ))}
-            {favoriteServices.map((s) => (
-              <li key={`s-${s.id}`} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm">
-                <span>{s.icon} {s.fr}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleFavorite("service", s.id)}
-                  disabled={busy === `service-${s.id}`}
-                  className="rounded-lg border border-red-300 bg-white text-red-600 px-2 py-1 text-xs font-medium disabled:opacity-60"
-                >
-                  Retirer
-                </button>
-              </li>
-            ))}
-          </ul>
-        )
-      ) : tab === "produits" ? (
-        <ul className="mt-4 space-y-2">
-          {products.map((p) => (
-            <li key={p.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm">
-              <span>{p.fr}</span>
-              <button
-                type="button"
-                onClick={() => toggleFavorite("product", p.id)}
-                disabled={busy === `product-${p.id}`}
-                className={`rounded-lg border px-2 py-1 text-xs font-medium disabled:opacity-60 ${
-                  isFavorite("product", p.id) ? "border-orange-400 bg-orange-50 text-orange-700" : "border-slate-300 bg-white"
-                }`}
-              >
-                {isFavorite("product", p.id) ? "★ Favori" : "☆ Ajouter"}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {services.map((s) => (
-            <li key={s.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm">
-              <span>{s.icon} {s.fr}</span>
-              <button
-                type="button"
-                onClick={() => toggleFavorite("service", s.id)}
-                disabled={busy === `service-${s.id}`}
-                className={`rounded-lg border px-2 py-1 text-xs font-medium disabled:opacity-60 ${
-                  isFavorite("service", s.id) ? "border-orange-400 bg-orange-50 text-orange-700" : "border-slate-300 bg-white"
-                }`}
-              >
-                {isFavorite("service", s.id) ? "★ Favori" : "☆ Ajouter"}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+        <h2 className="text-lg font-semibold">Mes produits</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-slate-500">
+                <th className="py-2 pr-4 font-medium">Nom</th>
+                <th className="py-2 pr-4 font-medium">Unité</th>
+                <th className="py-2 pr-4 font-medium">Prix USD</th>
+                <th className="py-2 pr-4 font-medium">Prix CDF</th>
+                <th className="py-2 pr-4 font-medium">Statut</th>
+                <th className="py-2 pr-4 font-medium">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-3 text-slate-500">Chargement…</td>
+                </tr>
+              ) : products.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-3 text-slate-500">Aucun produit publié pour le moment.</td>
+                </tr>
+              ) : (
+                products.map((product) => {
+                  const edit = edits[product.id] || {
+                    priceUSD: product.submittedPriceUSD?.toString() || "",
+                    priceCDF: product.submittedPriceCDF?.toString() || "",
+                  };
+                  return (
+                    <tr key={product.id} className="border-b border-slate-100 last:border-b-0">
+                      <td className="py-3 pr-4">{product.fr}</td>
+                      <td className="py-3 pr-4">{product.unitFr}</td>
+                      <td className="py-3 pr-4">
+                        <input
+                          type="number"
+                          value={edit.priceUSD}
+                          onChange={(e) =>
+                            setEdits((prev) => ({ ...prev, [product.id]: { ...edit, priceUSD: e.target.value } }))
+                          }
+                          className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                        />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <input
+                          type="number"
+                          value={edit.priceCDF}
+                          onChange={(e) =>
+                            setEdits((prev) => ({ ...prev, [product.id]: { ...edit, priceCDF: e.target.value } }))
+                          }
+                          className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                        />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span className={product.active ? "text-emerald-700" : "text-slate-400"}>
+                          {product.pricingStatus === 'pending' ? 'En attente de validation' : product.pricingStatus === 'approved' ? `Approuvé · commission ${product.platformFeePercent}%` : 'Rejeté / à corriger'}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => savePrice(product.id)}
+                            disabled={busyId === product.id}
+                            className="rounded-lg bg-slate-900 text-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                          >
+                            Enregistrer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleActive(product)}
+                            disabled={busyId === product.id}
+                            className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium disabled:opacity-60"
+                          >
+                            {product.active ? "Désactiver" : "Activer"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

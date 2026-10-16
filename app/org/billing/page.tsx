@@ -63,7 +63,7 @@ export default function TenantBillingPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {PLANS.map((plan) => (
-          <div key={plan.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div key={plan.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <h2 className="text-lg font-semibold">{plan.label}</h2>
             <p className="mt-1 text-sm text-slate-500">{plan.blurb}</p>
             <button

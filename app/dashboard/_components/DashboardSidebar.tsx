@@ -18,7 +18,7 @@ export default function DashboardSidebar({ sessionRole }: { sessionRole: AppRole
     <aside className="border-b border-[#284137] bg-[#142a22] px-4 py-5 text-white lg:min-h-screen lg:w-72 lg:shrink-0 lg:border-b-0 lg:border-r lg:px-5 lg:py-7">
       <Link
         href="/"
-        className="flex items-center gap-3 rounded-lg border border-white/15 bg-white px-3 py-2.5 shadow-sm transition hover:border-[#e6a748]"
+        className="flex items-center gap-3 rounded-lg border border-white/15 bg-white px-3 py-2.5 shadow-xs transition hover:border-[#e6a748]"
         aria-label="Retour à l'accueil MonChantier"
       >
         <Image
@@ -39,7 +39,7 @@ export default function DashboardSidebar({ sessionRole }: { sessionRole: AppRole
       <nav className="mt-5 space-y-1.5" aria-label="Navigation du tableau de bord">
         <Link
           href={roleDashboardPath(displayRole)}
-          className="liquid-control block rounded-md bg-[#e6a748] px-3 py-2.5 text-sm font-semibold text-[#17261f] shadow-sm transition hover:bg-[#f0bd63]"
+          className="liquid-control block rounded-md bg-[#e6a748] px-3 py-2.5 text-sm font-semibold text-[#17261f] shadow-xs transition hover:bg-[#f0bd63]"
         >
           Tableau de bord
         </Link>

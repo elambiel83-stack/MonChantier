@@ -147,7 +147,7 @@ export function Cart({
             </div>
             <button
               onClick={onCheckout}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
             >
               {t("Procéder au paiement", "Proceed to checkout")}
             </button>
@@ -155,7 +155,7 @@ export function Cart({
               href={cartWhatsAppUrl(cartItems, currency, lang, fxRateUSDCDF)}
               target="_blank"
               rel="noreferrer"
-              className="block w-full bg-green-700 hover:bg-green-800 text-center text-white font-semibold px-5 py-3 rounded-xl shadow"
+              className="block w-full bg-green-700 hover:bg-green-800 text-center text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
             >
               {t("Commander le panier sur WhatsApp", "Order cart on WhatsApp")}
             </a>

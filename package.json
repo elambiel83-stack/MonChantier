@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "biome lint app components lib proxy.ts",
     "test": "vitest run && node --test tests/security-hardening-regressions.test.mjs",
     "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql",
     "prod:check": "node scripts/check-production-env.mjs"
@@ -26,18 +26,17 @@
     "stripe": "^22.1.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/mailparser": "^3.4.5",
     "@types/node": "^20.10.6",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.11.10",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "autoprefixer": "^10.4.16",
-    "eslint": "^10.11.0",
-    "eslint-config-next": "^16.3.5",
     "pg-mem": "^2.8.1",
     "postcss": "^8.5.28",
-    "tailwindcss": "^3.4.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.3.3",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"

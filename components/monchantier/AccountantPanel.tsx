@@ -187,7 +187,7 @@ export default function AccountantPanel() {
         </div>
       )}
 
-      <div id="tresorerie" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="tresorerie" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Trésorerie</h2>
         <p className="mt-1 text-sm text-slate-500">Encaissé (factures confirmées) moins dépenses, par devise.</p>
         {treasuryByCurrency.length === 0 ? (
@@ -212,7 +212,7 @@ export default function AccountantPanel() {
         )}
       </div>
 
-      <div id="depenses" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="depenses" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Dépenses</h2>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
@@ -302,7 +302,7 @@ export default function AccountantPanel() {
         </div>
       </div>
 
-      <div id="tva" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="tva" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">TVA</h2>
         <p className="mt-1 text-sm text-slate-500">
           Calculée sur toutes les factures confirmées.
@@ -330,7 +330,7 @@ export default function AccountantPanel() {
         )}
       </div>
 
-      <div id="factures" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="factures" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Factures</h2>
           <button

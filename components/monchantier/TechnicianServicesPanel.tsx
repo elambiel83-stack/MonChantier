@@ -123,7 +123,7 @@ export default function TechnicianServicesPanel() {
         </div>
       )}
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Proposer un service</h2>
         <p className="mt-1 text-sm text-slate-500">
           Proposez votre prix de base. Le service sera publié après validation et ajout de la commission MonChantier.
@@ -191,7 +191,7 @@ export default function TechnicianServicesPanel() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes services</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">

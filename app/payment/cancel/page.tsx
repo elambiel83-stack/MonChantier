@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function PaymentCancel() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-b from-orange-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
         <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-4xl">✕</span>
@@ -16,7 +16,7 @@ export default function PaymentCancel() {
         <div className="space-y-3">
           <Link 
             href="/"
-            className="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
+            className="block w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm"
           >
             Retour à l&apos;accueil
           </Link>
