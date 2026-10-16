@@ -41,18 +41,7 @@ export function Partners({ lang, t }: PartnersProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).catch(() => null);
-
-      if (!res) {
-        setPartnerStatus("success");
-        setPartnerMsg(
-          t(
-            "Inscription enregistrée (mode démo). On vous contactera sous 24h.",
-            "Registration saved (demo mode). We will contact you within 24h."
-          )
-        );
-        return;
-      }
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Registration failed");
