@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type SavedAddress = { id: string; label: string; address: string; isDefault: boolean };
 
@@ -11,7 +11,7 @@ export default function AddressesPanel() {
   const [saving, setSaving] = useState(false);
   const [newAddress, setNewAddress] = useState({ label: "", address: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/client/addresses", { cache: "no-store" });
@@ -22,11 +22,11 @@ export default function AddressesPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createAddress = async () => {
     if (!newAddress.label.trim() || !newAddress.address.trim()) return;

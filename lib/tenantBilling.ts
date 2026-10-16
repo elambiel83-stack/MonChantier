@@ -1,5 +1,5 @@
 import { createSubscriptionCheckoutSession, isStripeConfigured } from './stripe';
-import { getTenantById, getTenantByStripeCustomerId, updateTenantBilling, Tenant, TenantPlan } from './tenantStore';
+import { getTenantById, getTenantByStripeCustomerId, updateTenantBilling, type Tenant, type TenantPlan } from './tenantStore';
 import { countTenantProducts } from './tenantCatalogStore';
 import { withStore } from './storeDb';
 

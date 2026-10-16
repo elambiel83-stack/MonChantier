@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { addSiteIncident, getSiteById, IncidentSeverity } from '@/lib/siteStore';
+import { addSiteIncident, getSiteById, type IncidentSeverity } from '@/lib/siteStore';
 import { canManageSite } from '@/lib/sitePermissions';
 import { getSessionActor } from '@/lib/sessionIdentity';
 

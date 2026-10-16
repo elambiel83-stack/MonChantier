@@ -1,8 +1,8 @@
-import { timingSafeEqual, createHash } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual, createHash } from 'node:crypto';
+import { type NextRequest, NextResponse } from 'next/server';
 import {
   confirmPayment,
-  ConfirmPaymentPayload,
+  type ConfirmPaymentPayload,
 } from '@/lib/paymentConfirmation';
 
 function safeEqual(a: string, b: string): boolean {

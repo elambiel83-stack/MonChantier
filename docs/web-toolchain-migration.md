@@ -19,8 +19,9 @@ braces / micromatch / fast-glob and postcss-selector-parser dependency chains.
 - TypeScript: passed.
 - Vitest: 107 passed; security source regression checks: 3 passed.
 - Next.js production build: passed, 87 static pages.
-- Biome: 99 errors, 160 warnings, 19 informational findings in existing code.
-  These require a separate code-quality pass; lint is not certified green.
+- Biome: the follow-up quality branch resolves the original 99 errors, 160
+  warnings and 19 informational findings. Recommended rules remain enabled;
+  CI now also runs lint with warnings treated as failures.
 - Browser visual verification is required before merging this major CSS upgrade.
 - Tailwind v4 requires Safari 16.4+, Chrome 111+, Firefox 128+. Validate these
   browser requirements against the intended Web audience before rollout.

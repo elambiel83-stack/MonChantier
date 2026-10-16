@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { OrderStatus, updateOrderStatus } from '@/lib/paymentStore';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type OrderStatus, updateOrderStatus } from '@/lib/paymentStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { restockItems } from '@/lib/productStore';
 
@@ -26,8 +26,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ ref
 
     if (nextStatus === 'cancelled') {
       const stockItems = (result.status.fullInvoice?.items || [])
-        .filter((item) => item.productId !== undefined)
-        .map((item) => ({ productId: item.productId!, quantity: item.quantity }));
+        .flatMap((item) => item.productId === undefined ? [] : [{ productId: item.productId, quantity: item.quantity }]);
       if (stockItems.length > 0) {
         await restockItems(stockItems);
       }

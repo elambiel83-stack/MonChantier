@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type SupportMessage = {
   id: string;
@@ -46,7 +46,7 @@ export default function SupportPanel() {
   const [replyDraft, setReplyDraft] = useState("");
   const [replying, setReplying] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/client/support", { cache: "no-store" });
@@ -57,11 +57,11 @@ export default function SupportPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createTicket = async () => {
     if (!newTicket.subject.trim() || !newTicket.message.trim()) return;

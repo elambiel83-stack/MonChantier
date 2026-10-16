@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type StoredOrder = {
   reference: string;
@@ -73,7 +73,7 @@ export default function AccountantPanel() {
     date: new Date().toISOString().slice(0, 10),
   });
 
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     try {
       setLoading(true);
       const [ordersRes, taxesRes, expensesRes] = await Promise.all([
@@ -94,11 +94,11 @@ export default function AccountantPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void loadAll();
-  }, []);
+  }, [loadAll]);
 
   const createExpense = async () => {
     if (!newExpense.label.trim() || !newExpense.amount) return;

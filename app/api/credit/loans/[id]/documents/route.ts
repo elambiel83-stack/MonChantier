@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { type NextRequest, NextResponse } from 'next/server';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canWriteLoanEvidence } from '@/lib/loanPermissions';
-import { addLoanDocument, getLoanById, LoanDocumentCategory } from '@/lib/loanStore';
+import { addLoanDocument, getLoanById, type LoanDocumentCategory } from '@/lib/loanStore';
 
 const VALID_CATEGORIES: LoanDocumentCategory[] = [
   'identity',

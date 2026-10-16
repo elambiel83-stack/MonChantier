@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canAssignDriver } from '@/lib/deliveryPermissions';
-import { DeliveryStatus, updateDeliveryStatus } from '@/lib/deliveryStore';
+import { type DeliveryStatus, updateDeliveryStatus } from '@/lib/deliveryStore';
 
 const VALID_STATUSES: DeliveryStatus[] = [
   'pending',

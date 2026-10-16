@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Tenant = {
   id: string;
@@ -18,7 +18,7 @@ export default function PlatformConsolePage() {
   const [forbidden, setForbidden] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/platform/tenants", { cache: "no-store" });
     if (res.status === 403) {
@@ -29,11 +29,11 @@ export default function PlatformConsolePage() {
     const data = await res.json();
     setTenants(Array.isArray(data.tenants) ? data.tenants : []);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const toggleStatus = async (tenant: Tenant) => {
     setBusyId(tenant.id);

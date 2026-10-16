@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { listAllTickets } from '@/lib/supportStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 

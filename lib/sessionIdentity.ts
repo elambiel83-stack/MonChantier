@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { AppRole, DEFAULT_ROLE } from '@/lib/roles';
+import { type AppRole, DEFAULT_ROLE } from '@/lib/roles';
 
 export type SessionActor = {
   identity: string;

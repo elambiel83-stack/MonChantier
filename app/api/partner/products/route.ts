@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { createProduct, listProductsByOwner } from '@/lib/productStore';
 import { validateSubmittedPrice } from '@/lib/partnerPricing';

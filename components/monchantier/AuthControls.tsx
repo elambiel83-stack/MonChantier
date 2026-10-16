@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { getProviders, signIn, useSession } from "next-auth/react";
 import { TurnstileWidget } from '@/components/TurnstileWidget';

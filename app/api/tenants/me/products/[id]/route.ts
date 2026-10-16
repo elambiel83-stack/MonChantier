@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTenantActor } from '@/lib/tenantSessionIdentity';
-import { deleteTenantProduct, updateTenantProduct, UpdateTenantProductPatch } from '@/lib/tenantCatalogStore';
+import { deleteTenantProduct, updateTenantProduct, type UpdateTenantProductPatch } from '@/lib/tenantCatalogStore';
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;

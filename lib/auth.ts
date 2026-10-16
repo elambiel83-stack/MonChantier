@@ -1,4 +1,4 @@
-import { timingSafeEqual, createHash } from "crypto";
+import { timingSafeEqual, createHash } from "node:crypto";
 import argon2 from "argon2";
 import type { NextAuthOptions } from "next-auth";
 import AppleProvider from "next-auth/providers/apple";
@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import { normalizePhone, verifyPhoneOtp } from "./phoneAuth";
-import { AppRole, DEFAULT_ROLE } from "./roles";
+import { type AppRole, DEFAULT_ROLE } from "./roles";
 import { getStoredRole, isIdentityActive } from "./roleStore";
 import { checkRateLimit } from "./rateLimit";
 import { verifyAdminTotp } from './totp';

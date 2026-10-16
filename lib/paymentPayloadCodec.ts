@@ -1,4 +1,4 @@
-import { ConfirmPaymentPayload, isSupportedMethod } from '@/lib/paymentConfirmation';
+import { type ConfirmPaymentPayload, isSupportedMethod } from '@/lib/paymentConfirmation';
 
 export function encodeInvoicePayload(value: Record<string, unknown>) {
   return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');

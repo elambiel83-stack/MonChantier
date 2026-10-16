@@ -1,4 +1,4 @@
-import { InvoiceData, InvoicePaymentMethod } from '@/lib/invoice';
+import type { InvoiceData, InvoicePaymentMethod } from '@/lib/invoice';
 import { readStore, withStore } from './storeDb';
 
 export type StoredInvoice = {
@@ -94,7 +94,7 @@ export function updateOrderStatus(
 ): Promise<{ status: StoredPaymentStatus } | { error: string }> {
   return withStore(STORE_KEY, buildInitialStore, (store) => {
     const existing = store.paymentStatuses[reference];
-    if (!existing || existing.state !== 'confirmed') {
+    if (existing?.state !== 'confirmed') {
       return { error: 'Commande introuvable ou non confirmée' };
     }
 

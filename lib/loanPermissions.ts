@@ -1,4 +1,4 @@
-import { AppRole } from '@/lib/roles';
+import type { AppRole } from '@/lib/roles';
 import type { Loan } from '@/lib/loanStore';
 
 function sameIdentity(left: string | undefined, right: string): boolean {

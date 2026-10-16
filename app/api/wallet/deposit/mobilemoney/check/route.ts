@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { verifyMobileMoneyTransaction } from '@/lib/mobileMoney';
 import { confirmDeposit, getWallet } from '@/lib/walletStore';
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const pending = wallet.transactions.find(
       (tx) => tx.type === 'deposit' && tx.reference === reference && tx.method === 'mobilemoney'
     );
-    if (!pending || pending.type !== 'deposit') {
+    if (pending?.type !== 'deposit') {
       return NextResponse.json({ success: true, found: false, state: 'not_found' });
     }
     if (pending.state === 'confirmed') {

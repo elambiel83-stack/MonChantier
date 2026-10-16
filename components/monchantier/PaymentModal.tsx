@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Currency, Language, MobileNetwork, PaymentMethod, CartItem, Status } from "./types";
+import { useState } from "react";
+import type { Currency, Language, MobileNetwork, PaymentMethod, CartItem, Status } from "./types";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -175,8 +175,8 @@ export function PaymentModal({
             location: location,
             customerName: trimmedName,
             customerEmail: trimmedEmail,
-            successUrl: window.location.origin + "/payment/success",
-            cancelUrl: window.location.origin + "/payment/cancel",
+            successUrl: `${window.location.origin}/payment/success`,
+            cancelUrl: `${window.location.origin}/payment/cancel`,
           }),
         });
         const data = await res.json();
@@ -204,8 +204,8 @@ export function PaymentModal({
             location: location,
             customerName: trimmedName,
             customerEmail: trimmedEmail,
-            returnUrl: window.location.origin + "/payment/success",
-            cancelUrl: window.location.origin + "/payment/cancel",
+            returnUrl: `${window.location.origin}/payment/success`,
+            cancelUrl: `${window.location.origin}/payment/cancel`,
           }),
         });
         const data = await res.json();
@@ -227,7 +227,7 @@ export function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <button type="button" aria-label={t("Fermer le paiement", "Close payment")} className="absolute inset-0 bg-black/40" onClick={onClose} data-liquid="off" />
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -241,7 +241,7 @@ export function PaymentModal({
               )}
             </p>
           </div>
-          <button className="rounded-lg px-2 py-1 text-slate-600 hover:bg-slate-100" onClick={onClose}>
+          <button type="button" className="rounded-lg px-2 py-1 text-slate-600 hover:bg-slate-100" onClick={onClose}>
             ✕
           </button>
         </div>
@@ -324,8 +324,8 @@ export function PaymentModal({
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
-              <input
+              <label htmlFor="PaymentModal-field-327" className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
+              <input id="PaymentModal-field-327"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -334,8 +334,8 @@ export function PaymentModal({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700">{t("Email de facturation", "Billing email")}</label>
-              <input
+              <label htmlFor="PaymentModal-field-337" className="text-xs font-semibold text-slate-700">{t("Email de facturation", "Billing email")}</label>
+              <input id="PaymentModal-field-337"
                 type="email"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 value={customerEmail}
@@ -382,8 +382,8 @@ export function PaymentModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Numéro", "Phone")}</label>
-                  <input
+                  <label htmlFor="PaymentModal-field-385" className="text-xs font-semibold text-slate-700">{t("Numéro", "Phone")}</label>
+                  <input id="PaymentModal-field-385"
                     className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     value={payPhone}
                     onChange={(e) => setPayPhone(e.target.value)}
@@ -414,9 +414,10 @@ export function PaymentModal({
             )}
 
             <div className="sm:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">{t("Adresse de livraison", "Delivery address")}</label>
+              <label htmlFor="payment-delivery-address" className="text-xs font-semibold text-slate-700">{t("Adresse de livraison", "Delivery address")}</label>
               <div className="flex gap-2">
                 <input
+                  id="payment-delivery-address"
                   className="mt-1 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
@@ -430,12 +431,12 @@ export function PaymentModal({
                   title={t("Partager ma position", "Share my location")}
                 >
                   {locationLoading ? (
-                    <svg className="w-5 h-5 text-slate-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" focusable="false" className="w-5 h-5 text-slate-600 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" focusable="false" className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -445,7 +446,7 @@ export function PaymentModal({
               {location && (
                 <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-xs">
                   <div className="flex items-center gap-1 text-emerald-700 font-semibold">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" focusable="false" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     {t("Position partagée", "Location shared")}
@@ -464,7 +465,7 @@ export function PaymentModal({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700">{t("Total", "Total")}</label>
+              <p className="text-xs font-semibold text-slate-700">{t("Total", "Total")}</p>
               <div className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-orange-600">
                 {calculateTotal().toLocaleString()} {payCurrency}
               </div>

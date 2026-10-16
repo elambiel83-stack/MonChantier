@@ -1,4 +1,4 @@
-import { AppRole } from '@/lib/roles';
+import type { AppRole } from '@/lib/roles';
 
 export function canViewAllDeliveries(role: AppRole): boolean {
   return role === 'admin' || role === 'director';

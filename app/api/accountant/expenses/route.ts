@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createExpense, listExpenses } from '@/lib/expenseStore';
 import { requireRole } from '@/lib/requireRole';
 import { getSessionActor } from '@/lib/sessionIdentity';

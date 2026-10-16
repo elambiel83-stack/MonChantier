@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type WalletCurrency = "USD" | "CDF";
 
@@ -75,7 +75,7 @@ export default function WalletPanel() {
   const [exchanging, setExchanging] = useState(false);
   const [exchangeError, setExchangeError] = useState("");
 
-  const loadWallet = async () => {
+  const loadWallet = useCallback(async () => {
     try {
       const res = await fetch("/api/wallet", { cache: "no-store" });
       if (!res.ok) throw new Error();
@@ -86,7 +86,7 @@ export default function WalletPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void loadWallet();
@@ -126,7 +126,7 @@ export default function WalletPanel() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadWallet]);
 
   useEffect(() => {
     const amount = Number(exchangeAmount);
@@ -305,8 +305,8 @@ export default function WalletPanel() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700">Montant</label>
-                <input
+                <label htmlFor="WalletPanel-field-308" className="text-xs font-semibold text-slate-700">Montant</label>
+                <input id="WalletPanel-field-308"
                   type="number"
                   min="0"
                   step="0.01"
@@ -333,8 +333,8 @@ export default function WalletPanel() {
 
             {depositMethod === "mobilemoney" && (
               <div>
-                <label className="text-xs font-semibold text-slate-700">Numéro de téléphone</label>
-                <input
+                <label htmlFor="WalletPanel-field-336" className="text-xs font-semibold text-slate-700">Numéro de téléphone</label>
+                <input id="WalletPanel-field-336"
                   value={depositPhone}
                   onChange={(e) => setDepositPhone(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -399,8 +399,8 @@ export default function WalletPanel() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700">Montant à convertir</label>
-              <input
+              <label htmlFor="WalletPanel-field-402" className="text-xs font-semibold text-slate-700">Montant à convertir</label>
+              <input id="WalletPanel-field-402"
                 type="number"
                 min="0"
                 step="0.01"

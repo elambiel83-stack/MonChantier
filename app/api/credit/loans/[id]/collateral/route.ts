@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canWriteLoanEvidence } from '@/lib/loanPermissions';
-import { addLoanCollateral, getLoanById, LoanCollateralType } from '@/lib/loanStore';
-import { WalletCurrency } from '@/lib/walletExchange';
+import { addLoanCollateral, getLoanById, type LoanCollateralType } from '@/lib/loanStore';
+import type { WalletCurrency } from '@/lib/walletExchange';
 
 const VALID_TYPES: LoanCollateralType[] = ['terrain', 'immeuble', 'vehicule', 'autre'];
 

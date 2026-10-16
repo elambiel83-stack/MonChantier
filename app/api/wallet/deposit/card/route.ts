@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { confirmDeposit, registerPendingDeposit } from '@/lib/walletStore';
 import { createStripeCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 import { encodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletCurrency } from '@/lib/walletExchange';
 import { isLivePaymentEnabled, paymentDisabledResponseMessage } from '@/lib/paymentAvailability';
 
 function parsePositiveAmount(value: unknown) {

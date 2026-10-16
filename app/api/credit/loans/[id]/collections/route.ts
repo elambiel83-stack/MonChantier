@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canLogLoanCollection } from '@/lib/loanPermissions';
-import { CollectionActionType, getLoanById, logCollectionAction } from '@/lib/loanStore';
+import { type CollectionActionType, getLoanById, logCollectionAction } from '@/lib/loanStore';
 
 const VALID_TYPES: CollectionActionType[] = [
   'called',

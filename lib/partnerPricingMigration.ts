@@ -37,7 +37,7 @@ export function normalizeLegacyPricingStore<T extends LegacyPricedItem>(store: L
       item.submittedPriceCDF = originalCDF;
       changed = true;
     }
-    if (!Number.isFinite(item.platformFeePercent) || item.platformFeePercent! < 0 || item.platformFeePercent! > 100) {
+    if (typeof item.platformFeePercent !== 'number' || !Number.isFinite(item.platformFeePercent) || item.platformFeePercent < 0 || item.platformFeePercent > 100) {
       item.platformFeePercent = 0;
       changed = true;
     }

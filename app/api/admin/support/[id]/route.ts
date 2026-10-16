@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { setTicketStatus, SupportTicketStatus } from '@/lib/supportStore';
+import { type NextRequest, NextResponse } from 'next/server';
+import { setTicketStatus, type SupportTicketStatus } from '@/lib/supportStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 
 const VALID_STATUSES: SupportTicketStatus[] = ['open', 'pending', 'closed'];

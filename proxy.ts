@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
-import { NextRequest, NextResponse } from 'next/server';
-import { APP_ROLES, AppRole, isAppRole } from '@/lib/roles';
+import { type NextRequest, NextResponse } from 'next/server';
+import { APP_ROLES, type AppRole, isAppRole } from '@/lib/roles';
 
 function getAdminEmails() {
   return (process.env.ADMIN_EMAILS || '')
@@ -10,7 +10,7 @@ function getAdminEmails() {
 }
 
 async function resolveRoleFromToken(request: NextRequest): Promise<AppRole | null> {
-  let token;
+  let token: Awaited<ReturnType<typeof getToken>>;
   try {
     token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   } catch (error) {

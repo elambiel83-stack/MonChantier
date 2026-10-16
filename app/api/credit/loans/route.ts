@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ message: 'Connexion requise' }, { status: 401 });
   }
 
-  let loans;
+  let loans: Awaited<ReturnType<typeof listAllLoans>>;
   if (canViewAllLoans(actor.role)) {
     loans = await listAllLoans();
   } else if (actor.role === 'credit-agent') {

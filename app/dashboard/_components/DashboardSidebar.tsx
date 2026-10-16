@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { AppRole, ROLE_LABELS, ROLE_MENUS, isAppRole, roleDashboardPath } from "@/lib/roles";
+import { type AppRole, ROLE_LABELS, ROLE_MENUS, isAppRole, roleDashboardPath } from "@/lib/roles";
 
 export default function DashboardSidebar({ sessionRole }: { sessionRole: AppRole }) {
   const pathname = usePathname();

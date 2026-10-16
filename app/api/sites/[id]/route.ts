@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSiteById, updateSite, UpdateSitePatch } from '@/lib/siteStore';
+import { getSiteById, updateSite, type UpdateSitePatch } from '@/lib/siteStore';
 import { canManageSite } from '@/lib/sitePermissions';
 import { getSessionActor } from '@/lib/sessionIdentity';
 

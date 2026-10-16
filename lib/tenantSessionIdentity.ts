@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { TenantRole } from '@/lib/tenantRoleStore';
+import type { TenantRole } from '@/lib/tenantRoleStore';
 import { getTenantById } from '@/lib/tenantStore';
 
 export type TenantActor = {
@@ -24,7 +24,7 @@ export async function getTenantActor(): Promise<TenantActor | null> {
   if (!identity || !user?.tenantId || !user?.tenantRole) return null;
 
   const tenant = await getTenantById(user.tenantId);
-  if (!tenant || tenant.status !== 'active') return null;
+  if (tenant?.status !== 'active') return null;
 
   return { identity: identity.toLowerCase(), tenantId: user.tenantId, tenantRole: user.tenantRole };
 }

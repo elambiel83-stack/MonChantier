@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { applyExchange } from '@/lib/walletStore';
-import { quoteExchange, WalletCurrency } from '@/lib/walletExchange';
+import { quoteExchange, type WalletCurrency } from '@/lib/walletExchange';
 
 function isCurrency(value: unknown): value is WalletCurrency {
   return value === 'USD' || value === 'CDF';

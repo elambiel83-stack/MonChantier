@@ -1,6 +1,6 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { recordPayment } from '@/lib/adminStore';
-import { buildInvoiceText, createInvoice, InvoicePaymentMethod } from '@/lib/invoice';
+import { buildInvoiceText, createInvoice, type InvoicePaymentMethod } from '@/lib/invoice';
 import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { isMailerConfigured, sendInvoiceEmail } from '@/lib/mailer';
 import {
@@ -8,7 +8,7 @@ import {
   getStoredPaymentStatus,
   releasePaymentClaim,
   setStoredPaymentStatus,
-  StoredInvoice,
+  type StoredInvoice,
 } from '@/lib/paymentStore';
 import { createDeliveryFromPayment } from '@/lib/deliveryStore';
 import { decrementStock } from '@/lib/productStore';
@@ -120,8 +120,7 @@ export async function confirmPayment(payload: ConfirmPaymentPayload) {
     // rupture ne bloque pas la facture — elle est journalisée pour un
     // traitement manuel plutôt que de survendre en silence.
     const stockItems = items
-      .filter((item) => item.productId !== undefined)
-      .map((item) => ({ productId: item.productId!, quantity: item.quantity }));
+      .flatMap((item) => item.productId === undefined ? [] : [{ productId: item.productId, quantity: item.quantity }]);
     let stockShortfall: Awaited<ReturnType<typeof decrementStock>> | null = null;
     if (stockItems.length > 0) {
       stockShortfall = await decrementStock(stockItems);

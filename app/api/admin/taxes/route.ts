@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { listPaymentStatuses } from '@/lib/paymentStore';
 import { computeTaxSummary } from '@/lib/taxSummary';
 import { requireAdmin } from '@/lib/requireAdmin';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canAssignDriver } from '@/lib/deliveryPermissions';
 import { assignDriver } from '@/lib/deliveryStore';

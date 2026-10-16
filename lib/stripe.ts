@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import Stripe from 'stripe';
 
 let client: Stripe | null = null;

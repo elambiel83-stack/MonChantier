@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
-import { listPaymentStatuses, StoredPaymentStatus } from "@/lib/paymentStore";
+import { listPaymentStatuses, type StoredPaymentStatus } from "@/lib/paymentStore";
 import { listQuoteRequestsByEmail } from "@/lib/quoteStore";
 import WalletPanel from "@/components/monchantier/WalletPanel";
 import LoanPanel from "@/components/monchantier/LoanPanel";

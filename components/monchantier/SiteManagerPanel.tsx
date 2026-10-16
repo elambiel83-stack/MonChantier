@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type SiteStatus = "planning" | "active" | "paused" | "completed";
 type IncidentSeverity = "low" | "medium" | "high";
@@ -46,7 +46,7 @@ export default function SiteManagerPanel() {
   const [newIncident, setNewIncident] = useState({ label: "", severity: "medium" as IncidentSeverity });
   const [newTeamMember, setNewTeamMember] = useState({ identity: "", name: "", role: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/sites", { cache: "no-store" });
@@ -59,11 +59,11 @@ export default function SiteManagerPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId) || null;
 

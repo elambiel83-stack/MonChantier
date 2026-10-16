@@ -1,5 +1,5 @@
-import { WalletDepositMethod } from '@/lib/walletStore';
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletDepositMethod } from '@/lib/walletStore';
+import type { WalletCurrency } from '@/lib/walletExchange';
 
 export type WalletDepositPayload = {
   kind: 'wallet_deposit';

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { confirmPayment, ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
+import { type NextRequest, NextResponse } from 'next/server';
+import { confirmPayment, type ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { confirmDeposit } from '@/lib/walletStore';
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       }
       const stored = await getStoredPaymentStatus(decoded.reference);
       const pending = stored?.pendingPayload as unknown as ConfirmPaymentPayload | undefined;
-      if (!stored || stored.method !== 'paypal' || !pending) {
+      if (stored?.method !== 'paypal' || !pending) {
         await unclaimWebhookEvent('paypal', eventId);
         return NextResponse.json({ message: 'Commande PayPal inconnue' }, { status: 404 });
       }

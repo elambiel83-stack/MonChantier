@@ -46,7 +46,7 @@ export async function sendSms(args: { to: string; message: string }) {
   };
 
   const recipient = data.SMSMessageData?.Recipients?.[0];
-  if (!recipient || recipient.status !== 'Success') {
+  if (recipient?.status !== 'Success') {
     throw new Error(`Africa's Talking: envoi refusé (${recipient?.status || 'réponse invalide'})`);
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platformAuth';
-import { setTenantStatus, TenantStatus } from '@/lib/tenantStore';
+import { setTenantStatus, type TenantStatus } from '@/lib/tenantStore';
 
 const VALID_STATUSES: TenantStatus[] = ['active', 'suspended'];
 

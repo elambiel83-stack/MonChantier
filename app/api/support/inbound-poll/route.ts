@@ -1,5 +1,5 @@
-import { timingSafeEqual, createHash } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual, createHash } from 'node:crypto';
+import { type NextRequest, NextResponse } from 'next/server';
 import { isInboundMailConfigured, pollInboundSupportMail } from '@/lib/inboundMail';
 
 function safeEqual(a: string, b: string): boolean {

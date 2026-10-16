@@ -1,5 +1,5 @@
 import { ImapFlow } from 'imapflow';
-import { simpleParser, ParsedMail } from 'mailparser';
+import { simpleParser, type ParsedMail } from 'mailparser';
 import { addTicketMessage, createTicket, getTicketById } from './supportStore';
 
 // Ingestion email des tickets support : un client peut écrire directement à

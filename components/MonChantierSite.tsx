@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "./monchantier/Header";
 import { Hero } from "./monchantier/Hero";
 import { Products } from "./monchantier/Products";
@@ -12,7 +12,7 @@ import { Footer } from "./monchantier/Footer";
 import { Cart } from "./monchantier/Cart";
 import { PaymentModal } from "./monchantier/PaymentModal";
 import { useFxRate } from "./monchantier/hooks/useFxRate";
-import { Language, Product, CartItem, Currency } from "./monchantier/types";
+import type { Language, Product, CartItem, Currency } from "./monchantier/types";
 
 const CART_STORAGE_KEY = "monchantier:cart";
 

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { CONTACT_INFO, INPUT_CLASS, services } from "./constants";
-import { ContactForm, Language, Status } from "./types";
+import type { ContactForm, Language, Status } from "./types";
 
 interface ContactProps {
   lang: Language;
@@ -67,7 +68,7 @@ export function Contact({ lang, t }: ContactProps) {
               <a
                 href={`https://wa.me/${CONTACT_INFO.whatsapp.replace(/[^0-9]/g, '')}`}
                 target="_blank"
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-3 rounded-xl shadow-sm" rel="noopener"
               >
                 <span>WhatsApp</span>
               </a>

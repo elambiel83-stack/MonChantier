@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CONTACT_INFO, SERVICES_BANNER_URL } from "./constants";
-import { Language, Product } from "./types";
+import type { Language, Product } from "./types";
 
 interface ServicesProps {
   lang: Language;
