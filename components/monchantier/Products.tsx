@@ -140,7 +140,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           <button
             type="button"
             onClick={onOrderClick}
-            className="inline-flex items-center justify-center bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow"
+            className="inline-flex items-center justify-center bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm"
           >
             {t("Passer la commande", "Place order")}
           </button>
@@ -157,14 +157,14 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("Rechercher un produit…", "Search a product…")}
-            className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
         </div>
         <select
           value={category}
           onChange={(e) => { setCategory(e.target.value); setVisibleCount(PAGE_SIZE); }}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
         >
           <option value="all">{t("Toutes les catégories", "All categories")}</option>
           {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{t(label[0], label[1])}</option>)}
@@ -172,7 +172,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         <select
           value={availability}
           onChange={(e) => { setAvailability(e.target.value as AvailabilityOption); setVisibleCount(PAGE_SIZE); }}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
         >
           <option value="all">{t("Toute disponibilité", "All availability")}</option>
           <option value="priced">{t("Prix disponible", "Price available")}</option>
@@ -181,7 +181,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
         >
           <option value="default">{t("Tri par défaut", "Default sort")}</option>
           <option value="price-asc">{t("Prix croissant", "Price: low to high")}</option>
@@ -199,7 +199,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         {visibleProducts.map((p) => {
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
           return (
-          <div key={p.id} className="group bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
+          <div key={p.id} className="group bg-white rounded-2xl shadow-xs ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
               <Image
                 src={imgFailed[p.id] && p.fallback ? p.fallback : p.img}
@@ -249,7 +249,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                     <button
                       type="button"
                       onClick={() => onAddToCart(p)}
-                      className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition"
                     >
                       {t("Ajouter au panier", "Add to cart")}
                     </button>

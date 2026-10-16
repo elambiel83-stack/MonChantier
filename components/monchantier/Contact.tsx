@@ -52,7 +52,7 @@ export function Contact({ lang, t }: ContactProps) {
   };
 
   return (
-    <section id="contact" className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <section id="contact" className="bg-linear-to-br from-slate-900 to-slate-800 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           <div>
@@ -67,19 +67,19 @@ export function Contact({ lang, t }: ContactProps) {
               <a
                 href={`https://wa.me/${CONTACT_INFO.whatsapp.replace(/[^0-9]/g, '')}`}
                 target="_blank"
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-3 rounded-xl shadow"
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
               >
                 <span>WhatsApp</span>
               </a>
               <a
                 href={`mailto:${CONTACT_INFO.email}`}
-                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow"
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
               >
                 <span>{t("Envoyer un email", "Send email")}</span>
               </a>
             </div>
           </div>
-          <form onSubmit={handleSubmit} className="bg-white text-slate-800 rounded-2xl p-6 ring-1 ring-slate-200 shadow-sm">
+          <form onSubmit={handleSubmit} className="bg-white text-slate-800 rounded-2xl p-6 ring-1 ring-slate-200 shadow-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input
                 className={INPUT_CLASS}
@@ -115,7 +115,7 @@ export function Contact({ lang, t }: ContactProps) {
                       <label key={service.fr} className="inline-flex items-center gap-2 text-sm text-slate-700">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                          className="h-4 w-4 rounded-sm border-slate-300 text-orange-600 focus:ring-orange-500"
                           checked={checked}
                           onChange={(e) => {
                             const isChecked = e.target.checked;

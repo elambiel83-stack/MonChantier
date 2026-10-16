@@ -326,7 +326,7 @@ export function PaymentModal({
             <div>
               <label className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
               <input
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder={t("Ex: Jean Ilunga", "e.g., John Doe")}
@@ -337,7 +337,7 @@ export function PaymentModal({
               <label className="text-xs font-semibold text-slate-700">{t("Email de facturation", "Billing email")}</label>
               <input
                 type="email"
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 placeholder={t("Ex: client@email.com", "e.g., client@email.com")}
@@ -348,7 +348,7 @@ export function PaymentModal({
               <label htmlFor="currency-select" className="text-xs font-semibold text-slate-700">{t("Devise", "Currency")}</label>
               <select
                 id="currency-select"
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 value={payCurrency}
                 onChange={(e) => setPayCurrency(e.target.value as Currency)}
               >
@@ -370,7 +370,7 @@ export function PaymentModal({
                   <label htmlFor="network-select" className="text-xs font-semibold text-slate-700">{t("Réseau", "Network")}</label>
                   <select
                     id="network-select"
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     value={payNetwork}
                     onChange={(e) => setPayNetwork(e.target.value as MobileNetwork)}
                   >
@@ -384,7 +384,7 @@ export function PaymentModal({
                 <div>
                   <label className="text-xs font-semibold text-slate-700">{t("Numéro", "Phone")}</label>
                   <input
-                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                     value={payPhone}
                     onChange={(e) => setPayPhone(e.target.value)}
                     placeholder={t("Ex: +243…", "e.g., +243…")}
@@ -417,7 +417,7 @@ export function PaymentModal({
               <label className="text-xs font-semibold text-slate-700">{t("Adresse de livraison", "Delivery address")}</label>
               <div className="flex gap-2">
                 <input
-                  className="mt-1 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="mt-1 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   placeholder={t("Ex: Dilala, Av. Kasaï, n°12", "e.g., Dilala, Kasaï Ave, #12")}
@@ -480,7 +480,7 @@ export function PaymentModal({
             type="button"
             disabled={payStatus === "loading" || cartItems.length === 0}
             onClick={() => handlePayment(payMethod)}
-            className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold px-5 py-3 rounded-xl shadow"
+            className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
           >
             {payStatus === "loading" ? t("En cours…", "Processing…") : t("Lancer le paiement", "Initiate payment")}
           </button>

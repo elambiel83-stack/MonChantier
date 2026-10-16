@@ -79,10 +79,10 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
   ];
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-slate-200">
+    <header className="sticky top-0 z-50 backdrop-blur-sm bg-white/70 border-b border-slate-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
         <div className="flex items-center gap-3">
-          <div className="relative h-14 w-14 rounded-md bg-white ring-1 ring-slate-200 grid place-items-center shadow-sm overflow-hidden">
+          <div className="relative h-14 w-14 rounded-md bg-white ring-1 ring-slate-200 grid place-items-center shadow-xs overflow-hidden">
             <Image src={LOGO_URL} alt="MonChantier" fill sizes="56px" className="object-contain p-1" />
           </div>
           <div className="leading-tight">
@@ -92,10 +92,10 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
         </div>
         <LiquidNav links={links} />
         <div className="flex items-center gap-2">
-          <button onClick={() => setLang("fr")} className={`px-2 py-1 rounded text-xs border ${lang === "fr" ? "bg-slate-900 text-white" : "bg-white"}`}>
+          <button onClick={() => setLang("fr")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "fr" ? "bg-slate-900 text-white" : "bg-white"}`}>
             FR
           </button>
-          <button onClick={() => setLang("en")} className={`px-2 py-1 rounded text-xs border ${lang === "en" ? "bg-slate-900 text-white" : "bg-white"}`}>
+          <button onClick={() => setLang("en")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "en" ? "bg-slate-900 text-white" : "bg-white"}`}>
             EN
           </button>
           <button
@@ -112,7 +112,7 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
               </span>
             )}
           </button>
-          <a href="#contact" className="ml-3 hidden sm:inline-block bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow">
+          <a href="#contact" className="ml-3 hidden sm:inline-block bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm">
             {t("Demander un devis", "Request a quote")}
           </a>
           <AuthControls t={t} />

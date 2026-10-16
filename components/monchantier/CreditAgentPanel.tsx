@@ -123,7 +123,7 @@ export default function CreditAgentPanel() {
           <p className="text-sm text-slate-500">Aucun dossier ne vous est assigné pour le moment.</p>
         ) : (
           loans.map((loan) => (
-            <div key={loan.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={loan.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-mono text-xs text-slate-500">{loan.id}</p>

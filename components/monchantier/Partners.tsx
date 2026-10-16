@@ -111,7 +111,7 @@ export function Partners({ lang, t }: PartnersProps) {
       </div>
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 ring-1 ring-slate-200 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 ring-1 ring-slate-200 shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

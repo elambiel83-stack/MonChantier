@@ -941,14 +941,14 @@ export default function AdminPage() {
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {cards.map((card) => (
-            <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
               <p className="text-sm text-slate-500">{card.title}</p>
               <p className="mt-1 text-2xl font-bold">{loading ? '…' : card.value}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">{t('Activité récente', 'Recent activity')}</h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -990,7 +990,7 @@ export default function AdminPage() {
           </ul>
         </div>
 
-        <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="paiements" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Paiements récents', 'Recent payments')}</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -1028,7 +1028,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="commandes" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Gestion des commandes', 'Order management')}</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -1114,7 +1114,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Support', 'Support')}</h2>
           <div className="mt-4 space-y-3">
             {tickets.length === 0 ? (
@@ -1212,7 +1212,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div id="utilisateurs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="utilisateurs" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Gestion des utilisateurs', 'User management')}</h2>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1297,7 +1297,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">
             {t('Attribution des rôles plateforme', 'Platform role assignment')}
           </h2>
@@ -1367,7 +1367,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Crédits immobiliers', 'Real estate loans')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1559,7 +1559,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div id="livraisons" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="livraisons" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Livraisons', 'Deliveries')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1625,7 +1625,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div id="produits" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="produits" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Produits', 'Products')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1748,7 +1748,7 @@ export default function AdminPage() {
                               <div>{t('Base partenaire', 'Partner base')}: {product.submittedPriceUSD ?? '—'} USD / {product.submittedPriceCDF ?? '—'} CDF</div>
                               <label className="flex items-center gap-1">
                                 <span>{t('Commission', 'Fee')} %</span>
-                                <input type="number" min="0" max="100" value={edit.feePercent} onChange={(e) => setProductEdits((prev) => ({ ...prev, [product.id]: { ...edit, feePercent: e.target.value } }))} className="w-16 rounded border px-1 py-0.5" />
+                                <input type="number" min="0" max="100" value={edit.feePercent} onChange={(e) => setProductEdits((prev) => ({ ...prev, [product.id]: { ...edit, feePercent: e.target.value } }))} className="w-16 rounded-sm border px-1 py-0.5" />
                               </label>
                             </div>
                           )}
@@ -1796,7 +1796,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Services', 'Services')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(
@@ -1972,7 +1972,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <h2 className="text-lg font-semibold">{t('Taxes (TVA à reverser)', 'Taxes (VAT payable)')}</h2>
           <p className="mt-1 text-sm text-slate-500">
             {t(

@@ -72,7 +72,7 @@ export default function FavoritesPanel() {
   );
 
   return (
-    <div id="favoris" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="favoris" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 className="text-lg font-semibold">Favoris</h2>
 
       <div className="mt-3 flex gap-2">

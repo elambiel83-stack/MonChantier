@@ -56,7 +56,7 @@ export default function PlatformConsolePage() {
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="text-xl font-semibold">Console plateforme — Tenants</h1>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">

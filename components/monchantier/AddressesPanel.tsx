@@ -73,7 +73,7 @@ export default function AddressesPanel() {
   };
 
   return (
-    <div id="adresses" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="adresses" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 className="text-lg font-semibold">Mes adresses</h2>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">

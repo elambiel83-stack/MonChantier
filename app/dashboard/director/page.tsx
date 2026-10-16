@@ -33,7 +33,7 @@ export default async function DirectorDashboardPage() {
 
       <div id="vue-generale" className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statusCards.map((card) => (
-          <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
             <p className="text-sm text-slate-500">{card.title}</p>
             <p className="mt-1 text-2xl font-bold">{card.value}</p>
           </div>
@@ -41,21 +41,21 @@ export default async function DirectorDashboardPage() {
       </div>
 
       <div id="finance" className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <p className="text-sm text-slate-500">Capital décaissé</p>
           <p className="mt-1 text-lg font-semibold">
             {formatMoney(summary.totalDisbursed.USD, "USD")}
           </p>
           <p className="text-sm text-slate-600">{formatMoney(summary.totalDisbursed.CDF, "CDF")}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <p className="text-sm text-slate-500">Capital restant à recouvrer</p>
           <p className="mt-1 text-lg font-semibold">
             {formatMoney(summary.totalOutstanding.USD, "USD")}
           </p>
           <p className="text-sm text-slate-600">{formatMoney(summary.totalOutstanding.CDF, "CDF")}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <p className="text-sm text-slate-500">Impayés (échéances en défaut)</p>
           <p className="mt-1 text-lg font-semibold text-red-700">
             {formatMoney(summary.totalOverdue.USD, "USD")}
@@ -64,7 +64,7 @@ export default async function DirectorDashboardPage() {
         </div>
       </div>
 
-      <div id="performance" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="performance" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Performance de remboursement</h2>
         <p className="mt-1 text-sm text-slate-500">
           Taux de remboursement (échéances payées / échéances dues sur crédits actifs et soldés) :{" "}

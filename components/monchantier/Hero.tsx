@@ -59,10 +59,10 @@ export function Hero({ t }: HeroProps) {
           onError={() => setHeroSrc("/images/produits/moellons.svg")}
         />
         <div className="absolute inset-0 bg-slate-900/15" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/90 to-white/60 lg:to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-white/95 via-white/90 to-white/60 lg:to-transparent" />
       </div>
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 min-h-[62vh] flex items-center">
-        <div className="max-w-2xl bg-white/75 backdrop-blur-sm rounded-2xl p-5 sm:p-8 border border-white/70 shadow">
+        <div className="max-w-2xl bg-white/75 backdrop-blur-xs rounded-2xl p-5 sm:p-8 border border-white/70 shadow-sm">
           <span className="inline-flex items-center rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-xs sm:text-sm font-bold tracking-wide uppercase">
             {t("Livraison rapide partout en RDC", "Fast delivery across DRC")}
           </span>
@@ -84,7 +84,7 @@ export function Hero({ t }: HeroProps) {
             </a>
           </div>
 
-          <div className="mt-8 p-4 bg-white/90 backdrop-blur rounded-xl border border-slate-200 shadow-sm">
+          <div className="mt-8 p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-xs">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

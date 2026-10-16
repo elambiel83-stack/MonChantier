@@ -111,7 +111,7 @@ export default function SignInPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xs ring-1 ring-slate-200">
         <h1 className="text-2xl font-extrabold text-slate-900">Connexion</h1>
         <p className="mt-1 text-sm text-slate-600">Connexion et inscription sécurisées après vérification de votre identité.</p>
 

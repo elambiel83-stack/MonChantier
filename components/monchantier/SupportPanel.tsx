@@ -105,7 +105,7 @@ export default function SupportPanel() {
   };
 
   return (
-    <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="support" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 className="text-lg font-semibold">Support</h2>
 
       {banner && (

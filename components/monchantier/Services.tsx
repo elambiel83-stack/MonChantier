@@ -116,14 +116,14 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("Rechercher un service…", "Search a service…")}
-              className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
           </div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">{t("Toutes les catégories", "All categories")}</option>
             {Object.entries(SERVICE_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{t(label[0], label[1])}</option>)}
@@ -131,7 +131,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
           >
             <option value="default">{t("Tri par défaut", "Default sort")}</option>
             <option value="price-asc">{t("Prix croissant", "Price: low to high")}</option>
@@ -195,7 +195,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
                   <button
                     type="button"
                     onClick={() => onAddToCart(toCartProduct(s))}
-                    className="ml-auto bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+                    className="ml-auto bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition"
                   >
                     {t("Ajouter au panier", "Add to cart")}
                   </button>
@@ -207,7 +207,7 @@ export function Services({ lang, t, onAddToCart }: ServicesProps) {
         <div className="mt-8 text-center">
           <a
             href="#contact"
-            className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
+            className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition"
           >
             {t("Demander un devis pour un service", "Request a quote for a service")}
           </a>

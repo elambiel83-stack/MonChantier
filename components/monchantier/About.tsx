@@ -23,7 +23,7 @@ export function About({ t }: AboutProps) {
             <li>• {t("Partenariats durables", "Long-term partnerships")}</li>
           </ul>
         </div>
-        <div className="relative rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-sm bg-slate-100 aspect-[4/3]">
+        <div className="relative rounded-2xl overflow-hidden ring-1 ring-slate-200 shadow-xs bg-slate-100 aspect-[4/3]">
           <Image src="/images/banners/apropos.svg" alt="À propos MonChantier" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
       </div>

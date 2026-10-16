@@ -137,7 +137,7 @@ export default function OrgDashboardPage() {
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Catalogue</h2>
 
         {canManage && (

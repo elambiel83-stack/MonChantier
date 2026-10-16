@@ -90,7 +90,7 @@ export default function MonChantierSite() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-800">
+    <div className="min-h-screen bg-linear-to-b from-white to-slate-50 text-slate-800">
       <Header 
         lang={lang} 
         setLang={setLang} 

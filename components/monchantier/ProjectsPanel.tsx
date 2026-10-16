@@ -80,7 +80,7 @@ export default function ProjectsPanel() {
   };
 
   return (
-    <div id="projets" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id="projets" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 className="text-lg font-semibold">Mes projets</h2>
       <p className="mt-1 text-sm text-slate-500">
         Regroupez vos commandes et devis par projet de construction (ex: &quot;Maison Kinshasa&quot;).
