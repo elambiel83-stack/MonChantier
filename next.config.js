@@ -15,6 +15,8 @@ if (!process.env.NEXTAUTH_URL?.trim()) {
 }
 
 /** @type {import('next').NextConfig} */
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
@@ -31,7 +33,7 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paypal.com https://js.stripe.com https://www.googletagmanager.com",
+              `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} https://www.paypal.com https://js.stripe.com https://www.googletagmanager.com`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",

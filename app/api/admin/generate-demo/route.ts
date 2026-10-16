@@ -9,12 +9,20 @@ const demoRows = [
   { method: 'mobilemoney' as const, amount: 240000, currency: 'CDF', reference: 'MM-DEMO-004' },
 ];
 
+function isProductionLike() {
+  const environment = process.env.VERCEL_ENV || process.env.NODE_ENV || '';
+  return environment === 'production' || environment === 'preview';
+}
+
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ message: 'Génération de données de démonstration désactivée en production.' }, { status: 404 });
   }
   const denied = await requireAdmin(request);
   if (denied) return denied;
+  if (isProductionLike()) {
+    return NextResponse.json({ message: 'Route indisponible hors environnement de test' }, { status: 403 });
+  }
 
   for (const row of demoRows) {
     await recordPayment({
