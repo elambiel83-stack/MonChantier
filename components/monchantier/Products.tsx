@@ -5,6 +5,7 @@ import Image from "next/image";
 import { PRODUCTS_BANNER_URL } from "./constants";
 import type { Language, Product } from "./types";
 import { facebookShareUrl, productShareUrl, productWhatsAppUrl } from "@/lib/socialCommerce";
+import { productTechnicalDetails } from "@/lib/productTechnicalDetails";
 
 interface ProductsProps {
   lang: Language;
@@ -35,7 +36,7 @@ function toProduct(p: CatalogProduct, lang: Language): Product {
   } else if (p.priceCDF !== null) {
     priceLabel = `${p.priceCDF.toLocaleString("fr-FR")} FC / ${unit}`;
   } else {
-    priceLabel = `$— / ${unit}`;
+    priceLabel = lang === "fr" ? "Sur devis" : "Request a quote";
   }
   return {
     id: p.id,
@@ -82,6 +83,8 @@ function productPriceValue(p: Product): number | null {
 
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
   const [category, setCategory] = useState("all");
@@ -98,9 +101,10 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
 
   useEffect(() => {
     fetch("/api/catalog/products", { cache: "no-store" })
-      .then((res) => res.json())
+      .then((res) => { if (!res.ok) throw new Error("Catalogue indisponible"); return res.json(); })
       .then((data) => setCatalog(Array.isArray(data.products) ? data.products : []))
-      .catch(() => setCatalog([]));
+      .catch(() => { setCatalog([]); setLoadError(true); })
+      .finally(() => setLoading(false));
   }, []);
 
   const normalizedQuery = normalize(query.trim());
@@ -155,13 +159,15 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
+            aria-label={t("Rechercher un produit", "Search products")}
             placeholder={t("Rechercher un produit…", "Search a product…")}
             className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
         </div>
         <select
+          aria-label={t("Catégorie de produit", "Product category")}
           value={category}
           onChange={(e) => { setCategory(e.target.value); setVisibleCount(PAGE_SIZE); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
@@ -170,6 +176,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{t(label[0], label[1])}</option>)}
         </select>
         <select
+          aria-label={t("Disponibilité du prix", "Price availability")}
           value={availability}
           onChange={(e) => { setAvailability(e.target.value as AvailabilityOption); setVisibleCount(PAGE_SIZE); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
@@ -179,6 +186,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           <option value="quote">{t("Sur devis", "Quote only")}</option>
         </select>
         <select
+          aria-label={t("Trier les produits", "Sort products")}
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-orange-500"
@@ -189,44 +197,64 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </select>
       </div>
 
-      {(normalizedQuery || category !== "all" || availability !== "all") && products.length === 0 && (
+      <p className="mt-5 text-sm text-slate-500" role="status">
+        {loading ? t("Chargement du catalogue…", "Loading catalogue…") : t(`${products.length} produits · sélection pour vos chantiers`, `${products.length} products · selected for your projects`)}
+      </p>
+      {loadError && <p role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">{t("Le catalogue est momentanément indisponible. Réessayez plus tard ou contactez-nous pour un devis.", "The catalogue is temporarily unavailable. Try again later or contact us for a quote.")}</p>}
+      {!loading && !loadError && products.length === 0 && (
         <p className="mt-6 text-sm text-slate-500">
           {t("Aucun produit ne correspond à votre recherche.", "No product matches your search.")}
         </p>
       )}
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {visibleProducts.map((p) => {
-          const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy={loading}>
+        {loading && ['one', 'two', 'three', 'four', 'five', 'six'].map(key => <div key={key} className="product-placeholder h-96 rounded-2xl bg-slate-100" aria-hidden="true" />)}
+        {visibleProducts.map((p, index) => {
+          const source = catalog.find(item => item.id === p.id);
+          if (!source) return null;
+          const details = productTechnicalDetails(source, lang);
+          const hasPrice = (p.prices?.USD ?? p.prices?.CDF ?? 0) > 0;
+          const outOfStock = source.stock !== null && source.stock <= 0;
+          const categoryLabel = PRODUCT_CATEGORIES[source.category];
           return (
-          <div key={p.id} className="group bg-white rounded-2xl shadow-xs ring-1 ring-slate-200 overflow-hidden hover:shadow-md transition flex flex-col">
+          <article key={p.id} className="product-card group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col" style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
             <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100">
               <Image
                 src={imgFailed[p.id] && p.fallback ? p.fallback : p.img}
-                alt={p.fr}
+                alt={t(p.fr, p.en)}
                 fill
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                className="product-card-image object-cover object-center"
                 onError={() => setImgFailed((prev) => ({ ...prev, [p.id]: true }))}
               />
+              <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-800 shadow-xs">{categoryLabel ? t(...categoryLabel) : t("Matériau", "Material")}</span>
+              {(imgFailed[p.id] ? p.fallback : p.img).endsWith('.svg') && <span className="absolute bottom-3 right-3 rounded-md bg-slate-900/75 px-2 py-1 text-[10px] text-white">{t("Illustration", "Illustration")}</span>}
             </div>
 
-            <div className="p-4 flex flex-col flex-1">
-              <h3 className="font-semibold text-lg leading-snug">{t(p.fr, p.en)}</h3>
-              <p className="text-slate-600 text-sm mt-1">
-                {t("Qualité contrôlée. Livraison rapide.", "Quality controlled. Fast delivery.")}
-              </p>
+            <div className="p-5 flex flex-col flex-1">
+              <p className="text-[11px] font-medium tracking-wider text-slate-400">MC · {String(p.id).padStart(4, '0')}</p>
+              <h3 className="mt-1 font-bold text-xl leading-snug text-slate-900">{t(p.fr, p.en)}</h3>
+              <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3 text-sm">
+                <div><dt className="text-xs text-slate-500">{t("Unité de vente", "Sales unit")}</dt><dd className="mt-1 font-semibold text-slate-800">{details.unit}</dd></div>
+                <div><dt className="text-xs text-slate-500">{details.measurement ? t("Indication catalogue", "Catalogue specification") : t("Stock", "Stock")}</dt><dd className="mt-1 font-semibold text-slate-800">{details.measurement || (source.stock === null ? t("À confirmer", "To confirm") : `${source.stock} ${details.unit}`)}</dd></div>
+              </dl>
+              <details className="product-specs mt-4 border-b border-slate-100 pb-4">
+                <summary className="cursor-pointer text-sm font-semibold text-slate-700">{t("Détails techniques", "Technical details")}</summary>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">{t("À préciser sur le devis fournisseur :", "To confirm on the supplier quote:")} {details.toConfirm}.</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{t("Les résistances, normes et performances doivent être confirmées par la fiche du fabricant.", "Strength, standards and performance must be confirmed in the manufacturer's data sheet.")}</p>
+              </details>
 
-              <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-                <span className="text-slate-900 font-bold whitespace-nowrap">{p.price}</span>
-                <div className="flex items-center gap-3 flex-wrap justify-end">
+              <div className="mt-auto pt-4">
+                <p className="text-xl font-extrabold tracking-tight text-slate-900">{p.price}</p>
+                {outOfStock && <p className="mt-1 text-xs font-medium text-amber-800">{t("Stock épuisé · contactez-nous", "Out of stock · contact us")}</p>}
+                <div className="mt-4 flex items-center gap-3 flex-wrap">
                   <a
                     href={productWhatsAppUrl(p, lang, typeof window === "undefined" ? undefined : window.location.origin)}
                     target="_blank"
                     className="text-sm font-semibold text-green-700 hover:text-green-800"
                     rel="noreferrer"
                   >
-                    WhatsApp
+                    {hasPrice ? "WhatsApp" : t("Demander un devis", "Request a quote")}
                   </a>
                   <a
                     href={facebookShareUrl(p, typeof window === "undefined" ? undefined : window.location.origin)}
@@ -245,7 +273,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                   >
                     {copiedProductId === p.id ? t("Lien copié", "Link copied") : "TikTok"}
                   </button>
-                  {hasPrice && (
+                  {hasPrice && !outOfStock && (
                     <button
                       type="button"
                       onClick={() => onAddToCart(p)}
@@ -257,7 +285,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                 </div>
               </div>
             </div>
-          </div>
+          </article>
           );
         })}
       </div>
