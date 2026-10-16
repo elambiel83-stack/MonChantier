@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { recordContact } from '@/lib/adminStore';
 import { isMailerConfigured, sendContactEmail } from '@/lib/mailer';
 import { recordQuoteRequest } from '@/lib/quoteStore';

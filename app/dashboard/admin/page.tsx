@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, useEffect, useState } from 'react';
-import { APP_ROLES, AppRole, ROLE_LABELS } from '@/lib/roles';
+import { useCallback, Fragment, useEffect, useState } from 'react';
+import { APP_ROLES, type AppRole, ROLE_LABELS } from '@/lib/roles';
 
 type PlatformRoleAssignment = {
   identity: string;
@@ -304,7 +304,7 @@ export default function AdminPage() {
     return parsed.toLocaleString(locale);
   };
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/users', { cache: 'no-store' });
       if (!response.ok) {
@@ -317,9 +317,9 @@ export default function AdminPage() {
       setUsers([]);
       setUsersApiOnline(false);
     }
-  };
+  }, []);
 
-  const loadLoans = async () => {
+  const loadLoans = useCallback(async () => {
     try {
       const response = await fetch('/api/credit/loans', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les prêts');
@@ -328,7 +328,7 @@ export default function AdminPage() {
     } catch {
       setLoans([]);
     }
-  };
+  }, []);
 
   const assignAgentToLoan = async (loanId: string) => {
     const agentIdentity = (agentAssignInput[loanId] || '').trim();
@@ -348,7 +348,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadDeliveries = async () => {
+  const loadDeliveries = useCallback(async () => {
     try {
       const response = await fetch('/api/deliveries', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les livraisons');
@@ -357,7 +357,7 @@ export default function AdminPage() {
     } catch {
       setDeliveries([]);
     }
-  };
+  }, []);
 
   const assignDriverToDelivery = async (deliveryId: string) => {
     const driverIdentity = (driverAssignInput[deliveryId] || '').trim();
@@ -377,7 +377,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/products', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les produits');
@@ -386,7 +386,7 @@ export default function AdminPage() {
     } catch {
       setProducts([]);
     }
-  };
+  }, []);
 
   const createProduct = async () => {
     if (!newProduct.fr.trim() || !newProduct.unitFr.trim()) return;
@@ -472,7 +472,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/services', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les services');
@@ -481,7 +481,7 @@ export default function AdminPage() {
     } catch {
       setServices([]);
     }
-  };
+  }, []);
 
   const createService = async () => {
     if (!newService.fr.trim() || !newService.frDesc.trim()) return;
@@ -576,7 +576,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadTaxes = async () => {
+  const loadTaxes = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/taxes', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les taxes');
@@ -585,9 +585,9 @@ export default function AdminPage() {
     } catch {
       setTaxSummary(null);
     }
-  };
+  }, []);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/orders', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les commandes');
@@ -596,7 +596,7 @@ export default function AdminPage() {
     } catch {
       setOrders([]);
     }
-  };
+  }, []);
 
   const changeOrderStatus = async (reference: string, orderStatus: OrderStatus) => {
     if (orderStatus === 'cancelled') {
@@ -622,7 +622,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/support', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les tickets');
@@ -631,7 +631,7 @@ export default function AdminPage() {
     } catch {
       setTickets([]);
     }
-  };
+  }, []);
 
   const replyToTicket = async (ticketId: string) => {
     if (!ticketReplyDraft.trim()) return;
@@ -671,7 +671,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadPlatformRoles = async () => {
+  const loadPlatformRoles = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/roles', { cache: 'no-store' });
       if (!response.ok) throw new Error('Impossible de charger les rôles');
@@ -680,7 +680,7 @@ export default function AdminPage() {
     } catch {
       setPlatformRoles([]);
     }
-  };
+  }, []);
 
   const assignPlatformRole = async () => {
     if (!roleIdentity.trim()) return;
@@ -699,7 +699,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       setErrorMessage('');
@@ -730,7 +730,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -747,7 +747,7 @@ export default function AdminPage() {
         loadTickets(),
       ]);
     })();
-  }, []);
+  }, [loadUsers, loadTickets, loadServices, loadTaxes, loadProducts, loadLoans, loadStats, loadPlatformRoles, loadOrders, loadDeliveries]);
 
   const generateDemoPayments = async () => {
     try {

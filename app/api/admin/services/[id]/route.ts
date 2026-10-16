@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { deleteService, getService, updateService, UpdateServicePatch } from '@/lib/serviceStore';
+import { type NextRequest, NextResponse } from 'next/server';
+import { deleteService, getService, updateService, type UpdateServicePatch } from '@/lib/serviceStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { calculateSellingPrice, hasSubmittedPrice, validateFeePercent } from '@/lib/partnerPricing';
 
@@ -57,8 +57,8 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       patch.pricingStatus = body.pricingStatus;
       patch.platformFeePercent = fee ?? existing.platformFeePercent;
       patch.active = body.pricingStatus === 'approved';
-      patch.priceUSD = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceUSD, fee!) : null;
-      patch.priceCDF = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceCDF, fee!) : null;
+      patch.priceUSD = body.pricingStatus === 'approved' && fee !== null ? calculateSellingPrice(existing.submittedPriceUSD, fee) : null;
+      patch.priceCDF = body.pricingStatus === 'approved' && fee !== null ? calculateSellingPrice(existing.submittedPriceCDF, fee) : null;
     }
 
     const service = await updateService(id, patch);

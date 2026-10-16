@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
 import { canDecideLoan } from '@/lib/loanPermissions';
 import { decideLoan, getLoanById } from '@/lib/loanStore';

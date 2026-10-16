@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { BANNER_URL } from "./constants";
 import { findNearestCity, getCity, haversineDistanceKm } from "@/lib/drcCities";
@@ -17,7 +17,7 @@ export function Hero({ t }: HeroProps) {
   const [heroSrc, setHeroSrc] = useState(BANNER_URL);
   const [location, setLocation] = useState<LocationState>({ status: "idle" });
 
-  const detectLocation = () => {
+  const detectLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setLocation({ status: "unsupported" });
       return;
@@ -39,12 +39,12 @@ export function Hero({ t }: HeroProps) {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
-  };
+  }, []);
 
   useEffect(() => {
     detectLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [detectLocation]);
 
   return (
     <section id="hero" className="relative isolate overflow-hidden scroll-mt-24 bg-slate-100">
@@ -87,7 +87,7 @@ export function Hero({ t }: HeroProps) {
           <div className="mt-8 p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-xs">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg aria-hidden="true" focusable="false" className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { haversineDistanceKm } from "@/lib/drcCities";
 
 type DeliveryStatus = "pending" | "assigned" | "picked_up" | "in_transit" | "delivered" | "cancelled";
@@ -70,7 +70,7 @@ export default function DeliveryTrackingPanel() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/deliveries", { cache: "no-store" });
       const data = await res.json();
@@ -80,13 +80,13 @@ export default function DeliveryTrackingPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [load]);
 
   return (
     <div id="livraisons" className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">

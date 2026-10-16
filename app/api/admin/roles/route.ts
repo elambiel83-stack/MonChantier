@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { isAppRole } from '@/lib/roles';
 import { listStoredRoles, setStoredRole } from '@/lib/roleStore';
 import { getSessionActor } from '@/lib/sessionIdentity';
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!actor || actor.role !== 'admin') {
+  if (actor?.role !== 'admin') {
     return NextResponse.json({ message: 'Accès administrateur requis' }, { status: 403 });
   }
   const expiresAt = typeof body?.expiresAt === 'string' ? body.expiresAt : undefined;

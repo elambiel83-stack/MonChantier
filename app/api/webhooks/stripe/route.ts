@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { confirmPayment, ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
+import { type NextRequest, NextResponse } from 'next/server';
+import { confirmPayment, type ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
 import { decodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { decodeWalletDepositPayload } from '@/lib/walletPayloadCodec';
 import { confirmDeposit } from '@/lib/walletStore';
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       }
       const stored = await getStoredPaymentStatus(decoded.reference);
       const pending = stored?.pendingPayload as unknown as ConfirmPaymentPayload | undefined;
-      if (!stored || stored.method !== 'card' || !pending) {
+      if (stored?.method !== 'card' || !pending) {
         await unclaimWebhookEvent('stripe', event.id);
         return NextResponse.json({ message: 'Commande Stripe inconnue' }, { status: 404 });
       }

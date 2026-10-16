@@ -1,4 +1,4 @@
-import { AppRole, ROLE_LABELS, ROLE_MENUS, ROLE_OBJECTIVES } from "@/lib/roles";
+import { type AppRole, ROLE_LABELS, ROLE_MENUS, ROLE_OBJECTIVES } from "@/lib/roles";
 
 export default function RoleComingSoon({ role, note }: { role: AppRole; note?: string }) {
   return (

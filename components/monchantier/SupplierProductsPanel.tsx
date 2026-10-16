@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type StoredProduct = {
   id: number;
@@ -36,7 +36,7 @@ export default function SupplierProductsPanel() {
   });
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/partner/products", { cache: "no-store" });
       const data = await res.json();
@@ -46,11 +46,11 @@ export default function SupplierProductsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createProduct = async () => {
     if (!newProduct.fr.trim() || !newProduct.unitFr.trim()) return;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { getWallet } from '@/lib/walletStore';
 

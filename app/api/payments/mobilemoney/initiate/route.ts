@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { isMobileMoneyConfigured, initiateMobileMoneyCharge } from '@/lib/mobileMoney';
 import { confirmPayment, generatePaymentReference, registerPendingPayment } from '@/lib/paymentConfirmation';
 import { OrderPricingError, priceOrderFromCatalog } from '@/lib/orderPricing';

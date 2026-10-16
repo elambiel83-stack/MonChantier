@@ -1,4 +1,4 @@
-import nodemailer, { Transporter } from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 
 type MailPayload = {
   to: string;

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSessionActor } from '@/lib/sessionIdentity';
-import { getService, updateService, UpdateServicePatch } from '@/lib/serviceStore';
+import { getService, updateService, type UpdateServicePatch } from '@/lib/serviceStore';
 import { validateSubmittedPrice } from '@/lib/partnerPricing';
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {

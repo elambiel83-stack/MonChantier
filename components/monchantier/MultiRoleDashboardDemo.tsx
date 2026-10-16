@@ -70,13 +70,13 @@ function cx(...classes: Array<string | false | null | undefined>) {
 
 function formatMoney(value: number, currency: Currency) {
   if (currency === "CDF") {
-    return Math.round(value * RATE_CDF).toLocaleString("fr-FR") + " FC";
+    return `${Math.round(value * RATE_CDF).toLocaleString("fr-FR")} FC`;
   }
 
-  return value.toLocaleString("fr-FR", {
+  return `${value.toLocaleString("fr-FR", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }) + " $";
+  })} $`;
 }
 
 function Kpi({
@@ -502,7 +502,7 @@ export default function MultiRoleDashboardDemo() {
                   const nextStage = index as DemoStage;
                   setStage(nextStage);
                   if (nextStage >= 3) setDriverAssigned(true);
-                  notify("État administrateur appliqué : " + label + ".");
+                  notify(`État administrateur appliqué : ${label}.`);
                 }}
                 className={cx(
                   "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-xs font-semibold",

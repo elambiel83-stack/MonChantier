@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type WalletCurrency = "USD" | "CDF";
 type LoanStatus = "submitted" | "under_review" | "approved" | "rejected" | "active" | "paid_off";
@@ -37,7 +37,7 @@ export default function CreditCommitteePanel() {
   const [rejectionReason, setRejectionReason] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/credit/loans", { cache: "no-store" });
       const data = await res.json();
@@ -48,11 +48,11 @@ export default function CreditCommitteePanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const decide = async (loanId: string, decision: "approved" | "rejected") => {
     setBusyId(loanId);

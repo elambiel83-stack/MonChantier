@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type TenantSeller = { companyName: string; address: string; city: string; country: string };
 type Tenant = {
@@ -34,7 +34,7 @@ export default function OrgDashboardPage() {
   const [saving, setSaving] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: "", price: "", currency: "USD", stock: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -56,11 +56,11 @@ export default function OrgDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const canManage = tenantRole === "owner" || tenantRole === "admin";
 

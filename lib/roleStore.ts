@@ -1,4 +1,4 @@
-import { AppRole } from "@/lib/roles";
+import type { AppRole } from "@/lib/roles";
 import { readStore, withStore } from './storeDb';
 
 export type RoleAssignment = { role: AppRole; active: boolean; assignedAt: string; assignedBy?: string; expiresAt?: string };
@@ -21,7 +21,7 @@ export async function getRoleAssignment(identity: string): Promise<RoleAssignmen
 }
 export async function getStoredRole(identity: string): Promise<AppRole | null> {
   const assignment = await getRoleAssignment(identity);
-  return isAssignmentActive(assignment) ? assignment!.role : null;
+  return assignment && isAssignmentActive(assignment) ? assignment.role : null;
 }
 export async function isIdentityActive(identity: string): Promise<boolean> {
   const assignment = await getRoleAssignment(identity);
@@ -32,7 +32,7 @@ export function setStoredRole(args: { identity: string; role: AppRole; actor: st
     const identity = normalizeIdentity(args.identity); const assignedAt = new Date().toISOString();
     const assignment: RoleAssignment = { role: args.role, active: true, assignedAt, assignedBy: normalizeIdentity(args.actor), expiresAt: args.expiresAt };
     store.assignments[identity] = assignment;
-    appendAudit(store, { at: assignedAt, actor: assignment.assignedBy!, identity, action: 'assigned', role: args.role });
+    appendAudit(store, { at: assignedAt, actor: normalizeIdentity(args.actor), identity, action: 'assigned', role: args.role });
     return assignment;
   });
 }

@@ -1,4 +1,4 @@
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletCurrency } from '@/lib/walletExchange';
 import {
   buildAmortizationSchedule,
   getLoanAnnualInterestRate,
@@ -211,7 +211,7 @@ export function createLoanApplication(args: {
       collateral: [],
       disbursementMode: hasTranches ? 'tranches' : 'lump_sum',
       tranches: hasTranches
-        ? args.tranches!.map((tranche, index) => ({
+        ? (args.tranches ?? []).map((tranche, index) => ({
             id: makeAuditId(),
             index: index + 1,
             label: tranche.label,

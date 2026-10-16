@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts } from 'pdf-lib';
-import { InvoiceData } from '@/lib/invoice';
+import type { InvoiceData } from '@/lib/invoice';
 
 function formatMoney(value: number, currency: string) {
   return `${value.toLocaleString('fr-FR', {

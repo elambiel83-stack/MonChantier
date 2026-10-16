@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type WalletCurrency = "USD" | "CDF";
 
@@ -170,15 +170,18 @@ export default function LoanPanel() {
   const [applying, setApplying] = useState(false);
 
   const [useTranches, setUseTranches] = useState(false);
-  const [tranches, setTranches] = useState<{ label: string; condition: string; amount: string }[]>([
-    { label: "", condition: "", amount: "" },
+  const [tranches, setTranches] = useState<{ id: string; label: string; condition: string; amount: string }[]>([
+    { id: "initial-tranche", label: "", condition: "", amount: "" },
   ]);
   const trancheTotal = tranches.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
   const updateTranche = (index: number, field: "label" | "condition" | "amount", value: string) => {
     setTranches((prev) => prev.map((t, i) => (i === index ? { ...t, [field]: value } : t)));
   };
-  const addTranche = () => setTranches((prev) => [...prev, { label: "", condition: "", amount: "" }]);
+  const addTranche = () => {
+    const id = crypto.randomUUID();
+    setTranches((prev) => [...prev, { id, label: "", condition: "", amount: "" }]);
+  };
   const removeTranche = (index: number) => setTranches((prev) => prev.filter((_, i) => i !== index));
 
   const [createdLoan, setCreatedLoan] = useState<Loan | null>(null);
@@ -192,7 +195,7 @@ export default function LoanPanel() {
   const [collOwner, setCollOwner] = useState("");
   const [addingCollateral, setAddingCollateral] = useState(false);
 
-  const loadLoans = async () => {
+  const loadLoans = useCallback(async () => {
     try {
       const res = await fetch("/api/loans", { cache: "no-store" });
       if (!res.ok) throw new Error();
@@ -203,11 +206,11 @@ export default function LoanPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void loadLoans();
-  }, []);
+  }, [loadLoans]);
 
   useEffect(() => {
     const amount = Number(principal);
@@ -473,16 +476,16 @@ export default function LoanPanel() {
               <h3 className="text-sm font-semibold text-slate-700">Informations personnelles</h3>
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Nom complet</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-476" className="text-xs font-semibold text-slate-700">Nom complet</label>
+                  <input id="LoanPanel-field-476"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Téléphone</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-484" className="text-xs font-semibold text-slate-700">Téléphone</label>
+                  <input id="LoanPanel-field-484"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -506,16 +509,16 @@ export default function LoanPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Employeur (optionnel)</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-509" className="text-xs font-semibold text-slate-700">Employeur (optionnel)</label>
+                  <input id="LoanPanel-field-509"
                     value={employer}
                     onChange={(e) => setEmployer(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Revenu mensuel</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-517" className="text-xs font-semibold text-slate-700">Revenu mensuel</label>
+                  <input id="LoanPanel-field-517"
                     type="number"
                     min="0"
                     value={monthlyIncome}
@@ -524,8 +527,8 @@ export default function LoanPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Charges mensuelles</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-527" className="text-xs font-semibold text-slate-700">Charges mensuelles</label>
+                  <input id="LoanPanel-field-527"
                     type="number"
                     min="0"
                     value={monthlyCharges}
@@ -542,32 +545,32 @@ export default function LoanPanel() {
               <h3 className="text-sm font-semibold text-slate-700">Votre projet</h3>
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Province</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-545" className="text-xs font-semibold text-slate-700">Province</label>
+                  <input id="LoanPanel-field-545"
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Ville</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-553" className="text-xs font-semibold text-slate-700">Ville</label>
+                  <input id="LoanPanel-field-553"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Commune</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-561" className="text-xs font-semibold text-slate-700">Commune</label>
+                  <input id="LoanPanel-field-561"
                     value={commune}
                     onChange={(e) => setCommune(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="sm:col-span-3">
-                  <label className="text-xs font-semibold text-slate-700">Description du projet</label>
-                  <textarea
+                  <label htmlFor="LoanPanel-field-569" className="text-xs font-semibold text-slate-700">Description du projet</label>
+                  <textarea id="LoanPanel-field-569"
                     value={projectDescription}
                     onChange={(e) => setProjectDescription(e.target.value)}
                     rows={3}
@@ -575,8 +578,8 @@ export default function LoanPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Budget total du projet</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-578" className="text-xs font-semibold text-slate-700">Budget total du projet</label>
+                  <input id="LoanPanel-field-578"
                     type="number"
                     min="0"
                     value={budgetTotal}
@@ -585,8 +588,8 @@ export default function LoanPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Apport personnel</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-588" className="text-xs font-semibold text-slate-700">Apport personnel</label>
+                  <input id="LoanPanel-field-588"
                     type="number"
                     min="0"
                     value={personalContribution}
@@ -603,8 +606,8 @@ export default function LoanPanel() {
               <h3 className="text-sm font-semibold text-slate-700">Financement souhaité</h3>
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Montant demandé</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-606" className="text-xs font-semibold text-slate-700">Montant demandé</label>
+                  <input id="LoanPanel-field-606"
                     type="number"
                     min="0"
                     value={principal}
@@ -627,8 +630,8 @@ export default function LoanPanel() {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">Durée (mois)</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-630" className="text-xs font-semibold text-slate-700">Durée (mois)</label>
+                  <input id="LoanPanel-field-630"
                     type="number"
                     min="1"
                     value={termMonths}
@@ -664,7 +667,7 @@ export default function LoanPanel() {
                 {useTranches && (
                   <div className="mt-3 space-y-2">
                     {tranches.map((tranche, index) => (
-                      <div key={index} className="grid grid-cols-1 sm:grid-cols-[2fr,2fr,1fr,auto] gap-2">
+                      <div key={tranche.id} className="grid grid-cols-1 sm:grid-cols-[2fr,2fr,1fr,auto] gap-2">
                         <input
                           value={tranche.label}
                           onChange={(e) => updateTranche(index, "label", e.target.value)}
@@ -808,8 +811,8 @@ export default function LoanPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Valeur estimée</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-811" className="text-xs font-semibold text-slate-700">Valeur estimée</label>
+                  <input id="LoanPanel-field-811"
                     type="number"
                     min="0"
                     value={collValue}
@@ -818,16 +821,16 @@ export default function LoanPanel() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">Description</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-821" className="text-xs font-semibold text-slate-700">Description</label>
+                  <input id="LoanPanel-field-821"
                     value={collDescription}
                     onChange={(e) => setCollDescription(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">Propriétaire</label>
-                  <input
+                  <label htmlFor="LoanPanel-field-829" className="text-xs font-semibold text-slate-700">Propriétaire</label>
+                  <input id="LoanPanel-field-829"
                     value={collOwner}
                     onChange={(e) => setCollOwner(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"

@@ -1,4 +1,4 @@
-import React from "react";
+
 import Link from "next/link";
 import { CONTACT_INFO } from "./constants";
 
@@ -13,7 +13,7 @@ export function Footer({ t }: FooterProps) {
       <a
         href={`https://wa.me/${CONTACT_INFO.whatsapp.replace(/[^0-9]/g, '')}`}
         target="_blank"
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-lg"
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-lg" rel="noopener"
       >
         <span className="sr-only">WhatsApp</span>
         <span className="text-2xl">💬</span>

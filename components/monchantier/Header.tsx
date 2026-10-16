@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { LOGO_URL } from "./constants";
 import { AuthControls } from "./AuthControls";
-import { Language } from "./types";
+import type { Language } from "./types";
 
 interface HeaderProps {
   lang: Language;
@@ -92,18 +92,18 @@ export function Header({ lang, setLang, t, cartItemCount = 0, onCartClick }: Hea
         </div>
         <LiquidNav links={links} />
         <div className="flex items-center gap-2">
-          <button onClick={() => setLang("fr")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "fr" ? "bg-slate-900 text-white" : "bg-white"}`}>
+          <button type="button" onClick={() => setLang("fr")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "fr" ? "bg-slate-900 text-white" : "bg-white"}`}>
             FR
           </button>
-          <button onClick={() => setLang("en")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "en" ? "bg-slate-900 text-white" : "bg-white"}`}>
+          <button type="button" onClick={() => setLang("en")} className={`px-2 py-1 rounded-sm text-xs border ${lang === "en" ? "bg-slate-900 text-white" : "bg-white"}`}>
             EN
           </button>
-          <button
+          <button type="button"
             onClick={onCartClick}
             className="relative ml-3 p-2 rounded-lg hover:bg-slate-100 transition-colors"
             title={t("Panier", "Cart")}
           >
-            <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" focusable="false" className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             {cartItemCount > 0 && (

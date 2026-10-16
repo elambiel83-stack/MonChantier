@@ -1,10 +1,10 @@
 import { getServerSession } from 'next-auth';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { buildInvoicePdf } from '@/lib/invoicePdf';
 import { getStoredPaymentStatus } from '@/lib/paymentStore';
 
-export async function GET(request: NextRequest, props: { params: Promise<{ reference: string }> }) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ reference: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {

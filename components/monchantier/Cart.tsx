@@ -1,6 +1,6 @@
-import React from "react";
+
 import Image from "next/image";
-import { CartItem, Currency, Language } from "./types";
+import type { CartItem, Currency, Language } from "./types";
 import { cartWhatsAppUrl } from "@/lib/socialCommerce";
 
 interface CartProps {
@@ -48,7 +48,7 @@ export function Cart({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <button type="button" aria-label={t("Fermer le panier", "Close cart")} className="absolute inset-0 bg-black/40" onClick={onClose} data-liquid="off" />
       <div className="relative w-full sm:max-w-lg max-h-[90vh] rounded-t-2xl sm:rounded-2xl bg-white shadow-xl ring-1 ring-slate-200 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
@@ -60,7 +60,7 @@ export function Cart({
               {cartItems.length} {t("article(s)", "item(s)")}
             </p>
           </div>
-          <button
+          <button type="button"
             className="rounded-lg px-2 py-1 text-slate-600 hover:bg-slate-100"
             onClick={onClose}
           >
@@ -104,20 +104,20 @@ export function Cart({
                         : t("Prix non disponible", "Price unavailable")}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <button
+                      <button type="button"
                         className="w-8 h-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-sm"
                         onClick={() => onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
                       >
                         −
                       </button>
                       <span className="w-12 text-center font-semibold">{item.quantity}</span>
-                      <button
+                      <button type="button"
                         className="w-8 h-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-sm"
                         onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                       >
                         +
                       </button>
-                      <button
+                      <button type="button"
                         className="ml-auto text-red-600 hover:text-red-700 text-sm font-semibold"
                         onClick={() => onRemoveItem(item.product.id)}
                       >
@@ -145,7 +145,7 @@ export function Cart({
                 {calculateTotal().toLocaleString()} {currency}
               </span>
             </div>
-            <button
+            <button type="button"
               onClick={onCheckout}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm"
             >
@@ -159,7 +159,7 @@ export function Cart({
             >
               {t("Commander le panier sur WhatsApp", "Order cart on WhatsApp")}
             </a>
-            <button
+            <button type="button"
               onClick={onClose}
               className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-5 py-3 rounded-xl"
             >

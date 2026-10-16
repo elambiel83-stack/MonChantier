@@ -1,4 +1,4 @@
-import { getDaysLate, getRepaymentHealth, Loan } from '@/lib/loanStore';
+import { getDaysLate, getRepaymentHealth, type Loan } from '@/lib/loanStore';
 
 export type PortfolioAlertSeverity = 'critical' | 'warning' | 'info';
 

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { verifyMobileMoneyTransaction } from '@/lib/mobileMoney';
-import { confirmPayment, ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
+import { confirmPayment, type ConfirmPaymentPayload } from '@/lib/paymentConfirmation';
 import { getStoredPaymentStatus } from '@/lib/paymentStore';
 
 /**
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stored = await getStoredPaymentStatus(reference);
-    if (!stored || stored.method !== 'mobilemoney') {
+    if (stored?.method !== 'mobilemoney') {
       return NextResponse.json({ success: true, found: false, state: 'not_found' });
     }
 

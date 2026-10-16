@@ -1,5 +1,5 @@
 import { listAllLoans } from "@/lib/loanStore";
-import { detectPortfolioAlerts, PortfolioAlertSeverity } from "@/lib/creditIntelligence";
+import { detectPortfolioAlerts, type PortfolioAlertSeverity } from "@/lib/creditIntelligence";
 import { ROLE_MENUS } from "@/lib/roles";
 
 const SEVERITY_STYLES: Record<PortfolioAlertSeverity, { icon: string; className: string }> = {

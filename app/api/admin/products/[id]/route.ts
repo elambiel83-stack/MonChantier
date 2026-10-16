@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { deleteProduct, getProduct, updateProduct, UpdateProductPatch } from '@/lib/productStore';
+import { type NextRequest, NextResponse } from 'next/server';
+import { deleteProduct, getProduct, updateProduct, type UpdateProductPatch } from '@/lib/productStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { calculateSellingPrice, hasSubmittedPrice, validateFeePercent } from '@/lib/partnerPricing';
 
@@ -63,8 +63,8 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       patch.pricingStatus = body.pricingStatus;
       patch.platformFeePercent = fee ?? existing.platformFeePercent;
       patch.active = body.pricingStatus === 'approved';
-      patch.priceUSD = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceUSD, fee!) : null;
-      patch.priceCDF = body.pricingStatus === 'approved' ? calculateSellingPrice(existing.submittedPriceCDF, fee!) : null;
+      patch.priceUSD = body.pricingStatus === 'approved' && fee !== null ? calculateSellingPrice(existing.submittedPriceUSD, fee) : null;
+      patch.priceCDF = body.pricingStatus === 'approved' && fee !== null ? calculateSellingPrice(existing.submittedPriceCDF, fee) : null;
     }
 
     const product = await updateProduct(id, patch);

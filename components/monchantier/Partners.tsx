@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { INPUT_CLASS } from "./constants";
-import { Language, PartnerForm, PartnerType, Status } from "./types";
+import type { Language, PartnerForm, PartnerType, Status } from "./types";
 
 interface PartnersProps {
   lang: Language;
@@ -115,8 +116,8 @@ export function Partners({ lang, t }: PartnersProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700">{t("Entreprise", "Company")}</label>
-                <input
+                <label htmlFor="Partners-field-119" className="text-xs font-semibold text-slate-700">{t("Entreprise", "Company")}</label>
+                <input id="Partners-field-119"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.company}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, company: e.target.value }))}
@@ -124,8 +125,8 @@ export function Partners({ lang, t }: PartnersProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
-                <input
+                <label htmlFor="Partners-field-128" className="text-xs font-semibold text-slate-700">{t("Nom complet", "Full name")}</label>
+                <input id="Partners-field-128"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.fullname}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, fullname: e.target.value }))}
@@ -133,8 +134,8 @@ export function Partners({ lang, t }: PartnersProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">{t("Téléphone", "Phone")}</label>
-                <input
+                <label htmlFor="Partners-field-137" className="text-xs font-semibold text-slate-700">{t("Téléphone", "Phone")}</label>
+                <input id="Partners-field-137"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.phone}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, phone: e.target.value }))}
@@ -142,8 +143,8 @@ export function Partners({ lang, t }: PartnersProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">Email</label>
-                <input
+                <label htmlFor="Partners-field-146" className="text-xs font-semibold text-slate-700">Email</label>
+                <input id="Partners-field-146"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.email}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, email: e.target.value }))}
@@ -152,8 +153,8 @@ export function Partners({ lang, t }: PartnersProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">{t("Ville", "City")}</label>
-                <input
+                <label htmlFor="Partners-field-156" className="text-xs font-semibold text-slate-700">{t("Ville", "City")}</label>
+                <input id="Partners-field-156"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.city}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, city: e.target.value }))}
@@ -161,8 +162,8 @@ export function Partners({ lang, t }: PartnersProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700">{t("Adresse", "Address")}</label>
-                <input
+                <label htmlFor="Partners-field-165" className="text-xs font-semibold text-slate-700">{t("Adresse", "Address")}</label>
+                <input id="Partners-field-165"
                   className={`mt-1 ${INPUT_CLASS}`}
                   value={partnerForm.address}
                   onChange={(e) => setPartnerForm((p) => ({ ...p, address: e.target.value }))}
@@ -174,8 +175,8 @@ export function Partners({ lang, t }: PartnersProps) {
             {partnerType === "transporter" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Types de véhicules", "Vehicle types")}</label>
-                  <input
+                  <label htmlFor="Partners-field-178" className="text-xs font-semibold text-slate-700">{t("Types de véhicules", "Vehicle types")}</label>
+                  <input id="Partners-field-178"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.vehicleTypes}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, vehicleTypes: e.target.value }))}
@@ -183,8 +184,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Capacité", "Capacity")}</label>
-                  <input
+                  <label htmlFor="Partners-field-187" className="text-xs font-semibold text-slate-700">{t("Capacité", "Capacity")}</label>
+                  <input id="Partners-field-187"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.capacity}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, capacity: e.target.value }))}
@@ -192,8 +193,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">{t("Zones desservies", "Service zones")}</label>
-                  <input
+                  <label htmlFor="Partners-field-196" className="text-xs font-semibold text-slate-700">{t("Zones desservies", "Service zones")}</label>
+                  <input id="Partners-field-196"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.zones}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, zones: e.target.value }))}
@@ -204,8 +205,8 @@ export function Partners({ lang, t }: PartnersProps) {
             ) : partnerType === "supplier" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">{t("Produits fournis", "Supplied products")}</label>
-                  <input
+                  <label htmlFor="Partners-field-208" className="text-xs font-semibold text-slate-700">{t("Produits fournis", "Supplied products")}</label>
+                  <input id="Partners-field-208"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.products}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, products: e.target.value }))}
@@ -213,8 +214,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Commande minimum", "Minimum order")}</label>
-                  <input
+                  <label htmlFor="Partners-field-217" className="text-xs font-semibold text-slate-700">{t("Commande minimum", "Minimum order")}</label>
+                  <input id="Partners-field-217"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.minOrder}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, minOrder: e.target.value }))}
@@ -236,8 +237,8 @@ export function Partners({ lang, t }: PartnersProps) {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">{t("Spécialité", "Specialty")}</label>
-                  <input
+                  <label htmlFor="Partners-field-240" className="text-xs font-semibold text-slate-700">{t("Spécialité", "Specialty")}</label>
+                  <input id="Partners-field-240"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.specialty}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, specialty: e.target.value }))}
@@ -245,8 +246,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Années d'expérience", "Years of experience")}</label>
-                  <input
+                  <label htmlFor="Partners-field-249" className="text-xs font-semibold text-slate-700">{t("Années d'expérience", "Years of experience")}</label>
+                  <input id="Partners-field-249"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.experience}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, experience: e.target.value }))}
@@ -254,8 +255,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">{t("Certifications", "Certifications")}</label>
-                  <input
+                  <label htmlFor="Partners-field-258" className="text-xs font-semibold text-slate-700">{t("Certifications", "Certifications")}</label>
+                  <input id="Partners-field-258"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.certifications}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, certifications: e.target.value }))}
@@ -263,8 +264,8 @@ export function Partners({ lang, t }: PartnersProps) {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700">{t("Zones d'intervention", "Service areas")}</label>
-                  <input
+                  <label htmlFor="Partners-field-267" className="text-xs font-semibold text-slate-700">{t("Zones d'intervention", "Service areas")}</label>
+                  <input id="Partners-field-267"
                     className={`mt-1 ${INPUT_CLASS}`}
                     value={partnerForm.zones}
                     onChange={(e) => setPartnerForm((p) => ({ ...p, zones: e.target.value }))}
@@ -275,8 +276,8 @@ export function Partners({ lang, t }: PartnersProps) {
             )}
 
             <div>
-              <label className="text-xs font-semibold text-slate-700">{t("Notes", "Notes")}</label>
-              <textarea
+              <label htmlFor="Partners-field-279" className="text-xs font-semibold text-slate-700">{t("Notes", "Notes")}</label>
+              <textarea id="Partners-field-279"
                 className={`mt-1 ${INPUT_CLASS} min-h-[110px]`}
                 value={partnerForm.notes}
                 onChange={(e) => setPartnerForm((p) => ({ ...p, notes: e.target.value }))}

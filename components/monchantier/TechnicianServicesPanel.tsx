@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type StoredService = {
   id: number;
@@ -38,7 +38,7 @@ export default function TechnicianServicesPanel() {
   });
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/partner/services", { cache: "no-store" });
       const data = await res.json();
@@ -48,11 +48,11 @@ export default function TechnicianServicesPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createServiceEntry = async () => {
     if (!newService.fr.trim() || !newService.frDesc.trim()) return;

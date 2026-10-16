@@ -40,7 +40,7 @@ export function computeMonthlyPayment(
 ): number {
   const monthlyRate = annualRatePercent / 100 / 12;
   if (monthlyRate === 0) return round2(principal / termMonths);
-  const factor = Math.pow(1 + monthlyRate, termMonths);
+  const factor = (1 + monthlyRate) ** termMonths;
   return round2((principal * monthlyRate * factor) / (factor - 1));
 }
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createPayPalOrder, isPayPalConfigured } from '@/lib/paypal';
 import { encodeInvoicePayload } from '@/lib/paymentPayloadCodec';
 import { confirmPayment, generatePaymentReference, registerPendingPayment } from '@/lib/paymentConfirmation';

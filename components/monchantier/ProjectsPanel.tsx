@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type ProjectStatus = "planning" | "in_progress" | "completed";
 type ClientProject = { id: string; name: string; address?: string; notes?: string; status: ProjectStatus };
@@ -18,7 +18,7 @@ export default function ProjectsPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [newProject, setNewProject] = useState({ name: "", address: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/client/projects", { cache: "no-store" });
@@ -29,11 +29,11 @@ export default function ProjectsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createProject = async () => {
     if (!newProject.name.trim()) return;

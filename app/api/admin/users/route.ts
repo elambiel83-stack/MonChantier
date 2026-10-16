@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { addUser, listUsers, toggleUserActive } from '@/lib/adminStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { isAppRole } from '@/lib/roles';

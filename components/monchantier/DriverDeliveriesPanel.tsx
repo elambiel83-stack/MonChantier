@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type DeliveryStatus = "pending" | "assigned" | "picked_up" | "in_transit" | "delivered" | "cancelled";
 
@@ -36,7 +36,7 @@ export default function DriverDeliveriesPanel() {
   const [autoSendId, setAutoSendId] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/deliveries", { cache: "no-store" });
       const data = await res.json();
@@ -50,11 +50,43 @@ export default function DriverDeliveriesPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const sendPosition = useCallback((id: string, silent = false) => {
+    if (!navigator.geolocation) {
+      if (!silent) setBanner("Géolocalisation non supportée par ce navigateur.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const res = await fetch(`/api/deliveries/${id}/position`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            }),
+          });
+          if (!res.ok && !silent) {
+            const data = await res.json();
+            setBanner(data?.message || "Erreur envoi position");
+          } else if (!silent) {
+            setBanner("Position envoyée.");
+          }
+        } catch {
+          if (!silent) setBanner("Erreur envoi position");
+        }
+      },
+      () => {
+        if (!silent) setBanner("Impossible d'obtenir votre position.");
+      }
+    );
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     if (!autoSendId) {
@@ -68,7 +100,7 @@ export default function DriverDeliveriesPanel() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSendId]);
+  }, [autoSendId, sendPosition]);
 
   const accept = async (id: string) => {
     setBusyId(id);
@@ -111,37 +143,7 @@ export default function DriverDeliveriesPanel() {
     }
   };
 
-  const sendPosition = (id: string, silent = false) => {
-    if (!navigator.geolocation) {
-      if (!silent) setBanner("Géolocalisation non supportée par ce navigateur.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const res = await fetch(`/api/deliveries/${id}/position`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            }),
-          });
-          if (!res.ok && !silent) {
-            const data = await res.json();
-            setBanner(data?.message || "Erreur envoi position");
-          } else if (!silent) {
-            setBanner("Position envoyée.");
-          }
-        } catch {
-          if (!silent) setBanner("Erreur envoi position");
-        }
-      },
-      () => {
-        if (!silent) setBanner("Impossible d'obtenir votre position.");
-      }
-    );
-  };
+
 
   return (
     <div id="mes-missions">

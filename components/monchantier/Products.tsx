@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { PRODUCTS_BANNER_URL } from "./constants";
-import { Language, Product } from "./types";
+import type { Language, Product } from "./types";
 import { facebookShareUrl, productShareUrl, productWhatsAppUrl } from "@/lib/socialCommerce";
 
 interface ProductsProps {

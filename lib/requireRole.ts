@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
-import { NextRequest, NextResponse } from 'next/server';
-import { AppRole, isAppRole } from './roles';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type AppRole, isAppRole } from './roles';
 
 function getAdminEmails(): string[] {
   return (process.env.ADMIN_EMAILS || '')

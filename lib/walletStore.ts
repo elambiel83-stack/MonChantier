@@ -1,4 +1,4 @@
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletCurrency } from '@/lib/walletExchange';
 import { readStore, withStore } from './storeDb';
 
 export type WalletDepositMethod = 'mobilemoney' | 'card' | 'paypal';

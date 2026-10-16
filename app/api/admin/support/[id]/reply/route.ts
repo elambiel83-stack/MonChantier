@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { addTicketMessage } from '@/lib/supportStore';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { getSessionActor } from '@/lib/sessionIdentity';

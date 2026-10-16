@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getPaymentStatus } from '@/lib/paymentConfirmation';
 
 export async function GET(request: NextRequest) {

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getWalletIdentity } from '@/lib/walletAuth';
 import { createLoanApplication, getRepaymentHealth, listLoansByIdentity } from '@/lib/loanStore';
 import { getLoanMaxPrincipal, getLoanMaxTermMonths, getLoanMinTermMonths } from '@/lib/loanCalculator';
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletCurrency } from '@/lib/walletExchange';
 
 function isCurrency(value: unknown): value is WalletCurrency {
   return value === 'USD' || value === 'CDF';
@@ -89,20 +89,21 @@ export async function POST(request: NextRequest) {
 
     let tranches: Array<{ label: string; condition: string; amount: number }> | undefined;
     if (Array.isArray(body?.tranches) && body.tranches.length > 0) {
-      tranches = body.tranches.map(
+      const parsedTranches: NonNullable<typeof tranches> = body.tranches.map(
         (tranche: { label?: unknown; condition?: unknown; amount?: unknown }) => ({
           label: String(tranche?.label || '').trim(),
           condition: String(tranche?.condition || '').trim(),
           amount: Number(tranche?.amount),
         })
       );
-      const invalid = tranches!.some(
+      tranches = parsedTranches;
+      const invalid = parsedTranches.some(
         (tranche) => !tranche.label || !Number.isFinite(tranche.amount) || tranche.amount <= 0
       );
       if (invalid) {
         return NextResponse.json({ message: 'Tranches invalides' }, { status: 400 });
       }
-      const trancheSum = tranches!.reduce((sum, tranche) => sum + tranche.amount, 0);
+      const trancheSum = parsedTranches.reduce((sum, tranche) => sum + tranche.amount, 0);
       if (Math.round(trancheSum * 100) !== Math.round(principal * 100)) {
         return NextResponse.json(
           { message: 'La somme des tranches doit être égale au montant demandé' },

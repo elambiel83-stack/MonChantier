@@ -42,7 +42,7 @@ export async function priceOrderFromCatalog(
     }
 
     const product = await getProduct(productId);
-    if (!product || !product.active) {
+    if (!product?.active) {
       throw new OrderPricingError(`Produit ${productId} indisponible`, 409);
     }
     const unitPrice = currency === 'USD' ? product.priceUSD : product.priceCDF;

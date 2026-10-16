@@ -85,9 +85,9 @@ export function createDeliveryFromPayment(args: {
   location?: { lat?: number; lng?: number } | null;
 }): Promise<Delivery> {
   return withStore(STORE_KEY, buildInitialStore, (store) => {
-    const alreadyExists = store.deliveries.some((delivery) => delivery.reference === args.reference);
+    const alreadyExists = store.deliveries.find((delivery) => delivery.reference === args.reference);
     if (alreadyExists) {
-      return store.deliveries.find((delivery) => delivery.reference === args.reference)!;
+      return alreadyExists;
     }
 
     const origin = getCity('Kolwezi');

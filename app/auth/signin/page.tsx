@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 function getCallbackUrl(value: string | null) {
   // The middleware supplies a relative path. Keep redirects on this site and
   // never send an authenticated user back to the sign-in screen.
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/auth/")) {
+  if (!value?.startsWith("/") || value.startsWith("//") || value.startsWith("/auth/")) {
     return "/";
   }
 
@@ -118,7 +118,7 @@ export default function SignInPage() {
         {oauthProviders.length > 0 ? (
           <div className="mt-4 grid grid-cols-1 gap-2">
             {oauthProviders.map((provider) => (
-              <button
+              <button type="button"
                 key={provider.id}
                 onClick={() => signIn(provider.id, { callbackUrl })}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50"

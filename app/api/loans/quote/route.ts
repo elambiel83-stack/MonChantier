@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import {
   buildAmortizationSchedule,
   getLoanAnnualInterestRate,
@@ -6,7 +6,7 @@ import {
   getLoanMaxTermMonths,
   getLoanMinTermMonths,
 } from '@/lib/loanCalculator';
-import { WalletCurrency } from '@/lib/walletExchange';
+import type { WalletCurrency } from '@/lib/walletExchange';
 
 function isCurrency(value: unknown): value is WalletCurrency {
   return value === 'USD' || value === 'CDF';

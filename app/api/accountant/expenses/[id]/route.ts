@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { deleteExpense, updateExpense, UpdateExpensePatch } from '@/lib/expenseStore';
+import { type NextRequest, NextResponse } from 'next/server';
+import { deleteExpense, updateExpense, type UpdateExpensePatch } from '@/lib/expenseStore';
 import { requireRole } from '@/lib/requireRole';
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {

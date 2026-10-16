@@ -59,6 +59,9 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Code quality
+        run: npm run lint -- --error-on-warnings
+
       - name: Unit and integration tests
         run: npm test
 

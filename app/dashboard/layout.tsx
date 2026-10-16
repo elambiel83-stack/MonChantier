@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/auth/signin?callbackUrl=/dashboard");
   }
 
-  const role = session!.user!.role || DEFAULT_ROLE;
+  const role = session.user.role || DEFAULT_ROLE;
 
   return (
     <div className="dashboard-shell min-h-screen bg-[#f4f6f2] text-slate-800 lg:flex">

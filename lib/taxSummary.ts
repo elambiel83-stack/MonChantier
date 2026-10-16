@@ -1,4 +1,4 @@
-import { StoredPaymentStatus } from '@/lib/paymentStore';
+import type { StoredPaymentStatus } from '@/lib/paymentStore';
 
 export type TaxTotals = {
   ht: number;
