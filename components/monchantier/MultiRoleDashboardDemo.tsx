@@ -160,8 +160,8 @@ function RouteMap() {
       </svg>
       <span className="absolute bottom-[18%] left-[12%] h-5 w-5 rounded-full border-4 border-white bg-[#ff6333] shadow-lg" />
       <span className="absolute right-[10%] top-[19%] h-5 w-5 rounded-full border-4 border-white bg-[#081421] shadow-lg" />
-      <span className="absolute bottom-4 left-4 rounded-lg bg-white px-2 py-1 text-[10px] font-bold shadow">Dépôt Manika</span>
-      <span className="absolute right-4 top-4 rounded-lg bg-white px-2 py-1 text-[10px] font-bold shadow">Joli Site</span>
+      <span className="absolute bottom-4 left-4 rounded-lg bg-white px-2 py-1 text-[10px] font-bold shadow-sm">Dépôt Manika</span>
+      <span className="absolute right-4 top-4 rounded-lg bg-white px-2 py-1 text-[10px] font-bold shadow-sm">Joli Site</span>
     </div>
   );
 }
@@ -540,7 +540,7 @@ export default function MultiRoleDashboardDemo() {
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold text-slate-500">
             Devise
-            <select value={currency} onChange={(event) => setCurrency(event.target.value as Currency)} className="bg-transparent font-black text-[#0b1724] outline-none">
+            <select value={currency} onChange={(event) => setCurrency(event.target.value as Currency)} className="bg-transparent font-black text-[#0b1724] outline-hidden">
               <option value="USD">USD</option>
               <option value="CDF">CDF</option>
             </select>

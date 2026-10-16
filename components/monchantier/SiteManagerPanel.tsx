@@ -210,7 +210,7 @@ export default function SiteManagerPanel() {
         </div>
       )}
 
-      <div id="chantiers" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div id="chantiers" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <h2 className="text-lg font-semibold">Mes chantiers</h2>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -287,7 +287,7 @@ export default function SiteManagerPanel() {
 
       {selectedSite && (
         <>
-          <div id="taches" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="taches" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <h2 className="text-lg font-semibold">Tâches — {selectedSite.name}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               <input
@@ -326,7 +326,7 @@ export default function SiteManagerPanel() {
             </ul>
           </div>
 
-          <div id="equipe" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="equipe" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <h2 className="text-lg font-semibold">Équipe — {selectedSite.name}</h2>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
               <input
@@ -372,7 +372,7 @@ export default function SiteManagerPanel() {
             </ul>
           </div>
 
-          <div id="incidents" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div id="incidents" className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <h2 className="text-lg font-semibold">Incidents — {selectedSite.name}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               <input
