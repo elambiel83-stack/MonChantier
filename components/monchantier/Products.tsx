@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { ProductComparison } from "./ProductComparison";
 import { PRODUCTS_BANNER_URL } from "./constants";
 import { Language, Product } from "./types";
 import { facebookShareUrl, productShareUrl, productWhatsAppUrl } from "@/lib/socialCommerce";
@@ -82,6 +83,31 @@ function productPriceValue(p: Product): number | null {
 
 export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) {
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
+  const [comparedIds, setComparedIds] = useState<number[]>([]);
+  const [compareMessage, setCompareMessage] = useState("");
+  useEffect(() => {
+    const parse = () => {
+      const raw = new URLSearchParams(window.location.search).get("compare") ?? "";
+      const ids = raw.split(",").filter(x => /^[1-9]\\d*$/.test(x)).map(Number);
+      setComparedIds([...new Set(ids.filter(Number.isSafeInteger))].slice(0, 3));
+    };
+    parse();
+    window.addEventListener("popstate", parse);
+    return () => window.removeEventListener("popstate", parse);
+  }, []);
+  function toggleCompare(id: number) {
+    if (!comparedIds.includes(id) && comparedIds.length === 3) {
+      setCompareMessage(t("Trois produits maximum.", "Maximum three products."));
+      return;
+    }
+    setCompareMessage("");
+    const next = comparedIds.includes(id) ? comparedIds.filter(x => x !== id) : [...comparedIds, id];
+    setComparedIds(next);
+    const url = new URL(window.location.href);
+    if (next.length) url.searchParams.set("compare", next.join(","));
+    else url.searchParams.delete("compare");
+    window.history.replaceState(null, "", url.toString());
+  }
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOption>("default");
   const [category, setCategory] = useState("all");
@@ -195,6 +221,8 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
         </p>
       )}
 
+      <p aria-live="polite" className="mt-5 text-sm">{t("Produits comparés", "Compared products")}: {comparedIds.length}/3</p>
+      {compareMessage && <p role="alert" className="text-sm text-orange-700">{compareMessage}</p>}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {visibleProducts.map((p) => {
           const hasPrice = Boolean(p.prices?.USD || p.prices?.CDF);
@@ -245,6 +273,9 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
                   >
                     {copiedProductId === p.id ? t("Lien copié", "Link copied") : "TikTok"}
                   </button>
+                  <button type="button" aria-pressed={comparedIds.includes(p.id)} onClick={() => toggleCompare(p.id)} className="text-sm font-semibold text-orange-700">
+                    {comparedIds.includes(p.id) ? t("Retirer", "Remove") : t("Comparer", "Compare")}
+                  </button>
                   {hasPrice && (
                     <button
                       type="button"
@@ -261,6 +292,7 @@ export function Products({ lang, t, onAddToCart, onOrderClick }: ProductsProps) 
           );
         })}
       </div>
+      <ProductComparison ids={comparedIds} lang={lang} />
       {visibleCount < products.length && (
         <div className="mt-8 text-center">
           <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="rounded-xl border border-orange-600 px-5 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-50">
