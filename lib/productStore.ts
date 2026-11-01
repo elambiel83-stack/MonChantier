@@ -23,6 +23,8 @@ export type StoredProduct = {
   // active le décrément atomique à la confirmation de paiement (voir
   // decrementStock) et empêche la survente.
   stock: number | null;
+  technicalSpecs?: Record<string, string | number | null>;
+  technicalSpecsVerified?: boolean;
   // Absent = produit MonChantier (catalogue plateforme). Présent = produit
   // apporté par un partenaire (rôle "supplier"), identifié par son email.
   ownerIdentity?: string;
